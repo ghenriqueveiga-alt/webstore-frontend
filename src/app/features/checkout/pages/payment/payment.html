@@ -1,0 +1,282 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a routerLink="/buying/cart" class="hover:text-blue-600">Carrinho</a>
+      <span>/</span>
+      <span class="text-gray-400">Endereço</span>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Pagamento</span>
+      <span>/</span>
+      <span class="text-gray-400">Confirmação</span>
+    </div>
+
+    <!-- Steps -->
+    <div class="flex items-center gap-2 mb-8">
+      <span class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">✓</span>
+      <span class="font-medium text-green-600">Endereço</span>
+      <div class="flex-1 h-0.5 bg-green-300"></div>
+      <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">2</span>
+      <span class="font-medium text-blue-600">Pagamento</span>
+      <div class="flex-1 h-0.5 bg-blue-200"></div>
+      <span class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold">3</span>
+      <span class="text-gray-400">Confirmação</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Form -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <h1 class="text-xl font-bold text-gray-900 mb-6">Forma de Pagamento</h1>
+
+          <!-- Methods -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            @for (m of [{key: 'credit', label: 'Cartão de Crédito', icon: '💳'}, {key: 'boleto', label: 'Boleto', icon: '📄'}, {key: 'pix', label: 'PIX', icon: '⚡'}]; track m.key) {
+              <button (click)="setMethod(m.key)"
+                class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer"
+                [class.border-blue-600]="data().method === m.key"
+                [class.border-gray-200]="data().method !== m.key"
+                [class.bg-blue-50]="data().method === m.key">
+                <span class="text-2xl">{{ m.icon }}</span>
+                <span class="text-sm font-medium" [class.text-blue-600]="data().method === m.key" [class.text-gray-700]="data().method !== m.key">{{ m.label }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Credit Card -->
+          @if (data().method === 'credit') {
+            @if (account.cards().length > 0) {
+              <!-- Saved cards -->
+              <p class="text-sm text-gray-500 mb-4">Selecione um cartão salvo ou adicione um novo.</p>
+              <div class="space-y-3 mb-6">
+                @for (card of account.cards(); track card.id) {
+                  <div class="border rounded-xl p-4 cursor-pointer transition-all flex items-center gap-4"
+                    [class.border-blue-500]="selectedSaved() === $index"
+                    [class.ring-2]="selectedSaved() === $index"
+                    [class.ring-blue-200]="selectedSaved() === $index"
+                    [class.border-gray-200]="selectedSaved() !== $index"
+                    (click)="selectSaved($index)">
+                    <div class="mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center"
+                      [class.border-blue-500]="selectedSaved() === $index"
+                      [class.border-gray-300]="selectedSaved() !== $index">
+                      @if (selectedSaved() === $index) {
+                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                      }
+                    </div>
+                    <span class="text-2xl">💳</span>
+                    <div>
+                      <p class="text-sm font-medium text-gray-800">{{ card.brand }} •••• {{ card.lastDigits }}</p>
+                      <p class="text-xs text-gray-500">{{ card.cardName }} — Validade {{ formatExpiry(card.expiry) }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <button (click)="openModal()" class="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer">
+                  + Usar outro cartão
+                </button>
+                <button (click)="useSelected()"
+                  class="bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                  [class.opacity-50]="selectedSaved() === null" [disabled]="selectedSaved() === null">
+                  Revisar Pedido
+                </button>
+              </div>
+            } @else {
+              <!-- New card form (no saved cards) -->
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Número do Cartão</label>
+                  <input type="text" [ngModel]="formatCardNumber(data().cardNumber ?? '')" (ngModelChange)="onCardNumberChange($event)" placeholder="0000 0000 0000 0000" maxlength="19"
+                    class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [class.border-red-400]="submitted() && !data().cardNumber" />
+                  @if (submitted() && !data().cardNumber) {
+                    <p class="text-red-500 text-xs mt-1">Informe o número do cartão</p>
+                  }
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Nome no Cartão</label>
+                  <input type="text" [ngModel]="data().cardName" (ngModelChange)="data.set({...data(), cardName: $event})" placeholder="Como impresso no cartão"
+                    class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [class.border-red-400]="submitted() && !data().cardName" />
+                  @if (submitted() && !data().cardName) {
+                    <p class="text-red-500 text-xs mt-1">Informe o nome no cartão</p>
+                  }
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Validade</label>
+                    <input type="text" [ngModel]="formatExpiry(data().expiry ?? '')" (ngModelChange)="onExpiryChange($event)" placeholder="MM/AA" maxlength="5"
+                      class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      [class.border-red-400]="submitted() && !data().expiry" />
+                    @if (submitted() && !data().expiry) {
+                      <p class="text-red-500 text-xs mt-1">Informe a validade</p>
+                    }
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+                    <input type="text" [ngModel]="data().cvv" (ngModelChange)="data.set({...data(), cvv: $event})" placeholder="123" maxlength="4"
+                      class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      [class.border-red-400]="submitted() && !data().cvv" />
+                    @if (submitted() && !data().cvv) {
+                      <p class="text-red-500 text-xs mt-1">Informe o CVV</p>
+                    }
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Parcelas</label>
+                  <select [ngModel]="data().installments" (ngModelChange)="data.set({...data(), installments: $event})"
+                    class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    @for (n of maxInstallments; track n) {
+                      <option [value]="n">{{ n }}x de R$ {{ (cart.total() / n).toFixed(2) }}{{ n > 1 ? ' sem juros' : '' }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+                <a routerLink="/checkout/address" class="text-gray-500 hover:text-gray-700 font-medium">&larr; Voltar ao endereço</a>
+                <button (click)="onSubmit()" class="bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                  Revisar Pedido
+                </button>
+              </div>
+            }
+          }
+
+          <!-- Boleto -->
+          @if (data().method === 'boleto') {
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+              <span class="text-5xl">📄</span>
+              <h3 class="text-lg font-bold text-gray-800 mt-3">Boleto Bancário</h3>
+              <p class="text-gray-500 text-sm mt-2">O boleto será gerado após a confirmação do pedido. Vencimento em 3 dias úteis.</p>
+            </div>
+            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+              <a routerLink="/checkout/address" class="text-gray-500 hover:text-gray-700 font-medium">&larr; Voltar ao endereço</a>
+              <button (click)="onSubmit()" class="bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                Revisar Pedido
+              </button>
+            </div>
+          }
+
+          <!-- PIX -->
+          @if (data().method === 'pix') {
+            <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+              <span class="text-5xl">⚡</span>
+              <h3 class="text-lg font-bold text-gray-800 mt-3">PIX</h3>
+              <p class="text-gray-500 text-sm mt-2">Pagamento instantâneo. O código QR será exibido após a confirmação do pedido.</p>
+            </div>
+            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+              <a routerLink="/checkout/address" class="text-gray-500 hover:text-gray-700 font-medium">&larr; Voltar ao endereço</a>
+              <button (click)="onSubmit()" class="bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                Revisar Pedido
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+          <h3 class="font-bold text-gray-900 mb-4">Resumo do Pedido</h3>
+          <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+            @for (item of cart.items(); track item.id) {
+              <div class="flex items-center gap-3">
+                <span class="text-2xl shrink-0">{{ item.image }}</span>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-800 truncate">{{ item.name }}</p>
+                  <p class="text-xs text-gray-400">Qtd: {{ item.quantity }}</p>
+                </div>
+                <span class="text-sm font-bold text-gray-900 ml-auto">R$ {{ (item.price * item.quantity).toFixed(2) }}</span>
+              </div>
+            }
+          </div>
+          <div class="border-t border-gray-100 pt-3 space-y-1.5 text-sm">
+            <div class="flex justify-between text-gray-500"><span>Subtotal</span><span>R$ {{ cart.subtotal().toFixed(2) }}</span></div>
+            <div class="flex justify-between text-gray-500"><span>Frete</span><span>{{ cart.shipping() === 0 ? 'Grátis' : 'R$ ' + cart.shipping().toFixed(2) }}</span></div>
+            <div class="flex justify-between font-bold text-gray-900 text-base pt-1.5 border-t border-gray-100"><span>Total</span><span>R$ {{ cart.total().toFixed(2) }}</span></div>
+          </div>
+          @if (checkout.address(); as addr) {
+            <div class="border-t border-gray-100 pt-3 mt-3">
+              <p class="text-xs text-gray-400 uppercase font-medium mb-1">Entrega</p>
+              <p class="text-sm text-gray-700">{{ addr.street }}, {{ addr.number }}</p>
+              <p class="text-sm text-gray-700">{{ addr.city }} - {{ addr.state }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for new card -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">Novo Cartão</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Número do Cartão</label>
+          <input type="text" [ngModel]="formatCardNumber(modalData().cardNumber ?? '')" (ngModelChange)="onModalCardNumberChange($event)" placeholder="0000 0000 0000 0000" maxlength="19"
+            class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="modalSubmitted() && !modalData().cardNumber" />
+          @if (modalSubmitted() && !modalData().cardNumber) {
+            <p class="text-red-500 text-xs mt-1">Informe o número do cartão</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nome no Cartão</label>
+          <input type="text" [ngModel]="modalData().cardName" (ngModelChange)="modalData.set({...modalData(), cardName: $event})" placeholder="Como impresso no cartão"
+            class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="modalSubmitted() && !modalData().cardName" />
+          @if (modalSubmitted() && !modalData().cardName) {
+            <p class="text-red-500 text-xs mt-1">Informe o nome no cartão</p>
+          }
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Validade</label>
+            <input type="text" [ngModel]="formatExpiry(modalData().expiry ?? '')" (ngModelChange)="onModalExpiryChange($event)" placeholder="MM/AA" maxlength="5"
+              class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              [class.border-red-400]="modalSubmitted() && !modalData().expiry" />
+            @if (modalSubmitted() && !modalData().expiry) {
+              <p class="text-red-500 text-xs mt-1">Informe a validade</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+            <input type="text" [ngModel]="modalData().cvv" (ngModelChange)="modalData.set({...modalData(), cvv: $event})" placeholder="123" maxlength="4"
+              class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              [class.border-red-400]="modalSubmitted() && !modalData().cvv" />
+            @if (modalSubmitted() && !modalData().cvv) {
+              <p class="text-red-500 text-xs mt-1">Informe o CVV</p>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Parcelas</label>
+          <select [ngModel]="modalData().installments" (ngModelChange)="modalData.set({...modalData(), installments: $event})"
+            class="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            @for (n of maxInstallments; track n) {
+              <option [value]="n">{{ n }}x de R$ {{ (cart.total() / n).toFixed(2) }}{{ n > 1 ? ' sem juros' : '' }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+        <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700 font-medium text-sm cursor-pointer">Cancelar</button>
+        <button (click)="onModalSubmit()" class="bg-blue-600 text-white font-semibold px-8 py-2.5 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+          Salvar e Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+}

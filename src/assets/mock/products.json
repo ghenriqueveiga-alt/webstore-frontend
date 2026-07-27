@@ -1,0 +1,973 @@
+[
+  {
+    "id": 1, "name": "Smartphone XYZ Pro 256GB", "price": 4999, "originalPrice": 5999, "image": "📱",
+    "category": "Eletrônicos", "rating": 4.5, "reviews": 234, "badge": "-17%",
+    "description": "O Smartphone XYZ Pro é o dispositivo mais avançado da linha, combinando desempenho excepcional com um design sofisticado. Equipado com processador de última geração, 12GB de RAM e 256GB de armazenamento interno, oferece velocidade e espaço para todas as suas necessidades.",
+    "specs": [
+      { "label": "Processador", "value": "Octa-Core 3.2GHz" },
+      { "label": "RAM", "value": "12GB LPDDR5" },
+      { "label": "Armazenamento", "value": "256GB UFS 3.1" },
+      { "label": "Tela", "value": "6.7\" AMOLED 120Hz" },
+      { "label": "Bateria", "value": "5.000 mAh" },
+      { "label": "Câmera Traseira", "value": "108MP + 12MP + 8MP" },
+      { "label": "Câmera Frontal", "value": "32MP" },
+      { "label": "Sistema", "value": "Android 15" },
+      { "label": "Peso", "value": "198g" }
+    ]
+  },
+  {
+    "id": 2, "name": "Notebook Ultra 15\" 16GB RAM", "price": 6499, "image": "💻",
+    "category": "Eletrônicos", "rating": 4.8, "reviews": 156,
+    "description": "Notebook ultrafino com processador Intel Core i7 de 13ª geração, 16GB de RAM DDR5 e SSD NVMe de 512GB. Tela Full HD de 15.6\" com bordas finas e bateria de longa duração.",
+    "specs": [
+      { "label": "Processador", "value": "Intel Core i7-1360P" },
+      { "label": "RAM", "value": "16GB DDR5" },
+      { "label": "Armazenamento", "value": "512GB SSD NVMe" },
+      { "label": "Tela", "value": "15.6\" Full HD IPS" },
+      { "label": "Bateria", "value": "56 Wh" },
+      { "label": "Peso", "value": "1.45kg" },
+      { "label": "Sistema", "value": "Windows 11 Home" }
+    ]
+  },
+  {
+    "id": 3, "name": "Fone Bluetooth ANC Preto", "price": 899, "originalPrice": 1199, "image": "🎧",
+    "category": "Música", "rating": 4.3, "reviews": 89, "badge": "-25%",
+    "description": "Fone de ouvido Bluetooth com cancelamento de ruído ativo (ANC), drivers de 40mm e até 30 horas de bateria. Confortável para uso prolongado com almofadas de memória.",
+    "specs": [
+      { "label": "Conectividade", "value": "Bluetooth 5.3" },
+      { "label": "Driver", "value": "40mm" },
+      { "label": "Bateria", "value": "30h" },
+      { "label": "Cancelamento", "value": "ANC Híbrido" },
+      { "label": "Peso", "value": "250g" }
+    ]
+  },
+  {
+    "id": 4, "name": "Tênis Running Air Max", "price": 599, "image": "👟",
+    "category": "Esportes", "rating": 4.6, "reviews": 312,
+    "description": "Tênis de corrida com amortecimento Air Max, solado em borracha resistente e cabedal em mesh respirável. Ideal para corridas de longa distância e treinos diários.",
+    "specs": [
+      { "label": "Amortecimento", "value": "Air Max" },
+      { "label": "Solado", "value": "Borracha" },
+      { "label": "Cabedal", "value": "Mesh Respirável" },
+      { "label": "Peso", "value": "280g (par 42)" },
+      { "label": "Indicado para", "value": "Corrida e Treino" }
+    ]
+  },
+  {
+    "id": 5, "name": "Smartwatch Series 5 44mm", "price": 2299, "originalPrice": 2799, "image": "⌚",
+    "category": "Eletrônicos", "rating": 4.4, "reviews": 178, "badge": "-18%",
+    "description": "Smartwatch com tela AMOLED sempre ativa, GPS integrado, monitor cardíaco e resistência à água 5ATM. Compatível com iOS e Android.",
+    "specs": [
+      { "label": "Tela", "value": "1.9\" AMOLED" },
+      { "label": "GPS", "value": "Integrado" },
+      { "label": "Resistência", "value": "5ATM (50m)" },
+      { "label": "Bateria", "value": "Até 5 dias" },
+      { "label": "Sensores", "value": "Cardíaco, SpO2, Acelerômetro" },
+      { "label": "Compatibilidade", "value": "iOS e Android" }
+    ]
+  },
+  {
+    "id": 6, "name": "Câmera DSLR 4K 24MP", "price": 3899, "image": "📷",
+    "category": "Eletrônicos", "rating": 4.7, "reviews": 67,
+    "description": "Câmera DSLR profissional com sensor de 24.2MP, gravação 4K a 60fps, estabilização de imagem e sistema de auto-foco com 153 pontos.",
+    "specs": [
+      { "label": "Sensor", "value": "24.2MP CMOS" },
+      { "label": "Vídeo", "value": "4K 60fps" },
+      { "label": "Auto-foco", "value": "153 pontos" },
+      { "label": "Estabilização", "value": "5 eixos" },
+      { "label": "ISO", "value": "100-51200" }
+    ]
+  },
+  {
+    "id": 7, "name": "Mochila Executiva Couro", "price": 299, "image": "🎒",
+    "category": "Moda", "rating": 4.2, "reviews": 45,
+    "description": "Mochila executiva em couro legítimo, com compartimento para notebook de até 15.6\", diversos bolsos organizadores e alças acolchoadas.",
+    "specs": [
+      { "label": "Material", "value": "Couro Legítimo" },
+      { "label": "Notebook", "value": "Até 15.6\"" },
+      { "label": "Compartimentos", "value": "3 principais + 5 bolsos" },
+      { "label": "Alças", "value": "Acolchoadas" },
+      { "label": "Peso", "value": "850g" }
+    ]
+  },
+  {
+    "id": 8, "name": "Tablet 10\" 256GB WiFi", "price": 2799, "originalPrice": 3299, "image": "📲",
+    "category": "Eletrônicos", "rating": 4.1, "reviews": 92, "badge": "-15%",
+    "description": "Tablet com tela de 10.9\" Liquid Retina, chip A14 Bionic, 256GB de armazenamento e suporte para Apple Pencil. Perfeito para produtividade e entretenimento.",
+    "specs": [
+      { "label": "Tela", "value": "10.9\" Liquid Retina" },
+      { "label": "Chip", "value": "A14 Bionic" },
+      { "label": "Armazenamento", "value": "256GB" },
+      { "label": "Câmera Traseira", "value": "12MP" },
+      { "label": "Câmera Frontal", "value": "12MP Ultra-wide" },
+      { "label": "Bateria", "value": "Até 10h" }
+    ]
+  },
+  {
+    "id": 9, "name": "Caixa de Som Bluetooth", "price": 449, "image": "🔊",
+    "category": "Música", "rating": 4.0, "reviews": 203,
+    "description": "Caixa de som Bluetooth portátil com som 360°, resistente à água IP67 e até 20 horas de bateria. Conecte até 2 dispositivos simultaneamente.",
+    "specs": [
+      { "label": "Potência", "value": "30W RMS" },
+      { "label": "Resistência", "value": "IP67" },
+      { "label": "Bateria", "value": "20h" },
+      { "label": "Bluetooth", "value": "5.2" },
+      { "label": "Peso", "value": "540g" }
+    ]
+  },
+  {
+    "id": 10, "name": "Monitor 27\" 4K IPS", "price": 2199, "image": "🖥️",
+    "category": "Eletrônicos", "rating": 4.6, "reviews": 134,
+    "description": "Monitor 4K UHD de 27\" com painel IPS, HDR10, 99% sRGB e ajuste de altura. Ideal para designers, editores de vídeo e profissionais.",
+    "specs": [
+      { "label": "Tela", "value": "27\" 4K UHD IPS" },
+      { "label": "Resolução", "value": "3840x2160" },
+      { "label": "HDR", "value": "HDR10" },
+      { "label": "Cobertura", "value": "99% sRGB" },
+      { "label": "Ajuste", "value": "Altura, Inclinação, Rotação" },
+      { "label": "Conexões", "value": "HDMI 2.1, DisplayPort 1.4, USB-C" }
+    ]
+  },
+  {
+    "id": 11, "name": "Teclado Mecânico RGB", "price": 379, "image": "⌨️",
+    "category": "Eletrônicos", "rating": 4.3, "reviews": 87,
+    "description": "Teclado mecânico gaming com switches Cherry MX Red, iluminação RGB por tecla e construção em alumínio. Layout ABNT2 com 104 teclas.",
+    "specs": [
+      { "label": "Switch", "value": "Cherry MX Red" },
+      { "label": "Iluminação", "value": "RGB por tecla" },
+      { "label": "Construção", "value": "Alumínio" },
+      { "label": "Layout", "value": "ABNT2" },
+      { "label": "Teclas", "value": "104" },
+      { "label": "Cabo", "value": "USB-C removível 1.8m" }
+    ]
+  },
+  {
+    "id": 12, "name": "Mouse Gamer 8000DPI", "price": 249, "image": "🖱️",
+    "category": "Eletrônicos", "rating": 4.5, "reviews": 156,
+    "description": "Mouse gamer com sensor óptico de 8000 DPI, 6 botões programáveis, iluminação RGB e cabo leve. Design ergonômico para destros.",
+    "specs": [
+      { "label": "Sensor", "value": "Óptico 8000 DPI" },
+      { "label": "Botões", "value": "6 programáveis" },
+      { "label": "Iluminação", "value": "RGB" },
+      { "label": "Conexão", "value": "USB 2.0" },
+      { "label": "Peso", "value": "85g" }
+    ]
+  },
+  {
+    "id": 13, "name": "Smart TV 55\" 4K HDR Smart", "price": 3299, "originalPrice": 3999, "image": "📺",
+    "category": "Eletrônicos", "rating": 4.4, "reviews": 312, "badge": "-18%",
+    "description": "Smart TV 55\" com resolução 4K UHD, HDR10+, sistema operacional inteligente com acesso a streaming, Wi-Fi integrado e 3 entradas HDMI.",
+    "specs": [
+      { "label": "Tamanho", "value": "55\"" },
+      { "label": "Resolução", "value": "4K UHD (3840x2160)" },
+      { "label": "HDR", "value": "HDR10+" },
+      { "label": "Sistema", "value": "Smart TV" },
+      { "label": "Wi-Fi", "value": "Integrado" },
+      { "label": "HDMI", "value": "3 entradas" }
+    ]
+  },
+  {
+    "id": 14, "name": "Air Fryer Digital 5L", "price": 349, "image": "🍟",
+    "category": "Alimentos & Bebidas", "rating": 4.6, "reviews": 567,
+    "description": "Air Fryer digital com 5 litros de capacidade, painel touch, 8 modos pré-programados e desligamento automático. Prepara alimentos crocantes com pouco ou nenhum óleo.",
+    "specs": [
+      { "label": "Capacidade", "value": "5L" },
+      { "label": "Potência", "value": "1500W" },
+      { "label": "Painel", "value": "Touch" },
+      { "label": "Modos", "value": "8 pré-programados" },
+      { "label": "Temperatura", "value": "80°C a 200°C" }
+    ]
+  },
+  {
+    "id": 15, "name": "Vestido Floral Verão", "price": 129, "image": "👗",
+    "category": "Moda", "rating": 4.3, "reviews": 89,
+    "description": "Vestido leve e fluido com estampa floral, alças finas ajustáveis e comprimento midi. Perfeito para os dias quentes de verão.",
+    "specs": [
+      { "label": "Tecido", "value": "Viscose 100%" },
+      { "label": "Comprimento", "value": "Midi" },
+      { "label": "Alças", "value": "Ajustáveis" },
+      { "label": "Estampa", "value": "Floral" },
+      { "label": "Tamanhos", "value": "P ao GG" }
+    ]
+  },
+  {
+    "id": 16, "name": "Bicicleta Aro 29 21 Marchas", "price": 1899, "originalPrice": 2399, "image": "🚲",
+    "category": "Esportes", "rating": 4.5, "reviews": 234, "badge": "-21%",
+    "description": "Bicicleta mountain bike aro 29 com quadro de alumínio, câmbio Shimano de 21 marchas e freio a disco hidráulico. Ideal para trilhas e uso urbano.",
+    "specs": [
+      { "label": "Quadro", "value": "Alumínio 29\"" },
+      { "label": "Marchas", "value": "21 (Shimano)" },
+      { "label": "Freio", "value": "A disco hidráulico" },
+      { "label": "Garfo", "value": "Suspensão 100mm" },
+      { "label": "Peso", "value": "14.5kg" }
+    ]
+  },
+  {
+    "id": 17, "name": "Kit Panelas Antiaderentes 5 Peças", "price": 279, "image": "🍳",
+    "category": "Alimentos & Bebidas", "rating": 4.2, "reviews": 412,
+    "description": "Conjunto de panelas antiaderentes em alumínio forjado, 5 peças, com revestimento CeramicForce, cabos de baquelite e tampas de vidro temperado.",
+    "specs": [
+      { "label": "Peças", "value": "5" },
+      { "label": "Material", "value": "Alumínio Forjado" },
+      { "label": "Revestimento", "value": "CeramicForce" },
+      { "label": "Cabos", "value": "Baquelite" },
+      { "label": "Tampas", "value": "Vidro temperado" }
+    ]
+  },
+  {
+    "id": 18, "name": "Tênis Casual Premium", "price": 349, "image": "👞",
+    "category": "Moda", "rating": 4.1, "reviews": 156,
+    "description": "Tênis casual em couro legítimo, solado em borracha flexível e palmilha acolchoada. Design versátil que combina com looks casuais e esportivos.",
+    "specs": [
+      { "label": "Material", "value": "Couro Legítimo" },
+      { "label": "Solado", "value": "Borracha Flexível" },
+      { "label": "Palmilha", "value": "Acolchoada" },
+      { "label": "Fechamento", "value": "Cadarço" },
+      { "label": "Tamanhos", "value": "34 ao 44" }
+    ]
+  },
+  {
+    "id": 19, "name": "Bola de Futebol Oficial", "price": 179, "image": "⚽",
+    "category": "Esportes", "rating": 4.7, "reviews": 678,
+    "description": "Bola de futebol oficial tamanho 5, certificada pela FIFA, com 32 painéis de PVC costurados à mão e câmara de butílio para retenção de ar.",
+    "specs": [
+      { "label": "Tamanho", "value": "5 (Oficial)" },
+      { "label": "Material", "value": "PVC Premium" },
+      { "label": "Costura", "value": "Manual" },
+      { "label": "Certificação", "value": "FIFA Quality" },
+      { "label": "Câmara", "value": "Butílio" }
+    ]
+  },
+  {
+    "id": 20, "name": "Perfume Importado 100ml", "price": 289, "image": "🧴",
+    "category": "Beleza", "rating": 4.5, "reviews": 234,
+    "description": "Perfume importado com fragrância amadeirada e cítrica, notas de saída de bergamota e limão siciliano, coração de lavanda e noz-moscada.",
+    "specs": [
+      { "label": "Volume", "value": "100ml" },
+      { "label": "Família Olfativa", "value": "Amadeirada Cítrica" },
+      { "label": "Notas de Saída", "value": "Bergamota e Limão" },
+      { "label": "Coração", "value": "Lavanda e Noz-moscada" },
+      { "label": "Fixação", "value": "Alta" }
+    ]
+  },
+  {
+    "id": 21, "name": "Livro Best-Seller Internacional", "price": 49, "image": "📖",
+    "category": "Livros", "rating": 4.8, "reviews": 1890,
+    "description": "Edição especial do best-seller internacional, com capa dura e marcador de páginas. Uma história emocionante que conquistou milhões de leitores ao redor do mundo.",
+    "specs": [
+      { "label": "Autor", "value": "Internacional" },
+      { "label": "Páginas", "value": "384" },
+      { "label": "Edição", "value": "Capa Dura" },
+      { "label": "Idioma", "value": "Português" },
+      { "label": "Ano", "value": "2025" }
+    ]
+  },
+  {
+    "id": 22, "name": "Console PlayStation 5 Slim", "price": 3899, "originalPrice": 4499, "image": "🎮",
+    "category": "Jogos", "rating": 4.9, "reviews": 890, "badge": "-13%",
+    "description": "Console PlayStation 5 Slim com SSD ultrarrápido de 1TB, suporte a Ray Tracing, controle DualSense com feedback háptico e jogos em 4K.",
+    "specs": [
+      { "label": "Armazenamento", "value": "1TB SSD" },
+      { "label": "Resolução", "value": "Até 4K" },
+      { "label": "Taxa de Quadros", "value": "Até 120fps" },
+      { "label": "Ray Tracing", "value": "Suportado" },
+      { "label": "Controle", "value": "DualSense" }
+    ]
+  },
+  {
+    "id": 23, "name": "Fone de Ouvido Esportivo", "price": 179, "image": "🎧",
+    "category": "Esportes", "rating": 4.0, "reviews": 345,
+    "description": "Fone de ouvido intra-auricular esportivo com proteção IPX5, design ergonômico com gancho de ouvido e drivers de 10mm com graves potentes.",
+    "specs": [
+      { "label": "Conectividade", "value": "Bluetooth 5.3" },
+      { "label": "Resistência", "value": "IPX5" },
+      { "label": "Driver", "value": "10mm" },
+      { "label": "Bateria", "value": "12h" },
+      { "label": "Peso", "value": "12g" }
+    ]
+  },
+  {
+    "id": 24, "name": "Patinete Elétrico", "price": 2199, "image": "🛴",
+    "category": "Brinquedos", "rating": 4.3, "reviews": 167,
+    "description": "Patinete elétrico com autonomia de até 25km, velocidade máxima de 25km/h, motor de 350W e dobradiça para fácil transporte.",
+    "specs": [
+      { "label": "Autonomia", "value": "Até 25km" },
+      { "label": "Velocidade Máx", "value": "25km/h" },
+      { "label": "Motor", "value": "350W" },
+      { "label": "Bateria", "value": "36V 7.5Ah" },
+      { "label": "Peso", "value": "12kg" }
+    ]
+  },
+  {
+    "id": 25, "name": "Jogo de Tabuleiro Estratégia", "price": 199, "image": "🎲",
+    "category": "Brinquedos", "rating": 4.6, "reviews": 234,
+    "description": "Jogo de tabuleiro de estratégia para 2 a 6 jogadores, com mais de 100 peças, tabuleiro dupla-face e tempo médio de 60 minutos por partida.",
+    "specs": [
+      { "label": "Jogadores", "value": "2 a 6" },
+      { "label": "Idade Recomendada", "value": "12+" },
+      { "label": "Tempo Médio", "value": "60 min" },
+      { "label": "Peças", "value": "Mais de 100" },
+      { "label": "Idioma", "value": "Português" }
+    ]
+  },
+  {
+    "id": 26, "name": "Relógio Clássico Couro", "price": 449, "image": "⌚",
+    "category": "Moda", "rating": 4.4, "reviews": 178,
+    "description": "Relógio analógico clássico em aço inoxidável com pulseira de couro legítimo, mostrador prateado com detalhes dourados e movimento de quartzo suíço.",
+    "specs": [
+      { "label": "Material", "value": "Aço Inoxidável" },
+      { "label": "Pulseira", "value": "Couro Legítimo" },
+      { "label": "Movimento", "value": "Quartzo Suíço" },
+      { "label": "Resistência", "value": "5ATM" },
+      { "label": "Diâmetro", "value": "40mm" }
+    ]
+  },
+  {
+    "id": 27, "name": "Cafeteira Elétrica Programável", "price": 159, "image": "☕",
+    "category": "Alimentos & Bebidas", "rating": 4.3, "reviews": 432,
+    "description": "Cafeteira elétrica com programação digital, jarra de vidro com capacidade para 12 xícaras, sistema antigotejamento e filtro permanente.",
+    "specs": [
+      { "label": "Capacidade", "value": "12 xícaras" },
+      { "label": "Jarra", "value": "Vidro" },
+      { "label": "Programação", "value": "Digital" },
+      { "label": "Filtro", "value": "Permanente" },
+      { "label": "Potência", "value": "900W" }
+    ]
+  },
+  {
+    "id": 28, "name": "Base Líquida Matte 24h", "price": 79, "image": "💄",
+    "category": "Beleza", "rating": 4.2, "reviews": 567,
+    "description": "Base líquida de alta cobertura com acabamento matte, longa duração de até 24 horas, enriquecida com ácido hialurônico e vitamina E.",
+    "specs": [
+      { "label": "Cobertura", "value": "Alta" },
+      { "label": "Acabamento", "value": "Matte" },
+      { "label": "Duração", "value": "24h" },
+      { "label": "Ativos", "value": "Ácido Hialurônico e Vitamina E" },
+      { "label": "Tons", "value": "Disponível em 8 cores" }
+    ]
+  },
+  {
+    "id": 29, "name": "Coleção 3 Livros Romance", "price": 89, "image": "📚",
+    "category": "Livros", "rating": 4.5, "reviews": 1203,
+    "description": "Coleção especial com 3 romances best-sellers em caixa exclusiva. Histórias emocionantes de amor, superação e descobertas que vão cativar o leitor.",
+    "specs": [
+      { "label": "Volumes", "value": "3" },
+      { "label": "Páginas", "value": "980 no total" },
+      { "label": "Encadernação", "value": "Brochura" },
+      { "label": "Idioma", "value": "Português" },
+      { "label": "Estojo", "value": "Caixa exclusiva" }
+    ]
+  },
+  {
+    "id": 30, "name": "Óculos de Sol Fashion", "price": 199, "originalPrice": 349, "image": "🕶️",
+    "category": "Moda", "rating": 4.1, "reviews": 234, "badge": "-43%",
+    "description": "Óculos de sol com armação acetato natural, lentes polarizadas com proteção UV400 e design contemporâneo. Acompanha estojo e flanela.",
+    "specs": [
+      { "label": "Armação", "value": "Acetato" },
+      { "label": "Lentes", "value": "Polarizadas UV400" },
+      { "label": "Formato", "value": "Retangular" },
+      { "label": "Proteção", "value": "UV400" },
+      { "label": "Acessórios", "value": "Estojo e Flanela" }
+    ]
+  },
+  {
+    "id": 31, "name": "Jogo FPS Multiplayer", "price": 249, "image": "🔫",
+    "category": "Jogos", "rating": 4.4, "reviews": 567,
+    "description": "Jogo de tiro em primeira pessoa com campanha épica e modo multiplayer competitivo para até 32 jogadores. Gráficos realistas e jogabilidade intensa.",
+    "specs": [
+      { "label": "Plataforma", "value": "PS5/PC/Xbox" },
+      { "label": "Jogadores", "value": "1 (campanha) / 32 (multiplayer)" },
+      { "label": "Gênero", "value": "FPS" },
+      { "label": "Modos", "value": "Campanha + Multiplayer" },
+      { "label": "Legendado", "value": "Português" }
+    ]
+  },
+  {
+    "id": 32, "name": "Aspirador Robô Inteligente", "price": 1599, "image": "🤖",
+    "category": "Casa & Decoração", "rating": 4.5, "reviews": 678,
+    "description": "Aspirador robô com mapeamento inteligente, potência de sucção de 4000Pa, compatível com Alexa e Google Assistant, autonomia de 180 minutos.",
+    "specs": [
+      { "label": "Sucção", "value": "4000Pa" },
+      { "label": "Mapeamento", "value": "Inteligente LiDAR" },
+      { "label": "Autonomia", "value": "180 min" },
+      { "label": "Compatível", "value": "Alexa e Google" },
+      { "label": "Funções", "value": "Aspira e Passa Pano" }
+    ]
+  },
+  {
+    "id": 33, "name": "Shampoo Antiqueda 400ml", "price": 49, "image": "🧴",
+    "category": "Beleza", "rating": 4.1, "reviews": 890,
+    "description": "Shampoo antiqueda com cafeína e biotina, estimula o crescimento capilar e fortalece os fios da raiz às pontas. Dermatologicamente testado.",
+    "specs": [
+      { "label": "Volume", "value": "400ml" },
+      { "label": "Ativos", "value": "Cafeína e Biotina" },
+      { "label": "Tipo", "value": "Antiqueda" },
+      { "label": "Testado", "value": "Dermatologicamente" },
+      { "label": "Para", "value": "Todos os tipos de cabelo" }
+    ]
+  },
+  {
+    "id": 34, "name": "Livro de Receitas Saudáveis", "price": 59, "image": "🥗",
+    "category": "Livros", "rating": 4.3, "reviews": 456,
+    "description": "Livro de receitas saudáveis com mais de 200 receitas fitness, low carb e vegetarianas. Inclui tabela nutricional e dicas de substituição de ingredientes.",
+    "specs": [
+      { "label": "Receitas", "value": "Mais de 200" },
+      { "label": "Categorias", "value": "Fitness, Low Carb, Veg" },
+      { "label": "Páginas", "value": "320" },
+      { "label": "Tabela Nutricional", "value": "Inclusa" },
+      { "label": "Encadernação", "value": "Capa flexível" }
+    ]
+  },
+  {
+    "id": 35, "name": "Controle Sem Fio Xbox", "price": 349, "image": "🎮",
+    "category": "Jogos", "rating": 4.5, "reviews": 1234,
+    "description": "Controle sem fio Xbox com design ergonômico, gatilhos e bumpers texturizados, conectividade Bluetooth e bateria de longa duração.",
+    "specs": [
+      { "label": "Conectividade", "value": "Xbox Wireless + Bluetooth" },
+      { "label": "Bateria", "value": "Até 40h" },
+      { "label": "Compatível", "value": "Xbox Series, One, PC" },
+      { "label": "Entrada", "value": "USB-C" },
+      { "label": "Peso", "value": "287g" }
+    ]
+  },
+  {
+    "id": 36, "name": "Jaqueta Jeans Masculina", "price": 229, "image": "🧥",
+    "category": "Moda", "rating": 4.3, "reviews": 198,
+    "description": "Jaqueta jeans masculina em denim de alta qualidade, modelagem reta clássica, com bolsos frontais e fechamento em botões de metal.",
+    "specs": [
+      { "label": "Material", "value": "Denim 100% algodão" },
+      { "label": "Modelagem", "value": "Reta" },
+      { "label": "Fechamento", "value": "Botões de metal" },
+      { "label": "Bolsos", "value": "4 (2 frontais, 2 laterais)" },
+      { "label": "Tamanhos", "value": "M ao GG" }
+    ]
+  },
+  {
+    "id": 37, "name": "Halteres Ajustáveis 20kg", "price": 599, "image": "🏋️",
+    "category": "Esportes", "rating": 4.6, "reviews": 345,
+    "description": "Par de halteres ajustáveis de 2kg a 20kg cada, com sistema de travamento rápido, revestimento em borracha e alça ergonômica.",
+    "specs": [
+      { "label": "Peso", "value": "2kg a 20kg cada" },
+      { "label": "Material", "value": "Ferro revestido em borracha" },
+      { "label": "Travamento", "value": "Rápido" },
+      { "label": "Peças", "value": "Par (2 unidades)" },
+      { "label": "Alças", "value": "Ergonômicas" }
+    ]
+  },
+  {
+    "id": 38, "name": "Panela Elétrica Multicooker", "price": 429, "image": "🍲",
+    "category": "Alimentos & Bebidas", "rating": 4.4, "reviews": 567,
+    "description": "Panela elétrica multicooker com 15 funções automáticas, panela de cerâmica antiaderente, temporizador programável e função manter aquecido.",
+    "specs": [
+      { "label": "Capacidade", "value": "6L" },
+      { "label": "Funções", "value": "15 automáticas" },
+      { "label": "Panela", "value": "Cerâmica Antiaderente" },
+      { "label": "Temporizador", "value": "Até 24h" },
+      { "label": "Potência", "value": "1000W" }
+    ]
+  },
+  {
+    "id": 39, "name": "Kit Maquiagem Profissional 12 Peças", "price": 159, "image": "💅",
+    "category": "Beleza", "rating": 4.3, "reviews": 678,
+    "description": "Kit de maquiagem profissional com 12 peças essenciais: paleta de sombras, blush, pó compacto, batons, delineador, máscara de cílios e pincéis.",
+    "specs": [
+      { "label": "Peças", "value": "12" },
+      { "label": "Incluso", "value": "Sombras, Blush, Pó, Batons, Pincéis" },
+      { "label": "Paleta", "value": "24 cores" },
+      { "label": "Acabamento", "value": "Matte e Brilhoso" },
+      { "label": "Estojo", "value": "Organizador" }
+    ]
+  },
+  {
+    "id": 40, "name": "HQ em Quadrinhos Marvel", "price": 79, "image": "🦸",
+    "category": "Livros", "rating": 4.7, "reviews": 1567,
+    "description": "Edição especial encadernada com 12 edições mensais do herói mais famoso da Marvel, com capa dura e artes exclusivas de fundo.",
+    "specs": [
+      { "label": "Editora", "value": "Marvel" },
+      { "label": "Páginas", "value": "320" },
+      { "label": "Encadernação", "value": "Capa Dura" },
+      { "label": "Edições", "value": "12 coletadas" },
+      { "label": "Idioma", "value": "Português" }
+    ]
+  },
+  {
+    "id": 41, "name": "Cadeira Gamer Reclinável", "price": 1299, "originalPrice": 1799, "image": "🪑",
+    "category": "Eletrônicos", "rating": 4.4, "reviews": 345, "badge": "-28%",
+    "description": "Cadeira gamer ergonômica com reclinação de 180°, almofadas lombar e cervical, braços 3D ajustáveis e revestimento em couro sintético premium.",
+    "specs": [
+      { "label": "Reclinação", "value": "90° a 180°" },
+      { "label": "Braços", "value": "3D ajustáveis" },
+      { "label": "Almofadas", "value": "Lombar e Cervical" },
+      { "label": "Revestimento", "value": "Couro Sintético" },
+      { "label": "Peso Máximo", "value": "150kg" }
+    ]
+  },
+  {
+    "id": 42, "name": "Liquidificador Turbo 1200W", "price": 199, "image": "🥤",
+    "category": "Alimentos & Bebidas", "rating": 4.1, "reviews": 890,
+    "description": "Liquidificador com motor de 1200W, jarra de vidro com capacidade de 2L, 10 velocidades mais função pulsar e trava de segurança.",
+    "specs": [
+      { "label": "Potência", "value": "1200W" },
+      { "label": "Capacidade", "value": "2L" },
+      { "label": "Jarra", "value": "Vidro Temperado" },
+      { "label": "Velocidades", "value": "10 + Pulsar" },
+      { "label": "Segurança", "value": "Trava de segurança" }
+    ]
+  },
+  {
+    "id": 43, "name": "Camisa Polo Premium", "price": 149, "image": "👕",
+    "category": "Moda", "rating": 4.2, "reviews": 234,
+    "description": "Camisa polo em malha piquet 100% algodão, gola polo com dois botões, modelagem confortável e logo bordado. Ideal para o dia a dia.",
+    "specs": [
+      { "label": "Tecido", "value": "Malha Piquet 100% algodão" },
+      { "label": "Gola", "value": "Polo com 2 botões" },
+      { "label": "Detalhe", "value": "Logo bordado" },
+      { "label": "Tamanhos", "value": "P ao GG" },
+      { "label": "Cores", "value": "Disponível em 6 cores" }
+    ]
+  },
+  {
+    "id": 44, "name": "Echo Dot 5ª Geração", "price": 379, "image": "🔊",
+    "category": "Música", "rating": 4.5, "reviews": 2345,
+    "description": "Echo Dot 5ª geração com som mais alto e graves mais profundos, sensor de temperatura, hub Zigbee integrado e controle por voz Alexa.",
+    "specs": [
+      { "label": "Geração", "value": "5ª" },
+      { "label": "Áudio", "value": "Alto-falante 1.73\"" },
+      { "label": "Sensor", "value": "Temperatura" },
+      { "label": "Hub", "value": "Zigbee Integrado" },
+      { "label": "Wi-Fi", "value": "Dual-band" }
+    ]
+  },
+  {
+    "id": 45, "name": "Tênis Skateboard", "price": 279, "image": "👟",
+    "category": "Moda", "rating": 4.0, "reviews": 123,
+    "description": "Tênis skateboarding em camurça e lona, solado vulcanizado, biqueira reforçada e palmilha interna de EVA para amortecimento.",
+    "specs": [
+      { "label": "Material", "value": "Camurça e Lona" },
+      { "label": "Solado", "value": "Vulcanizado" },
+      { "label": "Biqueira", "value": "Reforçada" },
+      { "label": "Palmilha", "value": "EVA" },
+      { "label": "Tamanhos", "value": "35 ao 45" }
+    ]
+  },
+  {
+    "id": 46, "name": "Kit 3 Livros de Suspense", "price": 79, "image": "📕",
+    "category": "Livros", "rating": 4.4, "reviews": 678,
+    "description": "Kit com 3 livros de suspense e mistério dos autores mais vendidos. Histórias intrigantes que prendem o leitor do início ao fim.",
+    "specs": [
+      { "label": "Volumes", "value": "3" },
+      { "label": "Gênero", "value": "Suspense e Mistério" },
+      { "label": "Total de Páginas", "value": "1050" },
+      { "label": "Idioma", "value": "Português" },
+      { "label": "Formato", "value": "Brochura 16x23cm" }
+    ]
+  },
+  {
+    "id": 47, "name": "Crime e Castigo", "price": 39, "image": "📖",
+    "category": "Livros", "rating": 4.6, "reviews": 234,
+    "description": "Edição integral do clássico Crime e Castigo de Fiódor Dostoiévski, com tradução direta do russo, notas explicativas e introdução crítica.",
+    "specs": [
+      { "label": "Autor", "value": "Fiódor Dostoiévski" },
+      { "label": "Páginas", "value": "592" },
+      { "label": "Tradução", "value": "Direta do Russo" },
+      { "label": "Gênero", "value": "Romance Clássico" },
+      { "label": "Edição", "value": "Integral" }
+    ]
+  },
+  {
+    "id": 48, "name": "Sérum Facial Vitamina C 30ml", "price": 89, "image": "✨",
+    "category": "Beleza", "rating": 4.5, "reviews": 1234,
+    "description": "Sérum facial concentrado com Vitamina C 15%, ácido hialurônico e vitamina E. Reduz manchas, uniformiza o tom e ilumina a pele.",
+    "specs": [
+      { "label": "Volume", "value": "30ml" },
+      { "label": "Ativo Principal", "value": "Vitamina C 15%" },
+      { "label": "Ativos Secundários", "value": "Ácido Hialurônico e Vit. E" },
+      { "label": "Benefícios", "value": "Antioxidante, Iluminador" },
+      { "label": "Para", "value": "Todos os tipos de pele" }
+    ]
+  },
+  {
+    "id": 49, "name": "Jogo de Cartas Colecionável", "price": 129, "image": "🃏",
+    "category": "Jogos", "rating": 4.3, "reviews": 345,
+    "description": "Box com 36 boosters de jogo de cartas colecionável, cartas raras garantidas, incluindo cartas foil e carta promocional exclusiva.",
+    "specs": [
+      { "label": "Boosters", "value": "36" },
+      { "label": "Cartas por Booster", "value": "10" },
+      { "label": "Cartas Raras", "value": "Garantidas" },
+      { "label": "Cartas Foil", "value": "Inclusas" },
+      { "label": "Idioma", "value": "Português" }
+    ]
+  },
+  {
+    "id": 50, "name": "Tapete Persa 2x1,5m", "price": 349, "image": "🧶",
+    "category": "Casa & Decoração", "rating": 4.2, "reviews": 234,
+    "description": "Tapete persa 2m x 1,5m em fibra sintética de alta resistência, padronagem geométrica, antialérgico e fácil de limpar.",
+    "specs": [
+      { "label": "Dimensão", "value": "2m x 1,5m" },
+      { "label": "Material", "value": "Fibra Sintética" },
+      { "label": "Padrão", "value": "Geométrico" },
+      { "label": "Antialérgico", "value": "Sim" },
+      { "label": "Limpeza", "value": "Aspiração e pano úmido" }
+    ]
+  },
+  {
+    "id": 51, "name": "Suporte Notebook Ajustável", "price": 129, "image": "💻",
+    "category": "Ferramentas", "rating": 4.2, "reviews": 567,
+    "description": "Suporte ergonômico para notebook com altura ajustável em 6 níveis, base ventilada em alumínio, compatível com notebooks de 10\" a 17\".",
+    "specs": [
+      { "label": "Material", "value": "Alumínio" },
+      { "label": "Altura", "value": "6 níveis ajustáveis" },
+      { "label": "Compatível", "value": "10\" a 17\"" },
+      { "label": "Ventilação", "value": "Aberta" },
+      { "label": "Peso Suportado", "value": "Até 8kg" }
+    ]
+  },
+  {
+    "id": 52, "name": "Moletom Oversized Anime", "price": 179, "image": "🧥",
+    "category": "Moda", "rating": 4.4, "reviews": 345,
+    "description": "Moletom oversized com estampa inspirada em anime, fleece macio 320g/m², capuz ajustável com cordão e bolso canguru frontal.",
+    "specs": [
+      { "label": "Tecido", "value": "Fleece 320g/m²" },
+      { "label": "Modelagem", "value": "Oversized" },
+      { "label": "Capuz", "value": "Ajustável com cordão" },
+      { "label": "Bolsos", "value": "Canguru frontal" },
+      { "label": "Tamanhos", "value": "P ao GG" }
+    ]
+  },
+  {
+    "id": 53, "name": "Protetor Solar FPS 50 200ml", "price": 69, "image": "☀️",
+    "category": "Beleza", "rating": 4.6, "reviews": 2345,
+    "description": "Protetor solar FPS 50 com toque seco, resistente à água por 80 minutos, vitamina E e sem parabenos. Proteção UVA/UVB de amplo espectro.",
+    "specs": [
+      { "label": "FPS", "value": "50" },
+      { "label": "Volume", "value": "200ml" },
+      { "label": "Resistência", "value": "À água 80 min" },
+      { "label": "Toque", "value": "Seco" },
+      { "label": "Espectro", "value": "UVA/UVB amplo" }
+    ]
+  },
+  {
+    "id": 54, "name": "Placa de Vídeo RTX 5070", "price": 4999, "image": "💾",
+    "category": "Eletrônicos", "rating": 4.8, "reviews": 456,
+    "description": "Placa de vídeo NVIDIA RTX 5070 com 12GB GDDR7, Ray Tracing de 4ª geração, DLSS 4 e conectividade HDMI 2.1 e DisplayPort 2.1.",
+    "specs": [
+      { "label": "GPU", "value": "NVIDIA RTX 5070" },
+      { "label": "VRAM", "value": "12GB GDDR7" },
+      { "label": "Ray Tracing", "value": "4ª geração" },
+      { "label": "DLSS", "value": "4" },
+      { "label": "Saídas", "value": "HDMI 2.1, DP 2.1" }
+    ]
+  },
+  {
+    "id": 55, "name": "Corda de Pular Speed", "price": 49, "image": "🏃",
+    "category": "Esportes", "rating": 4.3, "reviews": 567,
+    "description": "Corda de pular speed com cabos de aço revestidos, rolamentos de alta velocidade e cabos de espuma ergonômicos. Ajustável para diferentes alturas.",
+    "specs": [
+      { "label": "Material", "value": "Aço revestido" },
+      { "label": "Rolamentos", "value": "Alta velocidade" },
+      { "label": "Cabos", "value": "Espuma ergonômica" },
+      { "label": "Ajustável", "value": "Sim" },
+      { "label": "Comprimento", "value": "3m" }
+    ]
+  },
+  {
+    "id": 56, "name": "Lâmpada Inteligente RGB", "price": 89, "image": "💡",
+    "category": "Ferramentas", "rating": 4.1, "reviews": 890,
+    "description": "Lâmpada inteligente Wi-Fi com 16 milhões de cores, compatível com Alexa e Google, controle por aplicativo e modos de cena pré-programados.",
+    "specs": [
+      { "label": "Tecnologia", "value": "Wi-Fi" },
+      { "label": "Cores", "value": "16 milhões" },
+      { "label": "Compatível", "value": "Alexa e Google" },
+      { "label": "Potência", "value": "9W (equivalente 60W)" },
+      { "label": "Base", "value": "E27" }
+    ]
+  },
+  {
+    "id": 57, "name": "Carteira Couro Legítimo", "price": 149, "image": "👛",
+    "category": "Moda", "rating": 4.3, "reviews": 234,
+    "description": "Carteira em couro legítimo com 8 porta-cartões, 2 compartimentos para cédulas e porta-moedas com zíper. Design clássico e compacto.",
+    "specs": [
+      { "label": "Material", "value": "Couro Legítimo" },
+      { "label": "Porta-cartões", "value": "8" },
+      { "label": "Compartimentos", "value": "2 para cédulas" },
+      { "label": "Porta-moedas", "value": "Com zíper" },
+      { "label": "Dimensões", "value": "12cm x 9cm" }
+    ]
+  },
+  {
+    "id": 58, "name": "Hidratante Corporal 500ml", "price": 45, "image": "🧴",
+    "category": "Beleza", "rating": 4.2, "reviews": 1567,
+    "description": "Hidratante corporal com manteiga de karité e óleo de coco, textura cremosa de rápida absorção, fragrância suave e não oleosa.",
+    "specs": [
+      { "label": "Volume", "value": "500ml" },
+      { "label": "Ativos", "value": "Manteiga de Karité e Óleo de Coco" },
+      { "label": "Textura", "value": "Cremosa" },
+      { "label": "Absorção", "value": "Rápida" },
+      { "label": "Para", "value": "Todos os tipos de pele" }
+    ]
+  },
+  {
+    "id": 59, "name": "Kit Pintura por Números", "price": 199, "image": "🎨",
+    "category": "Brinquedos", "rating": 4.0, "reviews": 345,
+    "description": "Kit de pintura por números com tintas, pincéis e tela 40x50cm para colorir réplicas de obras famosas. Atividade relaxante e criativa.",
+    "specs": [
+      { "label": "Tela", "value": "40x50cm" },
+      { "label": "Tintas", "value": "24 cores numeradas" },
+      { "label": "Pincéis", "value": "3 tamanhos" },
+      { "label": "Nível", "value": "Iniciante ao Avançado" },
+      { "label": "Idade", "value": "8+" }
+    ]
+  },
+  {
+    "id": 60, "name": "Barbeador Elétrico à Prova D'Água", "price": 279, "image": "🪒",
+    "category": "Beleza", "rating": 4.3, "reviews": 678,
+    "description": "Barbeador elétrico com lâminas de aço inoxidável, cabeçote flutuante, à prova d'água, bateria com 60 minutos de autonomia e carregamento rápido.",
+    "specs": [
+      { "label": "Lâminas", "value": "Aço Inoxidável" },
+      { "label": "Cabeçote", "value": "Flutuante" },
+      { "label": "À prova d'água", "value": "Sim" },
+      { "label": "Bateria", "value": "60 min" },
+      { "label": "Carregamento", "value": "Rápido (1h)" }
+    ]
+  },
+  {
+    "id": 61, "name": "Teclado Wireless Slim", "price": 149, "image": "⌨️",
+    "category": "Eletrônicos", "rating": 4.0, "reviews": 456,
+    "description": "Teclado slim sem fio com conectividade Bluetooth e USB, teclas silenciosas de perfil baixo, bateria recarregável e design ultrafino.",
+    "specs": [
+      { "label": "Conectividade", "value": "Bluetooth + USB" },
+      { "label": "Perfil", "value": "Baixo (slim)" },
+      { "label": "Teclas", "value": "Silenciosas" },
+      { "label": "Bateria", "value": "Recarregável" },
+      { "label": "Compatível", "value": "Windows/Mac/Android" }
+    ]
+  },
+  {
+    "id": 62, "name": "Óculos de Realidade Virtual", "price": 3299, "image": "🥽",
+    "category": "Eletrônicos", "rating": 4.6, "reviews": 567,
+    "description": "Óculos de realidade virtual all-in-one com resolução 4K por olho, rastreamento inside-out 6DOF, controle de movimento e biblioteca com milhares de jogos.",
+    "specs": [
+      { "label": "Resolução", "value": "4K por olho" },
+      { "label": "Rastreamento", "value": "Inside-out 6DOF" },
+      { "label": "Processador", "value": "Qualcomm XR2 Gen 2" },
+      { "label": "Armazenamento", "value": "256GB" },
+      { "label": "Controles", "value": "Movimento 6DOF" }
+    ]
+  },
+  {
+    "id": 63, "name": "Carregador Veicular USB-C 36W", "price": 79, "image": "🔌",
+    "category": "Automotivo", "rating": 4.3, "reviews": 890,
+    "description": "Carregador veicular com porta USB-C Power Delivery 36W, carregamento rápido para smartphones e tablets, compatível com Android e iPhone.",
+    "specs": [
+      { "label": "Potência", "value": "36W PD" },
+      { "label": "Portas", "value": "1 USB-C" },
+      { "label": "Tensão", "value": "12-24V" },
+      { "label": "Compatível", "value": "Android / iPhone" },
+      { "label": "Proteção", "value": "Curto-circuito e sobrecarga" }
+    ]
+  },
+  {
+    "id": 64, "name": "Câmera de Ré Wireless", "price": 299, "image": "📷",
+    "category": "Automotivo", "rating": 4.1, "reviews": 345,
+    "description": "Câmera de ré sem fio com visão noturna infravermelha, ângulo de visão de 170°, transmissão digital e monitor LCD 4.3 polegadas.",
+    "specs": [
+      { "label": "Transmissão", "value": "Wireless digital" },
+      { "label": "Ângulo", "value": "170°" },
+      { "label": "Visão Noturna", "value": "Infravermelha" },
+      { "label": "Monitor", "value": "LCD 4.3\"" },
+      { "label": "Impermeável", "value": "IP67" }
+    ]
+  },
+  {
+    "id": 65, "name": "Organizador de Porta-Malas", "price": 89, "image": "🧳",
+    "category": "Automotivo", "rating": 4.4, "reviews": 678,
+    "description": "Organizador dobrável para porta-malas em tecido impermeável, divisórias ajustáveis, capacidade para 50L e alças de transporte.",
+    "specs": [
+      { "label": "Material", "value": "Tecido Impermeável" },
+      { "label": "Capacidade", "value": "50L" },
+      { "label": "Divisórias", "value": "Ajustáveis" },
+      { "label": "Dobrável", "value": "Sim" },
+      { "label": "Alças", "value": "Para transporte" }
+    ]
+  },
+  {
+    "id": 66, "name": "Kit Limpeza Automotiva 8 Peças", "price": 129, "image": "🧽",
+    "category": "Automotivo", "rating": 4.2, "reviews": 567,
+    "description": "Kit completo de limpeza automotiva com 8 peças: cera líquida, shampoo automotivo, pano de microfibra, esponja, limpador de pneus e mais.",
+    "specs": [
+      { "label": "Peças", "value": "8" },
+      { "label": "Cera", "value": "Líquida 500ml" },
+      { "label": "Shampoo", "value": "Automotivo 500ml" },
+      { "label": "Panos", "value": "Microfibra (2 uni)" },
+      { "label": "Uso", "value": "Externo e interno" }
+    ]
+  },
+  {
+    "id": 67, "name": "Suporte Magnético para Celular", "price": 49, "image": "🧲",
+    "category": "Automotivo", "rating": 4.0, "reviews": 1234,
+    "description": "Suporte magnético universal para celular no painel do carro, giro 360°, imã de neodímio superforte, adesivo 3M e placa metálica incluída.",
+    "specs": [
+      { "label": "Giro", "value": "360°" },
+      { "label": "Fixação", "value": "Adesivo 3M" },
+      { "label": "Ímã", "value": "Neodímio" },
+      { "label": "Compatível", "value": "Universal" },
+      { "label": "Placa Metálica", "value": "Inclusa" }
+    ]
+  },
+  {
+    "id": 68, "name": "Purificador de Ar Veicular", "price": 159, "image": "💨",
+    "category": "Automotivo", "rating": 4.3, "reviews": 234,
+    "description": "Purificador de ar para carro com filtro HEPA e carvão ativado, elimina odores, ácaros e poluentes, alimentação USB e design compacto.",
+    "specs": [
+      { "label": "Filtro", "value": "HEPA + Carvão Ativado" },
+      { "label": "Área", "value": "Até 8m²" },
+      { "label": "Alimentação", "value": "USB 5V" },
+      { "label": "Ruído", "value": "< 35dB" },
+      { "label": "Dimensões", "value": "15x15x5cm" }
+    ]
+  },
+  {
+    "id": 69, "name": "Kit Caderno Inteligente 5 Matérias", "price": 89, "image": "📓",
+    "category": "Papelaria", "rating": 4.5, "reviews": 789,
+    "description": "Kit caderno inteligente com 5 cadernos de matérias, capa dura, folhas pautadas e quadriculadas, elástico de fechamento e marcador de páginas.",
+    "specs": [
+      { "label": "Matérias", "value": "5 cadernos" },
+      { "label": "Folhas", "value": "Pautadas + Quadriculadas" },
+      { "label": "Capa", "value": "Dura" },
+      { "label": "Fechamento", "value": "Elástico" },
+      { "label": "Tamanho", "value": "A5" }
+    ]
+  },
+  {
+    "id": 70, "name": "Caneta Tinteiro Premium", "price": 149, "image": "🖊️",
+    "category": "Papelaria", "rating": 4.4, "reviews": 345,
+    "description": "Caneta tinteiro premium com corpo em resina acetato, bico de irídio polido, carga por cartucho ou conta-gotas e estojo de presente.",
+    "specs": [
+      { "label": "Corpo", "value": "Resina Acetato" },
+      { "label": "Bico", "value": "Irídio Polido" },
+      { "label": "Carga", "value": "Cartucho / Conta-gotas" },
+      { "label": "Espessura", "value": "Fina (F)" },
+      { "label": "Estojo", "value": "Incluso" }
+    ]
+  },
+  {
+    "id": 71, "name": "Agenda 2026 Capa Dura", "price": 59, "image": "📅",
+    "category": "Papelaria", "rating": 4.6, "reviews": 456,
+    "description": "Agenda anual 2026 com capa dura revestida em tecido, fechamento com elástico, marcador de páginas, bolsa interna e elástico para caneta.",
+    "specs": [
+      { "label": "Ano", "value": "2026" },
+      { "label": "Capa", "value": "Dura revestida em tecido" },
+      { "label": "Fechamento", "value": "Elástico" },
+      { "label": "Tamanho", "value": "15x21cm" },
+      { "label": "Extras", "value": "Bolsa + marcador" }
+    ]
+  },
+  {
+    "id": 72, "name": "Kit Marcadores Texto 6 Cores", "price": 29, "image": "🖍️",
+    "category": "Papelaria", "rating": 4.2, "reviews": 1234,
+    "description": "Kit com 6 marcadores de texto nas cores fluorescentes (amarelo, verde, rosa, laranja, azul e roxo), ponta chanfrada e tinta à base d'água.",
+    "specs": [
+      { "label": "Cores", "value": "6 fluorescentes" },
+      { "label": "Ponta", "value": "Chanfrada" },
+      { "label": "Tinta", "value": "À base d'água" },
+      { "label": "Não vaza", "value": "Sim" },
+      { "label": "Ideal", "value": "Papel comum e sulfite" }
+    ]
+  },
+  {
+    "id": 73, "name": "Mochila Executiva Couro Sintético", "price": 199, "image": "🎒",
+    "category": "Papelaria", "rating": 4.3, "reviews": 678,
+    "description": "Mochila executiva em couro sintético premium, compartimento para notebook até 15.6\", bolsos organizadores internos, alças acolchoadas e carregamento USB.",
+    "specs": [
+      { "label": "Material", "value": "Couro Sintético Premium" },
+      { "label": "Notebook", "value": "Até 15.6\"" },
+      { "label": "Compartimentos", "value": "3 principais + bolsos" },
+      { "label": "USB", "value": "Carregamento externo" },
+      { "label": "Anti-roubo", "value": "Zíper traseiro oculto" }
+    ]
+  },
+  {
+    "id": 74, "name": "Bloco Autoadesivo 76x76mm 5 Uni", "price": 19, "image": "📋",
+    "category": "Papelaria", "rating": 4.0, "reviews": 2345,
+    "description": "Blocos autoadesivos Post-it 3M com 5 unidades, 100 folhas cada, tamanho 76x76mm, na cor amarelo clássico, aderência que prende e solta.",
+    "specs": [
+      { "label": "Unidades", "value": "5 blocos" },
+      { "label": "Folhas", "value": "100 por bloco" },
+      { "label": "Tamanho", "value": "76x76mm" },
+      { "label": "Cor", "value": "Amarelo" },
+      { "label": "Marca", "value": "Post-it 3M" }
+    ]
+  },
+  {
+    "id": 75, "name": "Ração Premium Cães Adultos 15kg", "price": 189, "image": "🍖",
+    "category": "Pets", "rating": 4.7, "reviews": 3456,
+    "description": "Ração super premium para cães adultos de todas as raças, sabor frango e arroz, enriquecida com ômega 3 e 6, glucosamina e condroitina.",
+    "specs": [
+      { "label": "Sabor", "value": "Frango e Arroz" },
+      { "label": "Peso", "value": "15kg" },
+      { "label": "Indicado", "value": "Adultos todas as raças" },
+      { "label": "Ômega 3 e 6", "value": "Sim" },
+      { "label": "Glucosamina", "value": "Sim" }
+    ]
+  },
+  {
+    "id": 76, "name": "Arranhador para Gatos Torre", "price": 159, "image": "🐱",
+    "category": "Pets", "rating": 4.5, "reviews": 890,
+    "description": "Arranhador torre para gatos com 70cm de altura, sisal natural, plataforma de descanso, brinquedo pendurado e base antiderrapante.",
+    "specs": [
+      { "label": "Altura", "value": "70cm" },
+      { "label": "Material", "value": "Sisal Natural" },
+      { "label": "Plataforma", "value": "Descanso acolchoada" },
+      { "label": "Brinquedo", "value": "Pendurado" },
+      { "label": "Base", "value": "Antiderrapante" }
+    ]
+  },
+  {
+    "id": 77, "name": "Kit Higiene Pet Shampoo + Condicionador", "price": 69, "image": "🧴",
+    "category": "Pets", "rating": 4.2, "reviews": 567,
+    "description": "Kit de higiene pet com shampoo e condicionador neutro 500ml cada, fórmula suave com aloe vera e aveia, pH balanceado para cães e gatos.",
+    "specs": [
+      { "label": "Itens", "value": "Shampoo + Condicionador" },
+      { "label": "Volume", "value": "500ml cada" },
+      { "label": "Fórmula", "value": "Aloe Vera e Aveia" },
+      { "label": "pH", "value": "Balanceado" },
+      { "label": "Indicado", "value": "Cães e Gatos" }
+    ]
+  },
+  {
+    "id": 78, "name": "Cama Ortopédica Cães 70x50cm", "price": 179, "image": "🛏️",
+    "category": "Pets", "rating": 4.6, "reviews": 1234,
+    "description": "Cama ortopédica para cães de médio porte, espuma viscoelástica, capa impermeável removível e lavável, fundo antiderrapante e bordas elevadas.",
+    "specs": [
+      { "label": "Tamanho", "value": "70x50cm" },
+      { "label": "Porte", "value": "Médio" },
+      { "label": "Espuma", "value": "Viscoelástica" },
+      { "label": "Capa", "value": "Impermeável removível" },
+      { "label": "Bordas", "value": "Elevadas" }
+    ]
+  },
+  {
+    "id": 79, "name": "Bebedouro Automático Pet 2L", "price": 129, "image": "💧",
+    "category": "Pets", "rating": 4.3, "reviews": 345,
+    "description": "Bebedouro automático com filtro de carvão ativado, fluxo de água em cascata, reservatório de 2L, silencioso e fácil de limpar.",
+    "specs": [
+      { "label": "Capacidade", "value": "2L" },
+      { "label": "Filtro", "value": "Carvão Ativado" },
+      { "label": "Fluxo", "value": "Cascata" },
+      { "label": "Ruído", "value": "< 25dB" },
+      { "label": "Material", "value": "Plástico livre de BPA" }
+    ]
+  },
+  {
+    "id": 80, "name": "Guia Retrátil Cães até 25kg", "price": 59, "image": "🦮",
+    "category": "Pets", "rating": 4.1, "reviews": 678,
+    "description": "Guia retrátil automática para cães de até 25kg, fita de 5 metros, trava de segurança com freio instantâneo e cabo emborrachado confortável.",
+    "specs": [
+      { "label": "Capacidade", "value": "Até 25kg" },
+      { "label": "Comprimento", "value": "5 metros" },
+      { "label": "Trava", "value": "Freio instantâneo" },
+      { "label": "Cabo", "value": "Emborrachado" },
+      { "label": "Fita", "value": "Refletiva" }
+    ]
+  }
+]

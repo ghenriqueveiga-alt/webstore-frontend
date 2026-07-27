@@ -1,0 +1,86 @@
+<div class="relative">
+  <button class="relative p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" (click)="toggle()">
+    <span class="text-xl">👤</span>
+  </button>
+
+  @if (isOpen) {
+    <div class="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50" (click)="$event.stopPropagation()">
+      @if (auth.isAuthenticated()) {
+        <div class="px-4 py-3 border-b border-gray-100">
+          <p class="text-sm font-bold text-gray-800">Olá, {{ auth.user()?.name }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ auth.user()?.email }}</p>
+        </div>
+        <div class="py-1">
+          <a routerLink="/account" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>📊</span>
+            <span>Painel</span>
+          </a>
+          <a routerLink="/account/orders" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>📋</span>
+            <span>Meus Pedidos</span>
+          </a>
+          <a routerLink="/account/addresses" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>📍</span>
+            <span>Endereços</span>
+          </a>
+          <a routerLink="/account/payments" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>💳</span>
+            <span>Cartões</span>
+          </a>
+          <a routerLink="/account/settings" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>⚙️</span>
+            <span>Configurações</span>
+          </a>
+          @if (auth.isAdmin()) {
+            <div class="border-t border-gray-100 mt-1 pt-1">
+              <p class="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin</p>
+              <a routerLink="/admin/categories" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+                <span>📂</span>
+                <span>Gerenciar Categorias</span>
+              </a>
+              <a routerLink="/admin" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+                <span>📦</span>
+                <span>Gerenciar Produtos</span>
+              </a>
+            </div>
+          }
+          <div class="border-t border-gray-100 mt-1 pt-1">
+            <button class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left cursor-pointer" (click)="auth.logout(); close()">
+              <span>🚪</span>
+              <span>Sair</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="px-4 py-3 border-b border-gray-100">
+          <p class="text-sm font-bold text-gray-800">Minha Conta</p>
+          <p class="text-xs text-gray-500 mt-0.5">Acesse sua conta ou cadastre-se</p>
+        </div>
+        <div class="py-1">
+          <a routerLink="/auth/login" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>🔑</span>
+            <span>Entrar</span>
+          </a>
+          <a routerLink="/auth/registration" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>📝</span>
+            <span>Cadastrar</span>
+          </a>
+          <a routerLink="/auth/password-recovery" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>🔐</span>
+            <span>Recuperar Senha</span>
+          </a>
+        </div>
+        <div class="border-t border-gray-100 py-1">
+          <a routerLink="/buying/favorites" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>❤️</span>
+            <span>Favoritos</span>
+          </a>
+          <a routerLink="/buying/cart" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" (click)="close()">
+            <span>🛒</span>
+            <span>Carrinho</span>
+          </a>
+        </div>
+      }
+    </div>
+  }
+</div>

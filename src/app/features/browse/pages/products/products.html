@@ -1,0 +1,142 @@
+<!-- Breadcrumb -->
+<div class="bg-gray-50 border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-3 text-sm text-gray-500">
+    <a routerLink="/" class="hover:text-blue-600">Home</a>
+    <span class="mx-2">/</span>
+    <a routerLink="/categories" class="hover:text-blue-600">Categorias</a>
+    @if (selectedCats().size > 0) {
+      <span class="mx-2">/</span>
+      <span class="text-gray-800 font-medium">{{ selectedCatsLabel() }}</span>
+    }
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-6 py-8 flex gap-8">
+  <!-- Sidebar Filtros -->
+  <aside class="hidden lg:block w-64 shrink-0">
+    <h3 class="font-bold text-gray-800 mb-4">Categorias</h3>
+    <div class="space-y-2 mb-6">
+      @for (cat of categories(); track cat.name) {
+        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-blue-600">
+          <input type="checkbox" [checked]="selectedCats().has(cat.name)" (change)="toggleCat(cat.name)" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+          <span>{{ cat.name }}</span>
+          <span class="text-gray-400 ml-auto">({{ cat.count }})</span>
+        </label>
+      }
+    </div>
+
+    <h3 class="font-bold text-gray-800 mt-8 mb-4">Faixa de Preço</h3>
+    <div class="space-y-2 mb-6">
+      <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-blue-600">
+        <input type="radio" name="price" [checked]="selectedPrice() === null" (change)="pickPrice(null)" class="border-gray-300 text-blue-600 focus:ring-blue-500" />
+        <span>Todos os preços</span>
+      </label>
+      @for (r of priceRanges; track r.label) {
+        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-blue-600">
+          <input type="radio" name="price" [checked]="selectedPrice() === r" (change)="pickPrice(r)" class="border-gray-300 text-blue-600 focus:ring-blue-500" />
+          <span>{{ r.label }}</span>
+        </label>
+      }
+    </div>
+
+    <button (click)="applyFilters()" class="mt-2 w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer">
+      Filtrar
+    </button>
+  </aside>
+
+  <!-- Grade de Produtos -->
+  <div class="flex-1">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <p class="text-sm text-gray-500">
+        @if (filtered().length === 0) {
+          Nenhum produto encontrado
+        } @else {
+          {{ filtered().length }} produto{{ filtered().length > 1 ? 's' : '' }}
+        }
+      </p>
+      @if (filtered().length > 0) {
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-500">Ordenar por:</span>
+          <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [value]="selectedSort()" (change)="selectedSort.set($any($event.target).value); page.set(1)">
+            @for (opt of sortOpts; track opt) {
+              <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+
+    @if (displayProducts.length === 0) {
+      <div class="text-center py-20">
+        <span class="text-8xl">🔍</span>
+        <h1 class="text-2xl font-bold text-gray-800 mt-6">Nenhum produto encontrado</h1>
+        <p class="text-gray-500 mt-2">Tente alterar os filtros</p>
+        <button (click)="limparFiltros()" class="inline-block mt-6 bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+          Limpar Filtros
+        </button>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        @for (product of displayProducts; track product.id) {
+          <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+            <a routerLink="/product/{{ product.id }}" class="group">
+              <div class="relative h-48 bg-gray-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform">
+                {{ product.image }}
+                @if (product.badge) {
+                  <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">{{ product.badge }}</span>
+                }
+              </div>
+              <div class="p-4">
+                <span class="text-xs text-blue-600 font-medium uppercase">{{ product.category }}</span>
+                <h3 class="font-semibold text-gray-800 mt-1 group-hover:text-blue-600 transition-colors text-sm">{{ product.name }}</h3>
+                <div class="flex items-center gap-1 mt-1">
+                  @for (star of getStars(product.rating); track $index) {
+                    <span class="text-yellow-400 text-xs">{{ star === 'full' ? '★' : '☆' }}</span>
+                  }
+                  <span class="text-xs text-gray-400 ml-1">({{ product.reviews }})</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-lg font-bold text-gray-900">R$ {{ fmt(product.price) }}</span>
+                  @if (product.originalPrice) {
+                    <span class="text-sm text-gray-400 line-through">R$ {{ fmt(product.originalPrice) }}</span>
+                  }
+                </div>
+              </div>
+            </a>
+            <div class="px-4 pb-4 mt-auto flex gap-2">
+              <button class="flex-1 bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer" (click)="cart.add({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 })">
+                Adicionar ao Carrinho
+              </button>
+              <button class="w-9 h-9 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center shrink-0 cursor-pointer text-sm" (click)="fav.toggle({ id: product.id, name: product.name, price: product.price, image: product.image })">
+                {{ fav.isFavorite(product.id) ? '❤️' : '🤍' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-2 mt-10">
+          <button class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 cursor-pointer" [disabled]="page() === 1" (click)="page.set(page() - 1)">
+            &laquo; Anterior
+          </button>
+          @for (p of [].constructor(totalPages()); track $index) {
+            <button class="w-10 h-10 rounded-lg text-sm font-medium border transition-colors cursor-pointer"
+              [class.bg-blue-600]="$index + 1 === page()"
+              [class.text-white]="$index + 1 === page()"
+              [class.border-blue-600]="$index + 1 === page()"
+              [class.border-gray-300]="$index + 1 !== page()"
+              [class.text-gray-700]="$index + 1 !== page()"
+              [class.hover:bg-gray-50]="$index + 1 !== page()"
+              (click)="page.set($index + 1)">
+              {{ $index + 1 }}
+            </button>
+          }
+          <button class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 cursor-pointer" [disabled]="page() === totalPages()" (click)="page.set(page() + 1)">
+            Próximo &raquo;
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

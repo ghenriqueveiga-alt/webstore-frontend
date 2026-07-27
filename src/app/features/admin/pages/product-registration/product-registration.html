@@ -1,0 +1,185 @@
+<div class="min-h-[calc(100vh-58px-200px)] bg-gray-50 py-8 px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a routerLink="/" class="hover:text-blue-600">Home</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Admin</span>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Cadastro de Produto</span>
+    </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 mb-8">Cadastrar Produto</h1>
+
+    @if (success) {
+      <div class="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+        <span>✅</span>
+        <span>Produto cadastrado com sucesso!</span>
+      </div>
+    }
+
+    <form (ngSubmit)="onSubmit()" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Nome do Produto *</label>
+          <input
+            type="text"
+            [ngModel]="form().name"
+            (ngModelChange)="form.update(f => ({...f, name: $event}))"
+            name="name"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="submitted && !form().name"
+            placeholder="Ex: Smartphone XYZ Pro 256GB"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Preço (R$) *</label>
+          <input
+            type="number"
+            step="0.01"
+            [ngModel]="form().price"
+            (ngModelChange)="form.update(f => ({...f, price: +$event}))"
+            name="price"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="submitted && form().price <= 0"
+            placeholder="4999"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Preço Original (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            [ngModel]="form().originalPrice"
+            (ngModelChange)="form.update(f => ({...f, originalPrice: +$event}))"
+            name="originalPrice"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="5999"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Imagem (emoji ou URL) *</label>
+          <input
+            type="text"
+            [ngModel]="form().image"
+            (ngModelChange)="form.update(f => ({...f, image: $event}))"
+            name="image"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="submitted && !form().image"
+            placeholder="📱"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Categoria *</label>
+          <div class="flex gap-2">
+            <select
+              [ngModel]="form().category"
+              (ngModelChange)="form.update(f => ({...f, category: $event}))"
+              name="category"
+              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              [class.border-red-400]="submitted && !form().category"
+            >
+              <option value="">Selecione...</option>
+              @for (cat of categories(); track cat.id) {
+                <option value="{{ cat.name }}">{{ cat.icon }} {{ cat.name }}</option>
+              }
+            </select>
+            <a routerLink="/admin/categories" class="flex items-center gap-1 px-3 py-3 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap">
+              <span>⚙️</span>
+              <span>Gerenciar</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Avaliação (1-5)</label>
+          <input
+            type="number"
+            min="1"
+            max="5"
+            step="0.1"
+            [ngModel]="form().rating"
+            (ngModelChange)="form.update(f => ({...f, rating: +$event}))"
+            name="rating"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Badge (opcional)</label>
+          <input
+            type="text"
+            [ngModel]="form().badge"
+            (ngModelChange)="form.update(f => ({...f, badge: $event}))"
+            name="badge"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="-17%"
+          />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Descrição *</label>
+          <textarea
+            [ngModel]="form().description"
+            (ngModelChange)="form.update(f => ({...f, description: $event}))"
+            name="description"
+            rows="4"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="submitted && !form().description"
+            placeholder="Descrição detalhada do produto..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-200 pt-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Especificações Técnicas</h3>
+
+        <div class="flex gap-3 mb-4">
+          <input
+            type="text"
+            [(ngModel)]="newSpecLabel"
+            name="specLabel"
+            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ex: Processador"
+          />
+          <input
+            type="text"
+            [(ngModel)]="newSpecValue"
+            name="specValue"
+            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ex: Intel Core i7"
+          />
+          <button type="button" (click)="addSpec()" class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium cursor-pointer">
+            Adicionar
+          </button>
+        </div>
+
+        @if (specs().length > 0) {
+          <div class="space-y-2">
+            @for (spec of specs(); track $index) {
+              <div class="flex items-center justify-between bg-gray-50 px-4 py-2.5 rounded-lg">
+                <div>
+                  <span class="text-sm font-medium text-gray-700">{{ spec.label }}:</span>
+                  <span class="text-sm text-gray-500 ml-2">{{ spec.value }}</span>
+                </div>
+                <button type="button" (click)="removeSpec($index)" class="text-red-500 hover:text-red-700 text-sm cursor-pointer">
+                  Remover
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="flex items-center gap-4 pt-4">
+        <button type="submit" class="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+          Cadastrar Produto
+        </button>
+        <a routerLink="/" class="text-sm text-gray-500 hover:text-gray-700">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>

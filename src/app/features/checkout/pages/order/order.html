@@ -1,0 +1,104 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a routerLink="/buying/cart" class="hover:text-blue-600">Carrinho</a>
+      <span>/</span>
+      <span class="text-gray-400">Endereço</span>
+      <span>/</span>
+      <span class="text-gray-400">Pagamento</span>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Confirmação</span>
+    </div>
+
+    <!-- Steps -->
+    <div class="flex items-center gap-2 mb-8">
+      <span class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">✓</span>
+      <span class="font-medium text-green-600">Endereço</span>
+      <div class="flex-1 h-0.5 bg-green-300"></div>
+      <span class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">✓</span>
+      <span class="font-medium text-green-600">Pagamento</span>
+      <div class="flex-1 h-0.5 bg-green-300"></div>
+      <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">3</span>
+      <span class="font-medium text-blue-600">Confirmação</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Review -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <h1 class="text-xl font-bold text-gray-900 mb-6">Confirme seu Pedido</h1>
+
+          <!-- Items -->
+          <div class="mb-6">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Itens</h2>
+            <div class="divide-y divide-gray-100">
+              @for (item of cart.items(); track item.id) {
+                <div class="flex items-center gap-4 py-3">
+                  <span class="text-3xl shrink-0">{{ item.image }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-800">{{ item.name }}</p>
+                    <p class="text-sm text-gray-400">Qtd: {{ item.quantity }}</p>
+                  </div>
+                  <span class="font-bold text-gray-900">R$ {{ (item.price * item.quantity).toFixed(2) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Address -->
+          @if (checkout.address(); as addr) {
+            <div class="mb-6">
+              <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Endereço de Entrega</h2>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-gray-800">{{ addr.street }}, {{ addr.number }}{{ addr.complement ? ' - ' + addr.complement : '' }}</p>
+                <p class="text-gray-600">{{ addr.neighborhood }}</p>
+                <p class="text-gray-600">{{ addr.city }} - {{ addr.state }}</p>
+                <p class="text-gray-600">CEP: {{ addr.cep }}</p>
+              </div>
+            </div>
+          }
+
+          <!-- Payment -->
+          @if (checkout.payment(); as pmt) {
+            <div class="mb-6">
+              <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Forma de Pagamento</h2>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-gray-800">{{ methodLabel }}</p>
+                @if (pmt.method === 'credit') {
+                  <p class="text-gray-600">{{ cardMasked }}</p>
+                  <p class="text-gray-600">{{ pmt.installments }}x de R$ {{ (cart.total() / (pmt.installments ?? 1)).toFixed(2) }}</p>
+                }
+                @if (pmt.method === 'boleto') {
+                  <p class="text-gray-600">Vencimento em 3 dias úteis</p>
+                }
+                @if (pmt.method === 'pix') {
+                  <p class="text-gray-600">Pagamento instantâneo</p>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+            <a routerLink="/checkout/payment" class="text-gray-500 hover:text-gray-700 font-medium">&larr; Voltar ao pagamento</a>
+            <button (click)="onConfirm()" class="bg-green-600 text-white font-bold px-10 py-3 rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
+              Confirmar Pedido
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+          <h3 class="font-bold text-gray-900 mb-4">Resumo</h3>
+          <div class="space-y-1.5 text-sm">
+            <div class="flex justify-between text-gray-500"><span>Subtotal</span><span>R$ {{ cart.subtotal().toFixed(2) }}</span></div>
+            <div class="flex justify-between text-gray-500"><span>Frete</span><span>{{ cart.shipping() === 0 ? 'Grátis' : 'R$ ' + cart.shipping().toFixed(2) }}</span></div>
+            <div class="flex justify-between font-bold text-gray-900 text-base pt-1.5 border-t border-gray-100"><span>Total</span><span>R$ {{ cart.total().toFixed(2) }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-5xl mx-auto px-6 py-8">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a routerLink="/" class="hover:text-blue-600">Home</a>
+      <span>/</span>
+      <a routerLink="/account" class="hover:text-blue-600">Minha Conta</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Pedidos</span>
+    </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 mb-8">Meus Pedidos</h1>
+
+    @if (account.orders().length === 0) {
+      <div class="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
+        <span class="text-6xl">📋</span>
+        <h2 class="text-xl font-bold text-gray-800 mt-4">Nenhum pedido ainda</h2>
+        <p class="text-gray-500 mt-2">Seus pedidos aparecerão aqui após a primeira compra.</p>
+        <a routerLink="/products" class="inline-block mt-6 bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+          Ver Produtos
+        </a>
+      </div>
+    } @else {
+      <div class="space-y-4">
+        @for (order of account.orders(); track order.orderNumber) {
+          <a routerLink="/account/orders/{{ order.orderNumber }}" class="block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:border-blue-300 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
+              <div>
+                <p class="font-bold text-gray-900">{{ order.orderNumber }}</p>
+                <p class="text-sm text-gray-500">{{ order.date | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-full {{ statusColor(order.status) }}">{{ statusLabel(order.status) }}</span>
+                <span class="text-gray-400 text-lg">&rarr;</span>
+              </div>
+            </div>
+            <div class="px-6 py-3">
+              <div class="flex items-center gap-2">
+                @for (item of order.items.slice(0, 3); track $index) {
+                  <span class="text-2xl">{{ item.image }}</span>
+                }
+                @if (order.items.length > 3) {
+                  <span class="text-sm text-gray-400 ml-1">+{{ order.items.length - 3 }}</span>
+                }
+                <span class="ml-auto font-bold text-gray-900">R$ {{ order.total.toFixed(2) }}</span>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  </div>
+</div>

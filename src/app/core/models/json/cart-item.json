@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Notebook Gamer XYZ",
+    "price": 5999.99,
+    "image": "notebook.jpg",
+    "quantity": 1
+  },
+  {
+    "id": 5,
+    "name": "Mouse Sem Fio ABC",
+    "price": 149.90,
+    "image": "mouse.jpg",
+    "quantity": 2
+  }
+]

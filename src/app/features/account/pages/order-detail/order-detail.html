@@ -1,0 +1,128 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-5xl mx-auto px-6 py-8">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a routerLink="/" class="hover:text-blue-600">Home</a>
+      <span>/</span>
+      <a routerLink="/account" class="hover:text-blue-600">Minha Conta</a>
+      <span>/</span>
+      <a routerLink="/account/orders" class="hover:text-blue-600">Pedidos</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">{{ order()?.orderNumber }}</span>
+    </div>
+
+    @if (!order()) {
+      <div class="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
+        <span class="text-5xl">🔍</span>
+        <p class="text-gray-500 mt-4">Pedido não encontrado</p>
+        <a routerLink="/account/orders" class="inline-block mt-4 text-blue-600 font-medium hover:text-blue-800">Voltar aos Pedidos</a>
+      </div>
+    } @else {
+      @let o = order()!;
+
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">{{ o.orderNumber }}</h1>
+          <p class="text-sm text-gray-500 mt-1">Realizado em {{ o.date | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <span class="text-sm font-semibold px-4 py-2 rounded-full {{ statusColor(o.status) }}">{{ statusLabel(o.status) }}</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tracking Timeline -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h2 class="font-bold text-gray-900 mb-6">Acompanhamento</h2>
+
+            <div class="relative">
+              @for (event of o.tracking; track $index) {
+                @let done = trackingDone($index);
+                @let current = !done && event.status === o.status;
+                <div class="flex gap-4 pb-8 relative last:pb-0">
+                  <!-- Timeline line -->
+                  @if (!$last) {
+                    <div class="absolute left-[11px] top-8 bottom-0 w-0.5 {{ done ? 'bg-green-500' : 'bg-gray-200' }}"></div>
+                  }
+
+                  <!-- Dot -->
+                  <div class="relative shrink-0 mt-1">
+                    @if (current) {
+                      <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                        <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+                      </div>
+                    } @else if (done) {
+                      <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">✓</span>
+                      </div>
+                    } @else {
+                      <div class="w-6 h-6 rounded-full bg-gray-200"></div>
+                    }
+                  </div>
+
+                  <!-- Content -->
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold {{ current ? 'text-blue-700' : done ? 'text-green-700' : 'text-gray-400' }}">
+                      {{ event.label }}
+                    </p>
+                    <p class="text-xs {{ current ? 'text-blue-600' : done ? 'text-green-600' : 'text-gray-400' }} mt-0.5">
+                      {{ event.date | date:'dd/MM/yyyy HH:mm' }}
+                    </p>
+                    <p class="text-sm text-gray-600 mt-1">{{ event.description }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Items -->
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="font-bold text-gray-900 mb-4">Itens do Pedido</h2>
+            <div class="divide-y divide-gray-100">
+              @for (item of o.items; track $index) {
+                <div class="flex items-center gap-4 py-3">
+                  <span class="text-3xl shrink-0">{{ item.image }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-800">{{ item.name }}</p>
+                    <p class="text-sm text-gray-500">Qtd: {{ item.quantity }}</p>
+                  </div>
+                  <span class="font-bold text-gray-900">R$ {{ (item.price * item.quantity).toFixed(2) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="font-bold text-gray-900 mb-3">Resumo</h3>
+            <div class="space-y-1.5 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span>R$ {{ o.total.toFixed(2) }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Frete</span><span class="text-green-600 font-medium">Grátis</span></div>
+              <div class="flex justify-between font-bold text-gray-900 text-base pt-1.5 border-t border-gray-100"><span>Total</span><span>R$ {{ o.total.toFixed(2) }}</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="font-bold text-gray-900 mb-3">Pagamento</h3>
+            <div class="text-sm space-y-1">
+              <p class="text-gray-800 font-medium">{{ paymentLabel(o.payment.method) }}</p>
+              @if (o.payment.lastDigits) {
+                <p class="text-gray-500">•••• {{ o.payment.lastDigits }}</p>
+              }
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="font-bold text-gray-900 mb-3">Endereço de Entrega</h3>
+            <div class="text-sm text-gray-600 space-y-0.5">
+              <p>{{ o.address.street }}, {{ o.address.number }}{{ o.address.complement ? ' - ' + o.address.complement : '' }}</p>
+              <p>{{ o.address.neighborhood }}</p>
+              <p>{{ o.address.city }} - {{ o.address.state }}</p>
+              <p>CEP: {{ o.address.cep }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

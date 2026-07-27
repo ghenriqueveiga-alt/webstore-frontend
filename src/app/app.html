@@ -1,0 +1,30 @@
+<app-header />
+<main>
+  <router-outlet />
+</main>
+<app-footer />
+<app-cart-drawer />
+
+@if (fav.showAuthModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" (click)="fav.closeAuthModal()">
+    <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="text-center">
+        <span class="text-5xl">🤍</span>
+        <h2 class="text-xl font-bold text-gray-900 mt-4">Faça login ou cadastre-se</h2>
+        <p class="text-gray-500 text-sm mt-2">Você precisa estar logado para adicionar favoritos.</p>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <button (click)="fav.goLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+          Fazer Login
+        </button>
+        <button (click)="fav.goRegister()" class="w-full bg-white text-blue-600 font-semibold py-3 rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition-colors cursor-pointer">
+          Cadastrar
+        </button>
+        <button (click)="fav.closeAuthModal()" class="w-full text-gray-500 text-sm py-2 hover:text-gray-700 transition-colors cursor-pointer">
+          Agora não
+        </button>
+      </div>
+    </div>
+  </div>
+}

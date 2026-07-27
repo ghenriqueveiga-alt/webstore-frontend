@@ -1,0 +1,43 @@
+<form class="relative" (submit)="$event.preventDefault(); onSubmit()">
+  <div class="relative">
+    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+    <input
+      type="text"
+      placeholder="Buscar produtos..."
+      class="w-80 lg:w-96 pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+      [value]="search.query()"
+      (input)="onInput($event)"
+      (keydown.escape)="search.closeDropdown()"
+    />
+  </div>
+
+  @if (search.isDropdownOpen() && search.results().length > 0) {
+    <div class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
+      <div class="divide-y divide-gray-100">
+        @for (product of search.results().slice(0, 6); track product.id) {
+          <a routerLink="/product/{{ product.id }}" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" (click)="onSelect()">
+            <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-lg shrink-0">{{ product.image }}</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">{{ product.name }}</p>
+              <p class="text-xs text-gray-500">{{ product.category }}</p>
+            </div>
+            <p class="text-sm font-bold text-gray-900 shrink-0">R$ {{ product.price.toLocaleString('pt-BR') }}</p>
+          </a>
+        }
+      </div>
+      @if (search.results().length > 6) {
+        <div class="border-t border-gray-200 px-4 py-3 text-center">
+          <button type="button" class="text-sm text-blue-600 font-medium hover:text-blue-800" (click)="onSubmit()">
+            Ver todos os {{ search.results().length }} resultados
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (search.isDropdownOpen() && search.query().trim() && search.results().length === 0) {
+    <div class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-6 text-center">
+      <p class="text-gray-500 text-sm">Nenhum produto encontrado para "{{ search.query() }}"</p>
+    </div>
+  }
+</form>

@@ -1,0 +1,177 @@
+<!-- Hero Banner -->
+<section class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+  <div class="max-w-7xl mx-auto px-6 py-16 md:py-24 flex flex-col md:flex-row items-center gap-8">
+    <div class="flex-1">
+      <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+        Descubra Ofertas<br />
+        <span class="text-yellow-300">Imperdíveis</span>
+      </h1>
+      <p class="mt-4 text-lg text-blue-100">
+        Os melhores produtos com os melhores preços. Frete grátis para todo o Brasil em compras acima de R$ 199.
+      </p>
+      <div class="mt-8 flex gap-4">
+        <a routerLink="/products" class="bg-yellow-400 text-gray-900 font-semibold px-8 py-3 rounded-lg hover:bg-yellow-300 transition-colors">
+          Ver Ofertas
+        </a>
+        <a routerLink="/categories" class="border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-white hover:text-blue-600 transition-colors">
+          Categorias
+        </a>
+      </div>
+    </div>
+    <div class="flex-1 text-center">
+      <span class="text-8xl md:text-9xl">🛍️</span>
+    </div>
+  </div>
+</section>
+
+<!-- Categorias -->
+<section class="max-w-7xl mx-auto px-6 py-12">
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-2xl font-bold text-gray-800">Categorias</h2>
+    <a routerLink="/categories" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+      Ver todas &rarr;
+    </a>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    @for (cat of categories(); track cat.id) {
+      <a routerLink="/category/{{ cat.id }}" class="flex flex-col items-center bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
+        <span class="text-4xl mb-3">{{ cat.icon }}</span>
+        <span class="font-semibold text-gray-800 text-sm">{{ cat.name }}</span>
+        <span class="text-xs text-gray-400 mt-1">{{ cat.count }} itens</span>
+      </a>
+    }
+  </div>
+</section>
+
+<!-- Banner Promocional -->
+<section class="bg-gradient-to-r from-purple-600 to-pink-500 text-white">
+  <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+    <div>
+      <h2 class="text-2xl md:text-3xl font-bold">Frete Grátis</h2>
+      <p class="text-purple-100 mt-2">Em compras acima de R$ 199 para todo o Brasil</p>
+    </div>
+    <a routerLink="/products" class="bg-white text-purple-700 font-semibold px-8 py-3 rounded-lg hover:bg-purple-50 transition-colors whitespace-nowrap">
+      Comprar Agora
+    </a>
+  </div>
+</section>
+
+<!-- Carrossel de Melhores Produtos -->
+<section class="max-w-7xl mx-auto px-6 py-12">
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-2xl font-bold text-gray-800">⭐ Produtos Mais Bem Avaliados</h2>
+    <a routerLink="/products" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+      Ver todos &rarr;
+    </a>
+  </div>
+
+  <div class="relative">
+    <div class="overflow-hidden rounded-xl">
+      <div class="flex transition-transform duration-500 ease-in-out" [style.transform]="'translateX(-' + currentSlide() * 100 + '%)'">
+        @for (group of [0, 1]; track $index) {
+          <div class="min-w-full grid grid-cols-2 md:grid-cols-4 gap-6">
+            @for (product of bestProducts().slice($index * 4, $index * 4 + 4); track product.id) {
+              <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                <a routerLink="/product/{{ product.id }}" class="group">
+                  <div class="h-48 bg-gray-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform relative">
+                    {{ product.image }}
+                    @if (product.badge) {
+                      <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">{{ product.badge }}</span>
+                    }
+                  </div>
+                  <div class="p-4">
+                    <span class="text-xs text-blue-600 font-medium uppercase">{{ product.category }}</span>
+                    <h3 class="font-semibold text-gray-800 mt-1 group-hover:text-blue-600 transition-colors text-sm">{{ product.name }}</h3>
+                    <div class="flex items-center gap-1 mt-1">
+                      @for (star of getStars(product.rating); track $index) {
+                        <span class="text-yellow-400 text-xs">{{ star === 'full' ? '★' : '☆' }}</span>
+                      }
+                      <span class="text-xs text-gray-400 ml-1">({{ product.reviews }})</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                      <span class="text-lg font-bold text-gray-900">R$ {{ fmt(product.price) }}</span>
+                      @if (product.originalPrice) {
+                        <span class="text-sm text-gray-400 line-through">R$ {{ fmt(product.originalPrice) }}</span>
+                      }
+                    </div>
+                  </div>
+                </a>
+                <div class="px-4 pb-4 mt-auto flex gap-2">
+                  <button class="flex-1 bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer" (click)="cart.add({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 })">
+                    Adicionar ao Carrinho
+                  </button>
+                  <button class="w-9 h-9 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center shrink-0 cursor-pointer text-sm" (click)="fav.toggle({ id: product.id, name: product.name, price: product.price, image: product.image })">
+                    {{ fav.isFavorite(product.id) ? '❤️' : '🤍' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <button class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-xl transition-all cursor-pointer z-10" (click)="prev()">
+      ‹
+    </button>
+    <button class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-xl transition-all cursor-pointer z-10" (click)="next()">
+      ›
+    </button>
+
+    <div class="flex justify-center gap-2 mt-6">
+      @for (s of [].constructor(slideCount()); track $index) {
+        <button class="w-2.5 h-2.5 rounded-full transition-all cursor-pointer"
+          [class.bg-blue-600]="$index === currentSlide()"
+          [class.w-6]="$index === currentSlide()"
+          [class.bg-gray-300]="$index !== currentSlide()"
+          (click)="goTo($index)">
+        </button>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Produtos em Destaque -->
+<section class="bg-gray-50 py-12">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-2xl font-bold text-gray-800">🔥 Em Destaque</h2>
+      <a routerLink="/products" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+        Ver todos &rarr;
+      </a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      @for (product of bestProducts().slice(0, 4); track product.id) {
+        <a routerLink="/product/{{ product.id }}" class="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+          <div class="h-48 bg-gray-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform">
+            {{ product.image }}
+          </div>
+          <div class="p-4">
+            <span class="text-xs text-blue-600 font-medium uppercase">{{ product.category }}</span>
+            <h3 class="font-semibold text-gray-800 mt-1 group-hover:text-blue-600 transition-colors">{{ product.name }}</h3>
+            <div class="flex items-center gap-1 mt-1">
+              @for (star of getStars(product.rating); track $index) {
+                <span class="text-yellow-400 text-xs">{{ star === 'full' ? '★' : '☆' }}</span>
+              }
+            </div>
+            <p class="text-lg font-bold text-gray-900 mt-2">R$ {{ fmt(product.price) }}</p>
+          </div>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter -->
+<section class="bg-gray-100">
+  <div class="max-w-7xl mx-auto px-6 py-16 text-center">
+    <h2 class="text-2xl font-bold text-gray-800">Fique por dentro das novidades</h2>
+    <p class="text-gray-500 mt-2">Cadastre-se e receba ofertas exclusivas</p>
+    <div class="mt-6 flex max-w-md mx-auto gap-3">
+      <input type="email" placeholder="Seu e-mail" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <button class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
+        Inscrever
+      </button>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,65 @@
+@if (cart.isDrawerOpen()) {
+  <div class="fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/40" (click)="cart.closeDrawer()"></div>
+
+    <div class="absolute top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col animate-slide-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-800">Carrinho ({{ cart.count() }})</h2>
+        <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors text-xl leading-none" (click)="cart.closeDrawer()">&times;</button>
+      </div>
+
+      @if (cart.items().length === 0) {
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-6">
+          <span class="text-6xl">🛒</span>
+          <p class="text-gray-500 mt-4">Seu carrinho está vazio</p>
+          <a routerLink="/products" class="mt-4 text-blue-600 font-medium hover:text-blue-800" (click)="cart.closeDrawer()">Ver Produtos</a>
+        </div>
+      } @else {
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          @for (item of cart.items(); track item.id) {
+            <div class="flex gap-4 py-3 border-b border-gray-100 last:border-0">
+              <a routerLink="/product/{{ item.id }}" class="shrink-0" (click)="cart.closeDrawer()">
+                <div class="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center text-2xl">{{ item.image }}</div>
+              </a>
+              <div class="flex-1 min-w-0">
+                <a routerLink="/product/{{ item.id }}" class="font-medium text-gray-800 hover:text-blue-600 transition-colors truncate block" (click)="cart.closeDrawer()">{{ item.name }}</a>
+                <p class="text-sm font-bold text-gray-900 mt-0.5">R$ {{ item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</p>
+                <div class="flex items-center gap-2 mt-2">
+                  <button class="w-7 h-7 border border-gray-300 rounded flex items-center justify-center text-gray-600 hover:bg-gray-50 text-sm" (click)="cart.updateQuantity(item.id, item.quantity - 1)">−</button>
+                  <span class="w-6 text-center text-sm font-medium">{{ item.quantity }}</span>
+                  <button class="w-7 h-7 border border-gray-300 rounded flex items-center justify-center text-gray-600 hover:bg-gray-50 text-sm" (click)="cart.updateQuantity(item.id, item.quantity + 1)">+</button>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="font-bold text-gray-900 text-sm">R$ {{ (item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</p>
+                <button class="text-xs text-red-500 hover:text-red-700 mt-2" (click)="cart.remove(item.id)">Remover</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="border-t border-gray-200 px-6 py-4 space-y-3">
+          <div class="flex justify-between text-sm text-gray-600">
+            <span>Subtotal</span>
+            <span>R$ {{ cart.subtotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+          <div class="flex justify-between text-sm text-gray-600">
+            <span>Frete</span>
+            @if (cart.shipping() === 0) {
+              <span class="text-green-600 font-medium">Grátis</span>
+            } @else {
+              <span>R$ {{ cart.shipping().toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
+            }
+          </div>
+          <div class="flex justify-between font-bold text-gray-900">
+            <span>Total</span>
+            <span>R$ {{ cart.total().toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+          <a routerLink="/buying/cart" class="block w-full bg-blue-600 text-white font-semibold text-center py-3 rounded-lg hover:bg-blue-700 transition-colors" (click)="cart.closeDrawer()">
+            Ver Carrinho Completo
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+}

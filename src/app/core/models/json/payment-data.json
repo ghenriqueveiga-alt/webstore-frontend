@@ -1,0 +1,8 @@
+{
+  "method": "credit",
+  "cardNumber": "4111111111111111",
+  "cardName": "João Silva",
+  "expiry": "1228",
+  "cvv": "123",
+  "installments": 12
+}

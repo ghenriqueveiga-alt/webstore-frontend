@@ -1,0 +1,8 @@
+<button class="relative p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" (click)="cart.toggleDrawer()">
+  <span class="text-xl">🛒</span>
+  @if (cart.count() > 0) {
+    <span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+      {{ cart.count() }}
+    </span>
+  }
+</button>

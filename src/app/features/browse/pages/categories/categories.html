@@ -1,0 +1,22 @@
+<div class="bg-gray-50 border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-3 text-sm text-gray-500">
+    <a routerLink="/" class="hover:text-blue-600">Home</a>
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-medium">Categorias</span>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-6 py-12">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">Categorias</h1>
+  <p class="text-gray-500 mb-10">Navegue por todas as categorias disponíveis</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    @for (cat of categories(); track cat.id) {
+      <a routerLink="/category/{{ cat.id }}" class="group bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:-translate-y-1 transition-all">
+        <div class="text-6xl mb-4">{{ cat.icon }}</div>
+        <h3 class="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{{ cat.name }}</h3>
+        <p class="text-sm text-gray-400 mt-1">{{ cat.count }} produto{{ cat.count !== 1 ? 's' : '' }}</p>
+      </a>
+    }
+  </div>
+</div>

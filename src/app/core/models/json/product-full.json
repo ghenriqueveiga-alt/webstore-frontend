@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "name": "Notebook Gamer XYZ",
+    "price": 5999.99,
+    "originalPrice": 6999.99,
+    "image": "notebook.jpg",
+    "category": "Eletrônicos",
+    "rating": 4.5,
+    "reviews": 128,
+    "description": "Notebook gamer com placa RTX 4060",
+    "specs": [
+      { "label": "Processador", "value": "Intel Core i7-13700H" },
+      { "label": "RAM", "value": "16GB DDR5" },
+      { "label": "SSD", "value": "512GB NVMe" }
+    ],
+    "badge": "Mais vendido"
+  }
+]

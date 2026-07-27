@@ -1,0 +1,5 @@
+[
+  { "id": 1, "name": "Eletrônicos", "icon": "eletronicos.svg" },
+  { "id": 2, "name": "Moda", "icon": "moda.svg" },
+  { "id": 3, "name": "Casa & Decoração", "icon": "casa.svg" }
+]

@@ -1,0 +1,81 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-6xl mx-auto px-6 py-8">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a routerLink="/" class="hover:text-blue-600">Home</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Minha Conta</span>
+    </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 mb-8">Olá, {{ auth.user()?.name }}!</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <span class="text-3xl">📋</span>
+          <div>
+            <p class="text-3xl font-bold text-gray-900">{{ account.orderCount() }}</p>
+            <p class="text-sm text-gray-500">Pedidos</p>
+          </div>
+        </div>
+        <a routerLink="/account/orders" class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium">Ver pedidos &rarr;</a>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <span class="text-3xl">📍</span>
+          <div>
+            <p class="text-3xl font-bold text-gray-900">{{ account.addressCount() }}</p>
+            <p class="text-sm text-gray-500">Endereços</p>
+          </div>
+        </div>
+        <a routerLink="/account/addresses" class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium">Gerenciar &rarr;</a>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <span class="text-3xl">💳</span>
+          <div>
+            <p class="text-3xl font-bold text-gray-900">{{ account.cardCount() }}</p>
+            <p class="text-sm text-gray-500">Cartões</p>
+          </div>
+        </div>
+        <a routerLink="/account/payments" class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium">Gerenciar &rarr;</a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h2 class="font-bold text-gray-900 mb-4">Últimos Pedidos</h2>
+        @if (account.orders().length === 0) {
+          <p class="text-sm text-gray-500">Nenhum pedido ainda.</p>
+          <a routerLink="/products" class="inline-block mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium">Começar a comprar &rarr;</a>
+        } @else {
+          <div class="divide-y divide-gray-100">
+            @for (order of account.orders().slice(0, 3); track order.orderNumber) {
+              <div class="py-3 flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-800">{{ order.orderNumber }}</p>
+                  <p class="text-xs text-gray-500">{{ order.date | date:'shortDate' }}</p>
+                </div>
+                <span class="text-sm font-bold text-gray-900">R$ {{ order.total.toFixed(2) }}</span>
+              </div>
+            }
+          </div>
+          @if (account.orderCount() > 3) {
+            <a routerLink="/account/orders" class="inline-block mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium">Ver todos &rarr;</a>
+          }
+        }
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h2 class="font-bold text-gray-900 mb-4">Dados da Conta</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-gray-500">Nome</span><span class="text-gray-800 font-medium">{{ auth.user()?.name }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Email</span><span class="text-gray-800 font-medium">{{ auth.user()?.email }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Tipo</span><span class="text-gray-800 font-medium">{{ auth.isAdmin() ? 'Administrador' : 'Cliente' }}</span></div>
+        </div>
+        <a routerLink="/account/settings" class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium">Editar dados &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>

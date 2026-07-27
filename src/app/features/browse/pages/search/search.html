@@ -1,0 +1,88 @@
+<div class="bg-gray-50 border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-3 text-sm text-gray-500">
+    <a routerLink="/" class="hover:text-blue-600">Home</a>
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-medium">Busca: "{{ query() }}"</span>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <p class="text-sm text-gray-500">
+      @if (results().length === 0) {
+        Nenhum resultado encontrado
+      } @else {
+        {{ results().length }} resultado{{ results().length > 1 ? 's' : '' }} para "{{ query() }}"
+      }
+    </p>
+    @if (results().length > 0) {
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500">Ordenar por:</span>
+        <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="selectedSort">
+          @for (opt of sortOptions; track opt) {
+            <option [value]="opt">{{ opt }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (pagedResults().length === 0) {
+    <div class="text-center py-20">
+      <span class="text-8xl">🔍</span>
+      <h1 class="text-2xl font-bold text-gray-800 mt-6">Nenhum resultado encontrado</h1>
+      <p class="text-gray-500 mt-2">Tente buscar por outros termos</p>
+      <a routerLink="/products" class="inline-block mt-6 bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+        Ver Todos os Produtos
+      </a>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      @for (product of pagedResults(); track product.id) {
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+          <a routerLink="/product/{{ product.id }}" class="group">
+            <div class="h-48 bg-gray-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform">
+              {{ product.image }}
+            </div>
+            <div class="p-4">
+              <span class="text-xs text-blue-600 font-medium uppercase">{{ product.category }}</span>
+              <h3 class="font-semibold text-gray-800 mt-1 group-hover:text-blue-600 transition-colors text-sm">{{ product.name }}</h3>
+              <p class="text-lg font-bold text-gray-900 mt-2">R$ {{ product.price.toLocaleString('pt-BR') }}</p>
+            </div>
+          </a>
+          <div class="px-4 pb-4 mt-auto flex gap-2">
+            <button class="flex-1 bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer" (click)="cart.add({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 })">
+              Adicionar ao Carrinho
+            </button>
+            <button class="w-9 h-9 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center shrink-0 cursor-pointer text-sm" (click)="fav.toggle({ id: product.id, name: product.name, price: product.price, image: product.image })">
+              {{ fav.isFavorite(product.id) ? '❤️' : '🤍' }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="flex items-center justify-center gap-2 mt-10">
+        <button class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50" [disabled]="currentPage === 1" (click)="currentPage = currentPage - 1">
+          &laquo; Anterior
+        </button>
+        @for (page of [].constructor(totalPages()); track $index) {
+          <button class="w-10 h-10 rounded-lg text-sm font-medium border transition-colors"
+            [class.bg-blue-600]="$index + 1 === currentPage"
+            [class.text-white]="$index + 1 === currentPage"
+            [class.border-blue-600]="$index + 1 === currentPage"
+            [class.border-gray-300]="$index + 1 !== currentPage"
+            [class.text-gray-700]="$index + 1 !== currentPage"
+            [class.hover:bg-gray-50]="$index + 1 !== currentPage"
+            (click)="currentPage = $index + 1">
+            {{ $index + 1 }}
+          </button>
+        }
+        <button class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50" [disabled]="currentPage === totalPages()" (click)="currentPage = currentPage + 1">
+          Próximo &raquo;
+        </button>
+      </div>
+    }
+  }
+</div>
