@@ -26,7 +26,13 @@
 
       <!-- Player -->
       <div class="flex-1 bg-black flex items-center justify-center min-h-[300px]">
-        @if (videoUrl()) {
+        @if (waitSeconds() > 0) {
+          <div class="text-center">
+            <span class="text-6xl block mb-3">⏳</span>
+            <p class="text-lg text-gray-300 mb-2">Episódio começa em</p>
+            <p class="text-4xl font-mono font-bold text-yellow-400">{{ formatTime(waitSeconds()) }}</p>
+          </div>
+        } @else if (videoUrl()) {
           <video
             #videoPlayer
             [src]="videoUrl()"
@@ -108,7 +114,11 @@
           </div>
           <div class="flex justify-between text-xs">
             <span class="text-gray-500">Posição</span>
-            <span class="text-gray-300 font-mono">{{ formatTime(seekSeconds()) }} / --:--:--</span>
+            @if (waitSeconds() > 0) {
+              <span class="text-yellow-400 font-mono">Aguardando {{ formatTime(waitSeconds()) }}</span>
+            } @else {
+              <span class="text-gray-300 font-mono">{{ formatTime(seekSeconds()) }} / --:--:--</span>
+            }
           </div>
         </div>
 

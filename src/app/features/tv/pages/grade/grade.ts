@@ -272,6 +272,128 @@ export class Grade implements OnInit, OnDestroy {
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
   }
 
+  private getAllBlocosForDia(dia: string): BlocoOutput[] {
+    return this.filteredBlocos
+      .filter(b => this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia))
+      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+  }
+
+  private countConsecutiveBlocos(bloco: BlocoOutput, dia: string): number {
+    const allDay = this.getAllBlocosForDia(dia);
+    const pid = bloco.aPrograma?.aId;
+    if (!pid) return 1;
+    const pIdx = allDay.findIndex(b => b.aId === bloco.aId);
+    if (pIdx < 0) return 1;
+    let count = 1;
+    for (let j = pIdx + 1; j < allDay.length; j++) {
+      if (allDay[j].aPrograma?.aId === pid) count++;
+      else break;
+    }
+    for (let j = pIdx - 1; j >= 0; j--) {
+      if (allDay[j].aPrograma?.aId === pid) count++;
+      else break;
+    }
+    return count;
+  }
+
+  isMultiBloco(bloco: BlocoOutput, dia: string): boolean {
+    const ep = this.getEpisodio(bloco, dia);
+    if (!ep || !ep.aDuracao) return false;
+    const p = ep.aDuracao.split(':');
+    if (p.length !== 3) return false;
+    const totalSec = (parseInt(p[0]) || 0) * 3600 + (parseInt(p[1]) || 0) * 60 + (parseInt(p[2]) || 0);
+    if (totalSec <= 30 * 60) return false;
+    return this.countConsecutiveBlocos(bloco, dia) > 1;
+  }
+
+  private isFimDeSemana(dia: string): boolean {
+    const idx = this.dias.indexOf(dia);
+    return idx === 5 || idx === 6;
+  }
+
+  private tempoLivreSec(ep: EpisodioInfo): number {
+    if (!ep.aDuracao) return 0;
+    const p = ep.aDuracao.split(':');
+    if (p.length !== 3) return 0;
+    const totalSec = (parseInt(p[0]) || 0) * 3600 + (parseInt(p[1]) || 0) * 60 + (parseInt(p[2]) || 0);
+    return Math.max(0, 30 * 60 - totalSec);
+  }
+
+  private formatSec(mm: number): string {
+    const m = Math.floor(mm / 60);
+    const s = mm % 60;
+    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  }
+
+  private slotsForEpisode(ep: EpisodioInfo): number {
+    if (!ep.aDuracao) return 1;
+    const p = ep.aDuracao.split(':');
+    if (p.length !== 3) return 1;
+    const totalSec = (parseInt(p[0]) || 0) * 3600 + (parseInt(p[1]) || 0) * 60 + (parseInt(p[2]) || 0);
+    return Math.max(1, Math.ceil(totalSec / (30 * 60)));
+  }
+
+  private slotIndex(bloco: BlocoOutput, dia: string): number {
+    if (!this.isMultiBloco(bloco, dia)) return 0;
+    const allDay = this.getAllBlocosForDia(dia);
+    const pid = bloco.aPrograma?.aId;
+    if (!pid) return 0;
+    const idx = allDay.findIndex(b => b.aId === bloco.aId);
+    if (idx < 0) return 0;
+    let pos = 0;
+    for (let j = idx - 1; j >= 0; j--) {
+      if (allDay[j].aPrograma?.aId === pid) pos++;
+      else break;
+    }
+    return pos;
+  }
+
+  private multiBlocoFreeTime(ep: EpisodioInfo): number {
+    if (!ep.aDuracao) return 0;
+    const p = ep.aDuracao.split(':');
+    if (p.length !== 3) return 0;
+    const totalSec = (parseInt(p[0]) || 0) * 3600 + (parseInt(p[1]) || 0) * 60 + (parseInt(p[2]) || 0);
+    const slots = this.slotsForEpisode(ep);
+    const totalSlotSec = slots * 30 * 60;
+    return Math.max(0, totalSlotSec - totalSec);
+  }
+
+  getTempoLivreTopo(bloco: BlocoOutput, dia: string): string {
+    if (this.isMultiBloco(bloco, dia)) {
+      const idx = this.slotIndex(bloco, dia);
+      if (idx !== 0) return '00:00';
+      const ep = this.getEpisodio(bloco, dia);
+      if (!ep) return '00:00';
+      const livre = this.multiBlocoFreeTime(ep);
+      if (livre <= 0) return '00:00';
+      return this.formatSec(Math.floor(livre / 2));
+    }
+    const ep = this.getEpisodio(bloco, dia);
+    if (!ep) return '00:00';
+    const livre = this.tempoLivreSec(ep);
+    if (livre <= 0) return '00:00';
+    return this.formatSec(Math.floor(livre / 2));
+  }
+
+  getTempoLivreBaixo(bloco: BlocoOutput, dia: string): string {
+    const ep = this.getEpisodio(bloco, dia);
+    if (!ep || !ep.aDuracao) return '00:00';
+
+    if (!this.isMultiBloco(bloco, dia)) {
+      const livre = this.tempoLivreSec(ep);
+      if (livre <= 0) return '00:00';
+      return this.formatSec(Math.ceil(livre / 2));
+    }
+
+    const slots = this.slotsForEpisode(ep);
+    const idx = this.slotIndex(bloco, dia);
+    if (idx !== slots - 1) return '00:00';
+
+    const livre = this.multiBlocoFreeTime(ep);
+    if (livre <= 0) return '00:00';
+    return this.formatSec(Math.ceil(livre / 2));
+  }
+
   formatDuracao(duracao: string | null): string {
     if (!duracao) return '--:--';
     const parts = duracao.split(':');
@@ -466,14 +588,46 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   nowLineStyle(): Record<string, string> {
+    const now = this.currentTime();
+    const slotH = now.getHours();
+    const slotM = now.getMinutes() < 30 ? 0 : 30;
+    const slot = `${slotH.toString().padStart(2,'0')}:${slotM.toString().padStart(2,'0')}`;
+    const dayName = this.dias[this.nowDayIndex];
+
+    const todayBloco = this.filteredBlocos.find(b =>
+      this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dayName) &&
+      b.aHorario?.substring(0, 5) === slot
+    );
+
     const i = this.nowDayIndex;
     const offset = `calc(121px + ${i} * ((100% - 126px) / 7))`;
     const width = 'calc((100% - 126px) / 7)';
-    return {
-      left: offset,
-      width: width,
-      top: `${this.nowMinuteFraction() * 100}%`,
-    };
+
+    if (!todayBloco) {
+      return { left: offset, width, top: `${this.nowMinuteFraction() * 100}%` };
+    }
+
+    const ep = this.getEpisodio(todayBloco, dayName);
+    if (!ep || !ep.aDuracao) {
+      return { left: offset, width, top: `${this.nowMinuteFraction() * 100}%` };
+    }
+
+    const parts = ep.aDuracao.split(':');
+    if (parts.length !== 3) {
+      return { left: offset, width, top: `${this.nowMinuteFraction() * 100}%` };
+    }
+    const eh = parseInt(parts[0]) || 0;
+    const em = parseInt(parts[1]) || 0;
+    const es = parseInt(parts[2]) || 0;
+    const episodeSec = eh * 3600 + em * 60 + es;
+    const topFreeSec = Math.floor((1800 - episodeSec) / 2);
+    const currentSecInSlot = (now.getMinutes() % 30) * 60 + now.getSeconds();
+    const topFreeFrac = topFreeSec / 1800;
+    const episodeFrac = episodeSec / 1800;
+    const rawFrac = currentSecInSlot / 1800;
+    const clampedFrac = Math.max(topFreeFrac, Math.min(topFreeFrac + episodeFrac, rawFrac));
+
+    return { left: offset, width, top: `${clampedFrac * 100}%` };
   }
 
   getTipoDinamico(bloco: BlocoOutput, dia: string): string {

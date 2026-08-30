@@ -9,6 +9,7 @@ interface EpisodioInfo {
   aTemporada: number | null;
   aParte: number | null;
   aTitulo: string | null;
+  aDuracao?: string | null;
 }
 
 @Component({
@@ -31,6 +32,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly videoUrl = signal<string | null>(null);
   readonly seekSeconds = signal(0);
   readonly isReprise = signal(false);
+  readonly waitSeconds = signal(0);
 
   private _timerInterval: any;
 
@@ -38,6 +40,85 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   private allEpisodiosMap = new Map<number, EpisodioInfo[]>();
   private blocos: BlocoOutput[] = [];
+
+  private parseDurationSec(duracao: string | null): number {
+    if (!duracao) return 0;
+    const p = duracao.split(':');
+    if (p.length !== 3) return 0;
+    return (parseInt(p[0]) || 0) * 3600 + (parseInt(p[1]) || 0) * 60 + (parseInt(p[2]) || 0);
+  }
+
+  private isMultiBloco(ep: EpisodioInfo | null): boolean {
+    if (!ep) return false;
+    const sec = this.parseDurationSec(ep.aDuracao ?? null);
+    if (sec <= 30 * 60) return false;
+    return this.countConsecutiveBlocosForProgram() > 1;
+  }
+
+  private countConsecutiveBlocosForProgram(): number {
+    const bloco = this.currentBloco();
+    if (!bloco?.aPrograma) return 1;
+    const now = this.currentTime();
+    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const dia = this.dias[dayIdx];
+    const sameDay = this.blocos
+      .filter(b => b.aDiaSemanaDesc === dia && b.aPrograma?.aId === bloco.aPrograma!.aId && b.aHorario)
+      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+    const idx = sameDay.findIndex(b => b.aId === bloco.aId);
+    if (idx < 0) return 1;
+    let count = 1;
+    for (let j = idx + 1; j < sameDay.length; j++) {
+      if (sameDay[j].aPrograma?.aId === bloco.aPrograma!.aId) count++;
+      else break;
+    }
+    for (let j = idx - 1; j >= 0; j--) {
+      if (sameDay[j].aPrograma?.aId === bloco.aPrograma!.aId) count++;
+      else break;
+    }
+    return count;
+  }
+
+  private slotsForEpisode(ep: EpisodioInfo): number {
+    const sec = this.parseDurationSec(ep.aDuracao ?? null);
+    return Math.max(1, Math.ceil(sec / (30 * 60)));
+  }
+
+  private slotIndex(): number {
+    if (!this.isMultiBloco(this.currentEpisodio())) return 0;
+    const bloco = this.currentBloco();
+    if (!bloco?.aPrograma) return 0;
+    const now = this.currentTime();
+    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const dia = this.dias[dayIdx];
+    const sameDay = this.blocos
+      .filter(b => b.aDiaSemanaDesc === dia && b.aPrograma?.aId === bloco.aPrograma!.aId && b.aHorario)
+      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+    const idx = sameDay.findIndex(b => b.aId === bloco.aId);
+    if (idx < 0) return 0;
+    let pos = 0;
+    for (let j = idx - 1; j >= 0; j--) {
+      if (sameDay[j].aPrograma?.aId === bloco.aPrograma!.aId) pos++;
+      else break;
+    }
+    return pos;
+  }
+
+  private getTopFreeSeconds(): number {
+    const ep = this.currentEpisodio();
+    if (!ep) return 0;
+    if (this.isMultiBloco(ep)) {
+      if (this.slotIndex() !== 0) return 0;
+      const totalSec = this.parseDurationSec(ep.aDuracao ?? null);
+      const slots = this.slotsForEpisode(ep);
+      const totalSlotSec = slots * 30 * 60;
+      const livre = Math.max(0, totalSlotSec - totalSec);
+      return Math.floor(livre / 2);
+    }
+    const sec = this.parseDurationSec(ep.aDuracao ?? null);
+    const livre = 30 * 60 - sec;
+    if (livre <= 0) return 0;
+    return Math.floor(livre / 2);
+  }
 
   ngOnInit(): void {
     this._timerInterval = setInterval(() => {
@@ -77,6 +158,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
                 aTemporada: row.aTemporada,
                 aParte: row.aParte,
                 aTitulo: row.aTitulo,
+                aDuracao: (row as any).aDuracao ?? null,
               });
             }
             for (const [pid, eps] of grouped) {
@@ -131,7 +213,6 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const blocoTotalSeconds = bh * 3600 + bm * 60;
     const currentTotalSeconds = h * 3600 + m * 60 + s;
     const elapsedSeconds = currentTotalSeconds - blocoTotalSeconds;
-    this.seekSeconds.set(elapsedSeconds > 0 ? elapsedSeconds : 0);
 
     const nowIdx = this.dias.indexOf(dia);
     const eps = bloco.aPrograma ? this.allEpisodiosMap.get(bloco.aPrograma.aId) : null;
@@ -141,6 +222,18 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     } else {
       this.currentEpisodio.set(null);
     }
+
+    const topFree = this.getTopFreeSeconds();
+    const adjustedSeek = elapsedSeconds - topFree;
+    this.seekSeconds.set(adjustedSeek > 0 ? adjustedSeek : 0);
+
+    if (adjustedSeek < 0) {
+      this.waitSeconds.set(Math.abs(adjustedSeek));
+      this.videoUrl.set(null);
+      return;
+    }
+
+    this.waitSeconds.set(0);
 
     const primeiroHorario = this.findFirstBlocoForProgram(bloco.aPrograma?.aId ?? 0, dia);
     this.isReprise.set(primeiroHorario !== bloco.aHorario?.substring(0, 5));

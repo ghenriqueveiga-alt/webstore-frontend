@@ -141,6 +141,12 @@
               <div class="grid-cell"
                    (click)="openCellModal(dia, horario)">
                 @for (bloco of blocosFor(dia, horario); track bloco.aId) {
+                  <div class="tempo-livre">
+                    <span class="text-[8px] font-bold uppercase tracking-widest"
+                          style="color: rgba(251,191,36,0.5);">Livre</span>
+                    <span class="text-[11px] font-mono font-bold"
+                          style="color: rgba(253,224,71,0.9);">{{ getTempoLivreTopo(bloco, dia) }}</span>
+                  </div>
                    <div class="bloco-card"
                        [attr.data-tipo]="getTipoDinamico(bloco, dia).includes('Inédito') ? 'inedito' : getTipoDinamico(bloco, dia).includes('Rep') ? 'reprise' : getTipoDinamico(bloco, dia).includes('Maratona') ? 'maratona' : getTipoDinamico(bloco, dia).includes('Especial') ? 'especial' : 'default'"
                        (click)="selectBloco(bloco, dia); $event.stopPropagation()">
@@ -189,16 +195,12 @@
                       }
                     </div>
                   </div>
-                  @if (getEpisodio(bloco, dia); as ep) {
-                    @if (ep.aDuracao) {
-                      <div class="tempo-livre">
-                        <span class="text-[8px] font-bold uppercase tracking-widest"
-                              style="color: rgba(251,191,36,0.5);">Livre</span>
-                        <span class="text-[11px] font-mono font-bold"
-                              style="color: rgba(253,224,71,0.9);">{{ getTempoLivre(ep) }}</span>
-                      </div>
-                    }
-                  }
+                  <div class="tempo-livre">
+                    <span class="text-[8px] font-bold uppercase tracking-widest"
+                          style="color: rgba(251,191,36,0.5);">Livre</span>
+                    <span class="text-[11px] font-mono font-bold"
+                          style="color: rgba(253,224,71,0.9);">{{ getTempoLivreBaixo(bloco, dia) }}</span>
+                  </div>
                 }
               </div>
             }
