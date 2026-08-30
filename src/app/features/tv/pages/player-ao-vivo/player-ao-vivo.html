@@ -1,0 +1,134 @@
+<div class="min-h-screen bg-gray-900 text-white">
+
+  <!-- Header -->
+  <div class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center gap-4">
+    <h1 class="text-lg font-bold">TV Ao Vivo</h1>
+    <div class="flex items-center gap-2 ml-auto">
+      <span class="text-xs text-gray-400">{{ nowTimeFormatted }}</span>
+      <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+      <a routerLink="/tv/grade"
+         class="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+        Grade &rarr;
+      </a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="p-12 text-center text-gray-400">Carregando...</div>
+  } @else if (!currentBloco()) {
+    <div class="p-12 text-center text-gray-500">
+      <span class="text-5xl block mb-3">📺</span>
+      <p class="text-lg">Nenhum programa no ar agora</p>
+      <p class="text-sm text-gray-600 mt-1">{{ nowTimeFormatted }} &middot; {{ currentFaixa }}</p>
+    </div>
+  } @else {
+    <div class="flex flex-col lg:flex-row h-[calc(100vh-65px)]">
+
+      <!-- Player -->
+      <div class="flex-1 bg-black flex items-center justify-center min-h-[300px]">
+        @if (videoUrl()) {
+          <video
+            #videoPlayer
+            [src]="videoUrl()"
+            (loadeddata)="onVideoLoaded()"
+            autoplay
+            preload="auto"
+            controls
+            class="w-full h-full max-h-[calc(100vh-65px)]">
+          </video>
+        } @else {
+          <div class="text-center text-gray-500">
+            <span class="text-6xl block mb-3">🎬</span>
+            <p>Carregando vídeo...</p>
+          </div>
+        }
+      </div>
+
+      <!-- Info Sidebar -->
+      <aside class="w-full lg:w-80 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700 p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
+
+        <!-- Status -->
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          <span class="text-xs font-bold text-red-400 uppercase tracking-wider">Ao Vivo</span>
+          <span class="text-xs text-gray-500 ml-auto">{{ nowTimeFormatted }}</span>
+        </div>
+
+        <!-- Program Card -->
+        @if (currentBloco()!.aPrograma) {
+          <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
+            <div class="flex items-center gap-3 mb-3">
+              @if (currentBloco()!.aPrograma!.aCapaUrl) {
+                <img [src]="currentBloco()!.aPrograma!.aCapaUrl" class="w-12 h-12 rounded-lg object-cover shrink-0" />
+              } @else {
+                <div class="w-12 h-12 rounded-lg bg-gray-700 flex items-center justify-center shrink-0">
+                  <span class="text-xl">🎬</span>
+                </div>
+              }
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-white truncate">{{ currentBloco()!.aPrograma!.aNome }}</p>
+                @if (currentBloco()!.aGrade) {
+                  <p class="text-[11px] text-gray-400">{{ currentBloco()!.aGrade!.aNome }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Episode Info -->
+            @if (currentEpisodio()) {
+              <div class="bg-gray-800 rounded px-3 py-2 mt-2">
+                <p class="text-xs text-gray-300">
+                  @if (currentEpisodio()!.aTemporada) {
+                    <span class="text-purple-400 font-mono font-bold">T{{ currentEpisodio()!.aTemporada!.toString().padStart(2, '0') }}</span>
+                  }
+                  @if (currentEpisodio()!.aNumero) {
+                    <span class="text-blue-400 font-mono font-bold">E{{ currentEpisodio()!.aNumero!.toString().padStart(2, '0') }}</span>
+                  }
+                  @if (currentEpisodio()!.aTitulo) {
+                    <span class="ml-1">{{ currentEpisodio()!.aTitulo }}</span>
+                  }
+                </p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Schedule Details -->
+        <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-gray-500">Horário</span>
+            <span class="text-gray-300 font-mono">{{ currentBloco()!.aHorario }}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-gray-500">Faixa</span>
+            <span class="text-gray-300">{{ currentFaixa }}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-gray-500">Tipo</span>
+            <span class="text-gray-300">{{ isReprise() ? 'Reprise' : 'Inédito' }}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-gray-500">Posição</span>
+            <span class="text-gray-300 font-mono">{{ formatTime(seekSeconds()) }} / --:--:--</span>
+          </div>
+        </div>
+
+        <!-- Mini Grade Preview -->
+        <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
+          <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-2">Próximos</p>
+          <div class="space-y-1">
+            @for (bloco of upcomingBlocos; track bloco.aId) {
+              <div class="flex items-center gap-2 text-xs py-1 px-2 rounded"
+                   [class.bg-blue-900/30]="bloco.aId === currentBloco()?.aId"
+                   [class.border]="bloco.aId === currentBloco()?.aId"
+                   [class.border-blue-700]="bloco.aId === currentBloco()?.aId">
+                <span class="text-gray-500 font-mono w-10 shrink-0">{{ bloco.aHorario?.substring(0, 5) }}</span>
+                <span class="text-gray-300 truncate">{{ bloco.aPrograma?.aNome }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  }
+</div>

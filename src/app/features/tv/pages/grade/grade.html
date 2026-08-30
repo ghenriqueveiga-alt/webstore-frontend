@@ -1,0 +1,414 @@
+<div class="min-h-screen" style="background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);">
+
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.9) 100%); border-bottom: 1px solid rgba(148,163,184,0.08); backdrop-filter: blur(12px);"
+       class="px-6 py-4 flex items-center gap-4">
+    <div class="flex items-center gap-3">
+      <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"
+           class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg">
+        <span class="text-lg">📋</span>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-tight">Grade de Programação</h1>
+        <p class="text-[10px] text-gray-500 mt-0.5">Gerencie a programação semanal</p>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <a routerLink="/tv/ao-vivo"
+         class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+         style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5;">
+        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+        Ao Vivo
+      </a>
+      <a routerLink="/tv"
+         class="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-white/5">
+        &larr; Programas
+      </a>
+    </div>
+  </div>
+
+  <!-- Grade Filter Tabs -->
+  @if (grades().length > 0) {
+    <div style="background: rgba(15,23,42,0.5); border-bottom: 1px solid rgba(148,163,184,0.06);"
+         class="px-6 py-2.5 flex items-center gap-2 overflow-x-auto">
+      <span class="text-[10px] text-gray-600 font-semibold uppercase tracking-widest mr-1 shrink-0">Filtrar</span>
+      <button
+        (click)="filterByGrade(null)"
+        class="filter-tab"
+        [class.active]="selectedGradeId() === null"
+        [class.inactive]="selectedGradeId() !== null">
+        Todas
+      </button>
+      @for (grade of grades(); track grade.aId) {
+        <button
+          (click)="filterByGrade(grade.aId)"
+          class="filter-tab"
+          [class.active]="selectedGradeId() === grade.aId"
+          [class.inactive]="selectedGradeId() !== grade.aId">
+          {{ grade.aNome }}
+          @if (grade.aGradeAtiva) {
+            <span class="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-green-400"></span>
+          }
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Pagination Tabs -->
+  @if (totalPages() > 1) {
+    <div style="background: rgba(15,23,42,0.35); border-bottom: 1px solid rgba(148,163,184,0.04);"
+         class="px-6 py-2 flex items-center gap-2 overflow-x-auto">
+      <span class="text-[10px] text-gray-600 font-semibold uppercase tracking-widest mr-1 shrink-0">Episodios</span>
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage() === 0"
+        class="filter-tab"
+        [class.inactive]="currentPage() > 0"
+        [style.opacity]="currentPage() === 0 ? 0.3 : 1">
+        &lsaquo;
+      </button>
+      @for (label of pageLabels; track label; let i = $index) {
+        <button
+          (click)="goToPage(i)"
+          class="filter-tab"
+          [class.active]="currentPage() === i"
+          [class.inactive]="currentPage() !== i">
+          {{ label }}
+        </button>
+      }
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage() >= totalPages() - 1"
+        class="filter-tab"
+        [class.inactive]="currentPage() < totalPages() - 1"
+        [style.opacity]="currentPage() >= totalPages() - 1 ? 0.3 : 1">
+        &rsaquo;
+      </button>
+    </div>
+  }
+
+  <!-- Calendar -->
+  @if (loading()) {
+    <div class="p-20 text-center">
+      <div class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl"
+           style="background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.08);">
+        <div class="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+        <span class="text-sm text-gray-400 font-medium">Carregando grade...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="p-4 overflow-x-auto">
+      <div class="min-w-[960px]">
+
+        <!-- Day Headers -->
+        <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2">
+          <div class="flex items-end px-2 pb-2">
+            <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Horário</span>
+          </div>
+          @for (dia of diasAbrev; track dia; let i = $index) {
+            <div class="day-header" [class.today]="isToday(dias[i])">
+              <span class="day-abbr" [class.text-blue-400]="isToday(dias[i])" [class.text-gray-300]="!isToday(dias[i])">{{ dia }}</span>
+              <div class="day-full text-gray-500">{{ dias[i] }}</div>
+              @if (isToday(dias[i])) {
+                <div class="mt-1.5 mx-auto w-1.5 h-1.5 rounded-full bg-blue-500 shadow-lg"
+                     style="box-shadow: 0 0 8px rgba(59,130,246,0.5);"></div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Hour Rows -->
+        @for (horario of horarios; track horario; let i = $index) {
+          @if (showFaixaHeader(horario, i)) {
+            <div class="faixa-header animate-fade-in">
+              <span class="text-base">{{ faixaIcon(horario) }}</span>
+              <span class="text-xs font-bold text-gray-200 tracking-wide">{{ faixaNome(horario) }}</span>
+              <div class="flex-1 h-px ml-2" style="background: linear-gradient(90deg, rgba(148,163,184,0.15), transparent);"></div>
+            </div>
+          }
+          <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2 relative mt-1">
+            @if (horario === nowTimeSlot()) {
+              <div class="now-line" [ngStyle]="nowLineStyle()"></div>
+            }
+
+            <!-- Hour Label -->
+            <div class="time-label">
+              <span class="text-xs font-mono font-bold text-gray-300 tracking-wider">{{ horario }}</span>
+            </div>
+
+            <!-- Day Cells -->
+            @for (dia of dias; track dia; let i = $index) {
+              <div class="grid-cell"
+                   (click)="openCellModal(dia, horario)">
+                @for (bloco of blocosFor(dia, horario); track bloco.aId) {
+                   <div class="bloco-card"
+                       [attr.data-tipo]="getTipoDinamico(bloco, dia).includes('Inédito') ? 'inedito' : getTipoDinamico(bloco, dia).includes('Rep') ? 'reprise' : getTipoDinamico(bloco, dia).includes('Maratona') ? 'maratona' : getTipoDinamico(bloco, dia).includes('Especial') ? 'especial' : 'default'"
+                       (click)="selectBloco(bloco, dia); $event.stopPropagation()">
+                    <!-- Left accent bar -->
+                    <div class="bloco-accent-bar"
+                         [class.accent-inedito]="getTipoDinamico(bloco, dia).includes('Inédito')"
+                         [class.accent-reprise]="getTipoDinamico(bloco, dia).includes('Rep')"
+                         [class.accent-maratona]="getTipoDinamico(bloco, dia).includes('Maratona')"
+                         [class.accent-especial]="getTipoDinamico(bloco, dia).includes('Especial')"
+                         [class.accent-default]="!getTipoDinamico(bloco, dia).includes('Inédito') && !getTipoDinamico(bloco, dia).includes('Rep') && !getTipoDinamico(bloco, dia).includes('Maratona') && !getTipoDinamico(bloco, dia).includes('Especial')">
+                    </div>
+                    <!-- Card body -->
+                    <div class="bloco-body">
+                      <!-- Program name -->
+                      <p class="text-[11px] font-semibold text-gray-100 leading-tight truncate mb-1"
+                         style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                        {{ bloco.aPrograma?.aNome }}
+                      </p>
+                      @if (getEpisodio(bloco, dia); as ep) {
+                        <!-- Episode info row -->
+                        <div class="flex items-center gap-1.5 mb-1.5">
+                          <span [innerHTML]="formatTxExPx(ep)" class="font-mono text-[10px]"></span>
+                          @if (ep.aTitulo) {
+                            <span class="text-[10px] text-gray-400 leading-tight truncate flex-1">{{ ep.aTitulo }}</span>
+                          }
+                        </div>
+                        <!-- Meta row -->
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="badge"
+                                [class.badge-inedito]="getTipoDinamico(bloco, dia).includes('Inédito')"
+                                [class.badge-reprise]="getTipoDinamico(bloco, dia).includes('Rep')"
+                                [class.badge-maratona]="getTipoDinamico(bloco, dia).includes('Maratona')"
+                                [class.badge-especial]="getTipoDinamico(bloco, dia).includes('Especial')"
+                                [class.badge-default]="!getTipoDinamico(bloco, dia).includes('Inédito') && !getTipoDinamico(bloco, dia).includes('Rep') && !getTipoDinamico(bloco, dia).includes('Maratona') && !getTipoDinamico(bloco, dia).includes('Especial')">
+                            {{ getTipoDinamico(bloco, dia) }}
+                          </span>
+                          @if (ep.aDuracao) {
+                            <span class="inline-flex items-center gap-0.5 text-[9px] font-mono text-gray-500">
+                              <svg class="w-2.5 h-2.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                              </svg>
+                              {{ formatDuracao(ep.aDuracao) }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  @if (getEpisodio(bloco, dia); as ep) {
+                    @if (ep.aDuracao) {
+                      <div class="tempo-livre">
+                        <span class="text-[8px] font-bold uppercase tracking-widest"
+                              style="color: rgba(251,191,36,0.5);">Livre</span>
+                        <span class="text-[11px] font-mono font-bold"
+                              style="color: rgba(253,224,71,0.9);">{{ getTempoLivre(ep) }}</span>
+                      </div>
+                    }
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- ── New Bloco Modal ── -->
+  @if (modalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-panel" (click)="$event.stopPropagation()">
+
+        <div class="px-5 py-4 flex items-center justify-between"
+             style="border-bottom: 1px solid rgba(148,163,184,0.08);">
+          <div class="flex items-center gap-3">
+            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center">
+              <span class="text-sm">➕</span>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-white">Novo Bloco</h2>
+              <p class="text-[11px] text-gray-500 mt-0.5">{{ modalDia() }} &middot; {{ modalHorario() }}</p>
+            </div>
+          </div>
+          <button (click)="closeModal()"
+                  class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all text-lg">
+            &times;
+          </button>
+        </div>
+
+        <div class="px-5 py-4 space-y-4">
+
+          <!-- Programa Search -->
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Programa</label>
+            <input
+              type="text"
+              [ngModel]="modalProgramaSearch()"
+              (ngModelChange)="searchProgramas($event)"
+              placeholder="Buscar programa..."
+              class="grade-input" />
+            @if (modalProgramas().length > 0 && !modalSelectedPrograma()) {
+              <div class="mt-1 max-h-40 overflow-y-auto search-dropdown">
+                @for (p of modalProgramas(); track p.aId) {
+                  <div class="search-dropdown-item"
+                       (click)="selectProgramaModal(p)">
+                    @if (p.aCapaUrl) {
+                      <img [src]="p.aCapaUrl" class="w-6 h-6 rounded-lg object-cover" />
+                    }
+                    {{ p.aNome }}
+                  </div>
+                }
+              </div>
+            }
+            @if (modalSelectedPrograma()) {
+              <div class="mt-1.5 flex items-center gap-2 px-3 py-2 rounded-lg"
+                   style="background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2);">
+                @if (modalSelectedPrograma()!.aCapaUrl) {
+                  <img [src]="modalSelectedPrograma()!.aCapaUrl" class="w-6 h-6 rounded-lg object-cover" />
+                }
+                <span class="text-sm text-blue-200 flex-1 font-medium">{{ modalSelectedPrograma()!.aNome }}</span>
+                <button (click)="modalSelectedPrograma.set(null); modalProgramaSearch.set(''); modalEpisodios.set([]); modalSelectedEpisodio.set(null)"
+                        class="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all text-xs">
+                  &times;
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Episódios -->
+          @if (modalSelectedPrograma() && modalEpisodios().length > 0) {
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Episódio</label>
+              <div class="max-h-48 overflow-y-auto search-dropdown">
+                @for (ep of modalEpisodios(); track ep.aId) {
+                  <div class="ep-item"
+                       [class.selected]="modalSelectedEpisodio()?.aId === ep.aId"
+                       [style.color]="modalSelectedEpisodio()?.aId !== ep.aId ? 'rgba(229,231,235,0.8)' : ''"
+                       (click)="modalSelectedEpisodio.set(ep)">
+                    @if (ep.aNumero) {
+                      <span class="text-xs font-mono font-bold">
+                        <span [innerHTML]="formatTxExPx(ep)" class="font-mono"></span>
+                      </span>
+                    }
+                    <span class="truncate text-[13px]">{{ ep.aTitulo }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Tipo Bloco -->
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Tipo</label>
+            <div class="flex gap-2">
+              @for (tipo of tiposBloco; track tipo.code) {
+                <button
+                  (click)="modalTipoCode.set(tipo.code)"
+                  class="tipo-btn"
+                  [class.active]="modalTipoCode() === tipo.code"
+                  [class.inactive]="modalTipoCode() !== tipo.code">
+                  {{ tipo.desc }}
+                </button>
+              }
+            </div>
+          </div>
+
+        </div>
+
+        <div class="px-5 py-3 flex justify-end gap-2"
+             style="border-top: 1px solid rgba(148,163,184,0.08);">
+          <button (click)="closeModal()" class="btn-secondary">Cancelar</button>
+          <button (click)="submitBloco()"
+                  [disabled]="!modalSelectedPrograma() || modalSaving()"
+                  class="btn-primary">
+            {{ modalSaving() ? 'Salvando...' : 'Adicionar' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- ── Detail Modal ── -->
+  @if (detailOpen() && detailBloco()) {
+    <div class="modal-backdrop" (click)="closeDetail()">
+      <div class="detail-panel" (click)="$event.stopPropagation()">
+
+        <div class="px-5 py-4 flex items-center justify-between"
+             style="border-bottom: 1px solid rgba(148,163,184,0.08);">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                 style="background: rgba(99,102,241,0.15);">
+              <span class="text-sm">📺</span>
+            </div>
+            <h2 class="text-sm font-bold text-white">Detalhes do Bloco</h2>
+          </div>
+          <button (click)="closeDetail()"
+                  class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all text-lg">
+            &times;
+          </button>
+        </div>
+
+        <div class="px-5 py-4 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge"
+                  [class.badge-inedito]="detailBloco()!.aTipoBlocoDesc?.includes('Inédito')"
+                  [class.badge-reprise]="detailBloco()!.aTipoBlocoDesc?.includes('Rep')"
+                  [class.badge-maratona]="detailBloco()!.aTipoBlocoDesc?.includes('Maratona')"
+                  [class.badge-especial]="detailBloco()!.aTipoBlocoDesc?.includes('Especial')"
+                  [class.badge-default]="!detailBloco()!.aTipoBlocoDesc?.includes('Inédito') && !detailBloco()!.aTipoBlocoDesc?.includes('Rep') && !detailBloco()!.aTipoBlocoDesc?.includes('Maratona') && !detailBloco()!.aTipoBlocoDesc?.includes('Especial')">
+              {{ detailBloco()!.aTipoBlocoDesc }}
+            </span>
+            <span class="text-[11px] text-gray-500">{{ detailDia() }}</span>
+            <span class="text-[11px] font-mono font-bold text-blue-400">{{ detailBloco()!.aHorario }}</span>
+          </div>
+
+          @if (detailBloco()!.aPrograma) {
+            <div class="flex items-center gap-3 p-3 rounded-xl"
+                 style="background: rgba(2,6,23,0.4); border: 1px solid rgba(148,163,184,0.06);">
+              @if (detailBloco()!.aPrograma!.aCapaUrl) {
+                <img [src]="detailBloco()!.aPrograma!.aCapaUrl" class="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              }
+              <div>
+                <p class="text-sm font-semibold text-white">{{ detailBloco()!.aPrograma!.aNome }}</p>
+                @if (detailBloco()!.aGrade) {
+                  <p class="text-[10px] text-gray-500 mt-0.5">{{ detailBloco()!.aGrade!.aNome }}</p>
+                }
+              </div>
+            </div>
+          }
+
+          @if (detailEpisodio()) {
+            <div class="detail-info-box space-y-1.5">
+              <p class="text-xs text-gray-300 flex items-center gap-2">
+                <span [innerHTML]="formatTxExPx(detailEpisodio()!)" class="font-mono"></span>
+                @if (detailEpisodio()!.aTitulo) {
+                  <span class="text-gray-400">{{ detailEpisodio()!.aTitulo }}</span>
+                }
+              </p>
+              @if (detailEpisodio()!.aDuracao) {
+                <p class="text-[11px] text-gray-500 flex items-center gap-1.5">
+                  <span>⏱</span> Duração: {{ formatDuracao(detailEpisodio()!.aDuracao) }}
+                </p>
+              }
+              @if (detailEpisodio()!.aParte != null && detailEpisodio()!.aDuracao) {
+                <p class="text-[11px] font-semibold flex items-center gap-1.5" style="color: rgba(251,191,36,0.8);">
+                  <span>⏳</span> Tempo livre: {{ getTempoLivre(detailEpisodio()!) }}
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="px-5 py-3 flex justify-between"
+             style="border-top: 1px solid rgba(148,163,184,0.08);">
+          <button (click)="deleteBloco()"
+                  [disabled]="detailDeleting()"
+                  class="btn-danger">
+            {{ detailDeleting() ? 'Excluindo...' : 'Excluir' }}
+          </button>
+          <button (click)="watchBloco()" class="btn-primary">
+            ▶ Assistir
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+</div>

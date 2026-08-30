@@ -1,0 +1,149 @@
+<div class="min-h-screen bg-gray-900 text-white">
+
+  <!-- Header -->
+  <div class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center gap-4">
+    @if (selectedPrograma()) {
+      <button
+        (click)="backToList()"
+        class="text-blue-400 hover:text-blue-300 cursor-pointer text-sm">
+        &larr; Programas
+      </button>
+      <h1 class="text-lg font-bold">{{ selectedPrograma()!.aNome }}</h1>
+    } @else {
+      <h1 class="text-lg font-bold">Programas</h1>
+      <a routerLink="/tv/grade"
+         class="ml-auto text-sm text-blue-400 hover:text-blue-300 transition-colors">
+        Grade de Programação &rarr;
+      </a>
+    }
+  </div>
+
+  <!-- Programs Grid -->
+  @if (!selectedPrograma()) {
+
+    <!-- Search -->
+    <div class="px-6 py-3 border-b border-gray-700">
+      <input
+        type="text"
+        placeholder="Buscar programa..."
+        [value]="searchText()"
+        (input)="onSearch($event)"
+        class="w-full max-w-md bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500" />
+    </div>
+
+    @if (loadingProgramas()) {
+      <div class="p-12 text-center text-gray-400">Carregando programas...</div>
+    } @else if (programas().length === 0) {
+      <div class="p-12 text-center text-gray-400">Nenhum programa encontrado.</div>
+    } @else {
+      <div class="p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        @for (prog of programas(); track prog.aId) {
+          <div
+            (click)="selectPrograma(prog)"
+            class="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group">
+            <div class="aspect-[2/3] bg-gray-700 flex items-center justify-center">
+              @if (prog.aCapaUrl) {
+                <img [src]="prog.aCapaUrl" [alt]="prog.aNome" class="w-full h-full object-cover" />
+              } @else {
+                <span class="text-5xl group-hover:scale-110 transition-transform">📺</span>
+              }
+            </div>
+            <div class="p-3">
+              <p class="text-sm font-medium truncate">{{ prog.aNome }}</p>
+              @if (prog.aTemporadas) {
+                <p class="text-xs text-gray-400 mt-0.5">{{ prog.aTemporadas }} temporada{{ prog.aTemporadas > 1 ? 's' : '' }}</p>
+              }
+              @if (prog.aGeneros && prog.aGeneros.length > 0) {
+                <div class="flex flex-wrap gap-1 mt-2">
+                  @for (gen of prog.aGeneros.slice(0, 2); track gen.aId) {
+                    <span class="text-[10px] bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded">{{ gen.aNome }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (programasTotal() > programasPerPage) {
+        <div class="flex items-center justify-center gap-2 px-6 py-4 border-t border-gray-700">
+          <button
+            (click)="prevPage()"
+            [disabled]="programasPage() === 0"
+            class="text-sm px-3 py-1 rounded text-gray-400 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed cursor-pointer">
+            &larr;
+          </button>
+          <span class="text-sm text-gray-400">
+            {{ programasPage() + 1 }} / {{ episodiosTotalPages }}
+          </span>
+          <button
+            (click)="nextPage()"
+            [disabled]="programasPage() >= episodiosTotalPages - 1"
+            class="text-sm px-3 py-1 rounded text-gray-400 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed cursor-pointer">
+            &rarr;
+          </button>
+        </div>
+      }
+    }
+  }
+
+  <!-- Episodes by Season -->
+  @if (selectedPrograma()) {
+    @if (loadingEpisodios()) {
+      <div class="p-12 text-center text-gray-400">Carregando episódios...</div>
+    } @else if (episodios().length === 0) {
+      <div class="p-12 text-center text-gray-400">Nenhum episódio encontrado.</div>
+    } @else {
+      <div class="p-6 space-y-8">
+        @for (group of seasonGroups; track group.season) {
+          <section>
+            <h2 class="text-base font-semibold text-gray-300 mb-3 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">
+                {{ group.season }}
+              </span>
+              Temporada {{ group.season }}@if (group.part > 0) { - Parte {{ group.part }} }
+              <span class="text-xs text-gray-500 font-normal">({{ group.episodes.length }} episódio{{ group.episodes.length > 1 ? 's' : '' }})</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              @for (ep of group.episodes; track ep.aId) {
+                <a
+                  [routerLink]="['/player']"
+                  [queryParams]="{ episodio: ep.aId }"
+                  class="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg p-3 hover:border-blue-500 hover:bg-gray-750 transition-colors cursor-pointer group">
+                  <div class="w-12 h-12 rounded bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
+                    @if (ep.aCapaUrl) {
+                      <img [src]="tvService.capaEpisodioUrl(ep.aId)" class="w-full h-full object-cover" />
+                    } @else {
+                      <span class="text-lg group-hover:scale-110 transition-transform">🎬</span>
+                    }
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">
+                      @if (ep.aTitulo) {
+                        {{ ep.aTitulo }}
+                      } @else {
+                        Ep. {{ ep.aNumero ?? '?' }}
+                      }
+                    </p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                      @if (ep.aNumero) {
+                        <span class="text-xs text-gray-500">#{{ ep.aNumero }}</span>
+                      }
+                      @if (hasFile(ep)) {
+                        <span class="text-[10px] bg-green-900 text-green-300 px-1.5 py-0.5 rounded">Arquivo</span>
+                      }
+                      @if (ep.aProcessado) {
+                        <span class="text-[10px] bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded">Processado</span>
+                      }
+                    </div>
+                  </div>
+                </a>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+  }
+</div>

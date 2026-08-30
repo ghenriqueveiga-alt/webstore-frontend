@@ -1,0 +1,294 @@
+<div class="flex h-screen bg-gray-900 text-white">
+
+  <!-- Sidebar -->
+  <aside class="w-96 bg-gray-800 border-r border-gray-700 flex flex-col shrink-0">
+
+    <!-- Header -->
+    <div class="px-4 py-3 border-b border-gray-700 flex items-center gap-3">
+      @if (selectedEpisodio()) {
+        <button
+          (click)="backToEpisodios()"
+          class="text-blue-400 hover:text-blue-300 cursor-pointer text-sm">
+          &larr;
+        </button>
+        <span class="text-sm font-medium text-gray-300 truncate">{{ selectedEpisodio()!.aPrograma?.aNome }}</span>
+      } @else {
+        <span class="text-sm font-medium">Episódios</span>
+      }
+    </div>
+
+    <!-- Search -->
+    <div class="px-3 py-2 border-b border-gray-700">
+      <input
+        type="text"
+        placeholder="Buscar..."
+        [value]="searchText()"
+        (input)="onSearch($event)"
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500" />
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto">
+
+      <!-- Episodes List -->
+      @if (!selectedEpisodio()) {
+        @if (loadingEpisodios()) {
+          <div class="p-6 text-center text-gray-400">Carregando...</div>
+        } @else if (episodios().length === 0) {
+          <div class="p-6 text-center text-gray-400">Nenhum episódio encontrado.</div>
+        } @else {
+          @for (ep of episodios(); track ep.aId) {
+            <div
+              (click)="selectEpisodio(ep)"
+              class="px-4 py-3 border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
+                  @if (ep.aCapaUrl) {
+                    <img [src]="playerService.capaEpisodioUrl(ep.aId)" class="w-full h-full object-cover" />
+                  } @else {
+                    <span class="text-base">🎬</span>
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium truncate">
+                    {{ ep.aPrograma?.aNome ?? 'Sem programa' }}
+                  </p>
+                  <p class="text-xs text-gray-400 truncate">
+                    @if (ep.aTitulo) {
+                      {{ ep.aTitulo }}
+                    } @else if (ep.aNumero) {
+                      E{{ ep.aNumero }}
+                    }
+                    @if (ep.aTemporada) {
+                      · T {{ ep.aTemporada }}
+                    }
+                  </p>
+                </div>
+                @if (ep.aArquivo) {
+                  <span class="text-xs shrink-0 px-1.5 py-0.5 rounded bg-gray-700 text-gray-400">🎬</span>
+                }
+                @if (ep.aProcessado) {
+                  <span class="text-xs shrink-0 text-green-400">✓</span>
+                }
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Pagination -->
+        @if (episodiosTotal() > episodiosPerPage) {
+          <div class="flex items-center justify-center gap-1 px-4 py-3 border-t border-gray-700">
+            <button
+              (click)="prevEpisodiosPage()"
+              [disabled]="episodiosPage() === 0"
+              class="text-xs px-2 py-1 rounded text-gray-400 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed cursor-pointer">
+              &larr;
+            </button>
+            @for (p of visiblePages; track p) {
+              <button
+                (click)="goToPage(p)"
+                [class.bg-blue-600]="p === episodiosPage()"
+                [class.text-white]="p === episodiosPage()"
+                [class.text-gray-400]="p !== episodiosPage()"
+                class="text-xs px-2 py-1 rounded hover:bg-gray-700 cursor-pointer">
+                {{ p + 1 }}
+              </button>
+            }
+            <button
+              (click)="nextEpisodiosPage()"
+              [disabled]="episodiosPage() >= episodiosTotalPages - 1"
+              class="text-xs px-2 py-1 rounded text-gray-400 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed cursor-pointer">
+              &rarr;
+            </button>
+          </div>
+        }
+      }
+
+      <!-- Cortes List -->
+      @if (selectedEpisodio()) {
+        <div class="px-4 py-2 border-b border-gray-700 bg-gray-750">
+          <p class="text-xs text-gray-400">
+            @if (selectedEpisodio()!.aTitulo) {
+              {{ selectedEpisodio()!.aTitulo }}
+            } @else if (selectedEpisodio()!.aNumero) {
+              E{{ selectedEpisodio()!.aNumero }}
+            }
+            @if (selectedEpisodio()!.aTemporada) {
+              · T {{ selectedEpisodio()!.aTemporada }}
+            }
+          </p>
+        </div>
+
+        @if (loadingCortes()) {
+          <div class="p-6 text-center text-gray-400">Carregando cortes...</div>
+        } @else if (cortesTempo().length === 0) {
+          <div class="p-6 text-center text-gray-400">Nenhum corte encontrado.</div>
+        } @else {
+          @for (corte of cortesTempo(); track corte.aId) {
+            <div class="px-4 py-3 border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    [class.bg-blue-600]="corte.aTipoCode === 'AB'"
+                    [class.bg-purple-600]="corte.aTipoCode === 'EN'"
+                    [class.bg-gray-600]="corte.aTipoCode !== 'AB' && corte.aTipoCode !== 'EN'">
+                    {{ corte.aTipoCode }}
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium">{{ corte.aTipoDesc }}</p>
+                    <p class="text-xs text-gray-400">
+                      {{ formatSeconds(corte.aInicioSegundos) }} → {{ formatSeconds(corte.aFimSegundos) }}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <span class="text-xs text-gray-500 mr-1">{{ corte.aDuracao }}</span>
+                  <button
+                    (click)="playFromCorte(corte); $event.stopPropagation()"
+                    class="w-7 h-7 rounded flex items-center justify-center text-green-400 hover:bg-gray-600 transition-colors cursor-pointer"
+                    title="Reproduzir">
+                    ▶
+                  </button>
+                  <button
+                    (click)="stopCorte(); $event.stopPropagation()"
+                    class="w-7 h-7 rounded flex items-center justify-center text-red-400 hover:bg-gray-600 transition-colors cursor-pointer"
+                    title="Parar">
+                    ■
+                  </button>
+                  <button
+                    (click)="deleteCorte(corte.aId); $event.stopPropagation()"
+                    class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-gray-600 transition-colors cursor-pointer"
+                    title="Excluir">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Video Player -->
+    @if (videoUrl()) {
+      <div class="bg-black flex-1 flex items-center justify-center min-h-0">
+        <video
+          #videoPlayer
+          [src]="videoUrl()"
+          (canplay)="onVideoLoaded()"
+          (pause)="onVideoPaused()"
+          preload="auto"
+          controls
+          class="w-full h-full max-h-[calc(100vh-80px)]">
+          Seu navegador não suporta a reprodução de vídeo.
+        </video>
+      </div>
+    } @else {
+      <div class="flex-1 flex items-center justify-center">
+        <div class="text-center text-gray-500">
+          <span class="text-7xl block mb-4">🎬</span>
+          <p class="text-xl">Selecione um episódio ou faça upload</p>
+        </div>
+      </div>
+    }
+
+    <!-- Cut Control Bar -->
+    @if (selectedEpisodio()?.aArquivo && videoUrl()) {
+      <div class="bg-gray-800 border-t border-gray-700 px-4 py-2 flex items-center gap-2">
+        <select
+          [value]="selectedCorteType()"
+          (change)="selectedCorteType.set($any($event.target).value)"
+          class="bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+          @for (ct of corteTypes; track ct.code) {
+            <option [value]="ct.code">{{ ct.label }}</option>
+          }
+        </select>
+
+        @if (corteInicio() === null) {
+          <button
+            (click)="startCorte()"
+            class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1.5 rounded transition-colors cursor-pointer">
+            Início
+          </button>
+        } @else {
+          <button
+            (click)="finishCorte()"
+            [disabled]="addingCorte()"
+            class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-medium px-3 py-1.5 rounded transition-colors cursor-pointer">
+            @if (addingCorte()) { Salvando... } @else { Finalizar }
+          </button>
+          <button
+            (click)="cancelCorte()"
+            [disabled]="addingCorte()"
+            class="bg-gray-600 hover:bg-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium px-3 py-1.5 rounded transition-colors cursor-pointer">
+            Cancelar
+          </button>
+          <span class="text-xs text-yellow-400">Início: {{ formatSeconds(corteInicio()!) }}</span>
+        }
+
+        @if (pausedAt() !== null && corteInicio() === null) {
+          <span class="text-xs text-gray-400">Pausado em {{ formatSeconds(pausedAt()!) }}</span>
+        }
+        @if (addCorteError()) {
+          <span class="text-xs text-red-400">{{ addCorteError() }}</span>
+        }
+      </div>
+    }
+
+    <!-- Upload Bar -->
+    <div class="bg-gray-800 border-t border-gray-700 px-6 py-3">
+      <div class="flex items-center gap-4">
+        <input
+          type="file"
+          accept="video/*"
+          (change)="onFileSelected($event)"
+          #fileInput
+          class="hidden" />
+
+        @if (!selectedFile()) {
+          <button
+            (click)="fileInput.click()"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer text-sm">
+            Selecionar arquivo
+          </button>
+        } @else {
+          <div class="flex-1 flex items-center gap-3 min-w-0">
+            <span class="text-sm text-gray-300 truncate">{{ selectedFile()!.name }}</span>
+            <span class="text-xs text-gray-500 shrink-0">{{ formatSize(selectedFile()!.size) }}</span>
+          </div>
+          <button
+            (click)="upload()"
+            [disabled]="uploading()"
+            class="bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer text-sm">
+            @if (uploading()) { Enviando... } @else { Upload }
+          </button>
+          <button
+            (click)="clearUpload()"
+            class="text-gray-400 hover:text-white text-sm cursor-pointer">
+            Trocar
+          </button>
+        }
+
+        @if (uploadSuccess()) {
+          <span class="text-sm text-green-400">✓ Enviado</span>
+        }
+        @if (uploadError()) {
+          <span class="text-sm text-red-400">{{ uploadError() }}</span>
+        }
+
+        @if (selectedFile() || videoUrl()) {
+          <button
+            (click)="clearAll()"
+            class="ml-auto text-gray-400 hover:text-red-400 text-sm cursor-pointer">
+            Limpar
+          </button>
+        }
+      </div>
+    </div>
+  </main>
+</div>
