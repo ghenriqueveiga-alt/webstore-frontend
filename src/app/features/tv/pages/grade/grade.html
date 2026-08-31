@@ -145,7 +145,7 @@
                     <span class="text-[8px] font-bold uppercase tracking-widest"
                           style="color: rgba(251,191,36,0.5);">Livre</span>
                     <span class="text-[11px] font-mono font-bold"
-                          style="color: rgba(253,224,71,0.9);">{{ getTempoLivreTopo(bloco, dia) }}</span>
+                          style="color: rgba(253,224,71,0.9);">{{ getTempoLivreTopo(bloco, dia, horario) }}</span>
                   </div>
                    <div class="bloco-card"
                        [attr.data-tipo]="getTipoDinamico(bloco, dia).includes('Inédito') ? 'inedito' : getTipoDinamico(bloco, dia).includes('Rep') ? 'reprise' : getTipoDinamico(bloco, dia).includes('Maratona') ? 'maratona' : getTipoDinamico(bloco, dia).includes('Especial') ? 'especial' : 'default'"
@@ -199,7 +199,7 @@
                     <span class="text-[8px] font-bold uppercase tracking-widest"
                           style="color: rgba(251,191,36,0.5);">Livre</span>
                     <span class="text-[11px] font-mono font-bold"
-                          style="color: rgba(253,224,71,0.9);">{{ getTempoLivreBaixo(bloco, dia) }}</span>
+                          style="color: rgba(253,224,71,0.9);">{{ getTempoLivreBaixo(bloco, dia, horario) }}</span>
                   </div>
                 }
               </div>
