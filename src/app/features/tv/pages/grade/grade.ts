@@ -236,6 +236,7 @@ export class Grade implements OnInit, OnDestroy {
           const slotsNeeded = Math.ceil(epSec / (30 * 60));
           for (let s = 1; s < slotsNeeded; s++) {
             const consumedTime = this.addTime(t, s * 30);
+            if (consumedTime <= t) continue;
             const consumedKey = `${d}|${consumedTime}`;
             this.consumedSlots.add(consumedKey);
             this.slotPositionMap.set(consumedKey, s);
@@ -311,20 +312,29 @@ export class Grade implements OnInit, OnDestroy {
           });
         }
 
-        let maxEps = 0;
+        let maxPages = 1;
         for (const [pid, eps] of grouped) {
           eps.sort((a, b) => ((a.aTemporada ?? 0) - (b.aTemporada ?? 0)) || ((a.aParte ?? 0) - (b.aParte ?? 0)) || ((a.aNumero ?? 0) - (b.aNumero ?? 0)));
           this.allEpisodiosMap.set(pid, eps);
-          if (eps.length > maxEps) maxEps = eps.length;
+          const diasQuePassa = this.diasProgramaMap.get(pid) ?? [];
+          const weekendDias = diasQuePassa.filter(d => d === 5 || d === 6);
+          let pageSize = this.EPISODES_PER_PAGE;
+          if (weekendDias.length > 0) {
+            let minSlots = Infinity;
+            for (const wd of weekendDias) {
+              const count = blocos.filter(b => b.aPrograma?.aId === pid && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(this.dias[wd])).length;
+              if (count > 0 && count < minSlots) minSlots = count;
+            }
+            if (minSlots < Infinity && minSlots > 0) pageSize = minSlots;
+          }
+          const progPages = Math.max(1, Math.ceil(eps.length / pageSize));
+          if (progPages > maxPages) maxPages = progPages;
         }
 
-        const pages = Math.max(1, Math.ceil(maxEps / this.EPISODES_PER_PAGE));
-        this.totalPages.set(pages);
+        this.totalPages.set(maxPages);
         this.pageLabels.length = 0;
-        for (let p = 0; p < pages; p++) {
-          const start = p * this.EPISODES_PER_PAGE + 1;
-          const end = Math.min((p + 1) * this.EPISODES_PER_PAGE, maxEps);
-          this.pageLabels.push(`Ep ${start.toString().padStart(2, '0')}-${end.toString().padStart(2, '0')}`);
+        for (let p = 0; p < maxPages; p++) {
+          this.pageLabels.push(`Página ${p + 1}`);
         }
 
         this.computeBaseRemovedDias();
@@ -405,6 +415,18 @@ export class Grade implements OnInit, OnDestroy {
     if (!diasQuePassa || diasQuePassa.length === 0) return null;
     const dayPosition = diasQuePassa.indexOf(diaIdx);
     if (dayPosition < 0) return null;
+    const diaName = this.dias[diaIdx];
+    if (this.isFimDeSemana(diaName)) {
+      const programaId = bloco.aPrograma.aId;
+      const sameDayBlocos = this.filteredBlocos
+        .filter(b => b.aPrograma?.aId === programaId && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(diaName))
+        .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      const numSlots = sameDayBlocos.length;
+      const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
+      const pageOffset = this.currentPage() * numSlots;
+      const finalIdx = (pageOffset + slotOffset) % eps.length;
+      return eps[finalIdx];
+    }
     const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
     const idx = (dayPosition + pageOffset) % eps.length;
     return eps[idx];
@@ -434,6 +456,18 @@ export class Grade implements OnInit, OnDestroy {
     const dayPosition = diasQuePassa.indexOf(diaIdx);
     if (dayPosition < 0) return null;
 
+    if (this.isFimDeSemana(dia)) {
+      const programaId = bloco.aPrograma.aId;
+      const sameDayBlocos = this.filteredBlocos
+        .filter(b => b.aPrograma?.aId === programaId && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia))
+        .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      const numSlots = sameDayBlocos.length;
+      const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
+      const pageOffset = this.currentPage() * numSlots;
+      const finalIdx = (pageOffset + slotOffset) % eps.length;
+      return eps[finalIdx];
+    }
+
     const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
     const globalIdx = dayPosition + pageOffset;
     const removedDias = this.programaRemovedDias.get(bloco.aPrograma.aId) ?? [];
@@ -460,8 +494,7 @@ export class Grade implements OnInit, OnDestroy {
         if (isConsumed) totalOffset++;
       }
     }
-    const finalIdx = ((globalIdx - totalOffset) % eps.length + eps.length) % eps.length;
-    return eps[finalIdx];
+    return eps[((globalIdx - totalOffset) % eps.length + eps.length) % eps.length];
   }
 
   blocosFor(dia: string, horario: string): BlocoOutput[] {
@@ -836,7 +869,6 @@ export class Grade implements OnInit, OnDestroy {
   getTipoDinamico(bloco: BlocoOutput, dia: string): string {
     const original = bloco.aTipoBlocoDesc ?? '';
     if (original.includes('Maratona') || original.includes('Especial')) return original;
-    if (original.includes('Reprise')) return 'Reprise';
 
     if (!bloco.aPrograma) return original || 'Inédito';
 
@@ -851,14 +883,46 @@ export class Grade implements OnInit, OnDestroy {
     const dayPosition = diasQuePassa.indexOf(diaIdx);
     if (dayPosition < 0) return original || 'Inédito';
 
+    const epThis = this.getEpisodio(bloco, dia);
+
+    if (this.isFimDeSemana(dia)) {
+      const currentTime = bloco.aHorario?.substring(0, 5) ?? '';
+      const mesmoDiaSameEp = this.filteredBlocos.some(b => {
+        if (b.aId === bloco.aId) return false;
+        if (b.aPrograma?.aId !== programaId) return false;
+        if (b.aDiaSemanaDesc !== dia) return false;
+        if ((b.aHorario?.substring(0, 5) ?? '') >= currentTime) return false;
+        const epB = this.getEpisodio(b, dia);
+        return epB && epThis && epB.aId === epThis.aId;
+      });
+      if (mesmoDiaSameEp) return 'Reprise';
+
+      const sameDayBlocos = this.filteredBlocos
+        .filter(b => b.aPrograma?.aId === programaId && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia))
+        .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      const numSlots = sameDayBlocos.length;
+
+      for (let p = 0; p < this.currentPage(); p++) {
+        const pOffset = p * numSlots;
+        for (let s = 0; s < numSlots; s++) {
+          const prevIdx = (pOffset + s) % eps.length;
+          if (epThis && eps[prevIdx]?.aId === epThis.aId) return 'Reprise';
+        }
+      }
+
+      return 'Inédito';
+    }
+
     const currentTime = bloco.aHorario?.substring(0, 5) ?? '';
-    const mesmoDia = this.filteredBlocos.some(b =>
-      b.aId !== bloco.aId &&
-      b.aPrograma?.aId === programaId &&
-      b.aDiaSemanaDesc === dia &&
-      (b.aHorario?.substring(0, 5) ?? '') < currentTime
-    );
-    if (mesmoDia) return 'Reprise';
+    const mesmoDiaSameEp = this.filteredBlocos.some(b => {
+      if (b.aId === bloco.aId) return false;
+      if (b.aPrograma?.aId !== programaId) return false;
+      if (b.aDiaSemanaDesc !== dia) return false;
+      if ((b.aHorario?.substring(0, 5) ?? '') >= currentTime) return false;
+      const epB = this.getEpisodio(b, dia);
+      return epB && epThis && epB.aId === epThis.aId;
+    });
+    if (mesmoDiaSameEp) return 'Reprise';
 
     const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
     const currentIdx = (dayPosition + pageOffset) % eps.length;
