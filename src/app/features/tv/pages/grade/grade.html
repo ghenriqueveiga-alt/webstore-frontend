@@ -87,6 +87,28 @@
     </div>
   }
 
+  <!-- Floating Page Nav -->
+  @if (totalPages() > 1) {
+    <button (click)="prevPage()" [disabled]="currentPage() === 0"
+      class="fixed left-2 top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all"
+      [style.opacity]="currentPage() === 0 ? 0.2 : 0.8"
+      [style.background]="currentPage() === 0 ? 'rgba(30,41,59,0.3)' : 'rgba(30,41,58,0.85)'"
+      [style.border]="'1px solid rgba(148,163,184,0.15)'"
+      [style.color]="'#e2e8f0'"
+      [style.pointerEvents]="currentPage() === 0 ? 'none' : 'auto'">
+      ‹
+    </button>
+    <button (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1"
+      class="fixed right-2 top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all"
+      [style.opacity]="currentPage() >= totalPages() - 1 ? 0.2 : 0.8"
+      [style.background]="currentPage() >= totalPages() - 1 ? 'rgba(30,41,59,0.3)' : 'rgba(30,41,58,0.85)'"
+      [style.border]="'1px solid rgba(148,163,184,0.15)'"
+      [style.color]="'#e2e8f0'"
+      [style.pointerEvents]="currentPage() >= totalPages() - 1 ? 'none' : 'auto'">
+      ›
+    </button>
+  }
+
   <!-- Calendar -->
   @if (loading()) {
     <div class="p-20 text-center">

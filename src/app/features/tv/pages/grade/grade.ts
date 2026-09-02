@@ -355,7 +355,6 @@ export class Grade implements OnInit, OnDestroy {
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages()) return;
     this.currentPage.set(page);
-    if (this.allEpisodiosMap.size > 0) this.computeEffectiveSchedule();
   }
 
   nextPage(): void {
@@ -368,8 +367,9 @@ export class Grade implements OnInit, OnDestroy {
 
   get filteredBlocos(): BlocoOutput[] {
     const gid = this.selectedGradeId();
-    if (gid === null) return this.blocos();
-    return this.blocos().filter(b => b.aGrade?.aId === gid);
+    let list = this.blocos().filter(b => b.aStatusCode === 'AT');
+    if (gid !== null) list = list.filter(b => b.aGrade?.aId === gid);
+    return list;
   }
 
   selectBloco(bloco: BlocoOutput, dia: string): void {
