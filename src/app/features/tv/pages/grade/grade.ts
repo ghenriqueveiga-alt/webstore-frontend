@@ -496,7 +496,7 @@ export class Grade implements OnInit, OnDestroy {
       const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
       if (slotOffset < 0) return null;
       const pageOffset = this.currentPage() * numSlots;
-      const shift = this.displacedEpisodeShift.get(bloco.aId) ?? 0;
+      const shift = bloco.aPrograma.aId === 13 ? 0 : (this.displacedEpisodeShift.get(bloco.aId) ?? 0);
       const finalIdx = (((pageOffset + slotOffset) - shift) % eps.length + eps.length) % eps.length;
       return eps[finalIdx];
     }

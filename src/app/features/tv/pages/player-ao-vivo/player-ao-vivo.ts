@@ -24,6 +24,16 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly playerService = inject(PlayerService);
 
   @ViewChild('videoPlayer') videoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('playerWrap') wrapRef!: ElementRef<HTMLDivElement>;
+
+  readonly isPlaying = signal(true);
+  readonly isMuted = signal(false);
+  readonly volume = signal(1);
+  readonly videoEnded = signal(false);
+
+  private tuneInAt = 0;
+  private liveBase = 0;
+  private suppressSeekGuard = false;
 
   readonly loading = signal(true);
   readonly currentTime = signal(new Date());
@@ -198,6 +208,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       this.currentBloco.set(null);
       this.currentEpisodio.set(null);
       this.videoUrl.set(null);
+      this.videoEnded.set(false);
       return;
     }
 
@@ -230,6 +241,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (adjustedSeek < 0) {
       this.waitSeconds.set(Math.abs(adjustedSeek));
       this.videoUrl.set(null);
+      this.videoEnded.set(false);
       return;
     }
 
@@ -275,15 +287,122 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   onVideoLoaded(): void {
     const video = this.videoRef?.nativeElement;
     if (video) {
+      this.videoEnded.set(false);
+      this.suppressSeekGuard = true;
+      this.liveBase = this.seekSeconds();
+      this.tuneInAt = Date.now();
       video.currentTime = this.seekSeconds();
+      video.muted = this.isMuted();
+      video.volume = this.volume();
       const playPromise = video.play();
       if (playPromise) {
         playPromise.catch(() => {
           video.muted = true;
+          this.isMuted.set(true);
           video.play().catch(() => {});
         });
       }
+      setTimeout(() => (this.suppressSeekGuard = false), 500);
     }
+  }
+
+  private liveEdge(): number {
+    const video = this.videoRef?.nativeElement;
+    const elapsed = (Date.now() - this.tuneInAt) / 1000;
+    let edge = this.liveBase + Math.max(0, elapsed);
+    if (video && isFinite(video.duration) && video.duration > 0) {
+      edge = Math.min(edge, video.duration);
+    }
+    return Math.max(0, edge);
+  }
+
+  onSeeking(): void {
+    const video = this.videoRef?.nativeElement;
+    if (!video || this.suppressSeekGuard || !this.tuneInAt) return;
+    const edge = this.liveEdge();
+    if (Math.abs(video.currentTime - edge) > 2) {
+      this.suppressSeekGuard = true;
+      try {
+        video.currentTime = edge;
+      } catch {}
+      setTimeout(() => (this.suppressSeekGuard = false), 400);
+    }
+  }
+
+  onPlayState(playing: boolean): void {
+    this.isPlaying.set(playing);
+    if (playing) {
+      const video = this.videoRef?.nativeElement;
+      if (video && this.tuneInAt && !this.suppressSeekGuard) {
+        const edge = this.liveEdge();
+        if (edge - video.currentTime > 2) {
+          this.suppressSeekGuard = true;
+          try {
+            video.currentTime = edge;
+          } catch {}
+          setTimeout(() => (this.suppressSeekGuard = false), 400);
+        }
+      }
+    }
+  }
+
+  onVideoEnded(): void {
+    this.videoEnded.set(true);
+    this.isPlaying.set(false);
+  }
+
+  get freeCountdownSec(): number {
+    const now = this.currentTime();
+    const intoSlot = (now.getMinutes() % 30) * 60 + now.getSeconds();
+    return Math.max(0, 30 * 60 - intoSlot);
+  }
+
+  togglePlay(): void {
+    const video = this.videoRef?.nativeElement;
+    if (!video || video.ended) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }
+
+  toggleMute(): void {
+    const video = this.videoRef?.nativeElement;
+    const muted = !this.isMuted();
+    this.isMuted.set(muted);
+    if (video) video.muted = muted;
+  }
+
+  onVolumeInput(event: Event): void {
+    const value = parseFloat((event.target as HTMLInputElement).value);
+    this.volume.set(value);
+    const video = this.videoRef?.nativeElement;
+    if (video) {
+      video.volume = value;
+      if (value > 0 && this.isMuted()) {
+        this.isMuted.set(false);
+        video.muted = false;
+      }
+    }
+  }
+
+  toggleFullscreen(): void {
+    const el = this.wrapRef?.nativeElement;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else if (el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {});
+    }
+  }
+
+  get liveElapsed(): number {
+    const bloco = this.currentBloco();
+    if (!bloco?.aHorario) return 0;
+    const now = this.currentTime();
+    const [bh, bm] = bloco.aHorario.substring(0, 5).split(':').map(Number);
+    return Math.max(0, now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() - (bh * 3600 + bm * 60));
   }
 
   get nowTimeFormatted(): string {

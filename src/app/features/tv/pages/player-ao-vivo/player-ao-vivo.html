@@ -33,15 +33,37 @@
             <p class="text-4xl font-mono font-bold text-yellow-400">{{ formatTime(waitSeconds()) }}</p>
           </div>
         } @else if (videoUrl()) {
-          <video
-            #videoPlayer
-            [src]="videoUrl()"
-            (loadeddata)="onVideoLoaded()"
-            autoplay
-            preload="auto"
-            controls
-            class="w-full h-full max-h-[calc(100vh-65px)]">
-          </video>
+          <div #playerWrap class="relative w-full h-full max-h-[calc(100vh-65px)] bg-black select-none" (contextmenu)="$event.preventDefault()">
+            <video
+              #videoPlayer
+              [src]="videoUrl()"
+              (loadeddata)="onVideoLoaded()"
+              (seeking)="onSeeking()"
+              (play)="onPlayState(true)"
+              (pause)="onPlayState(false)"
+              (ended)="onVideoEnded()"
+              autoplay
+              preload="auto"
+              playsinline
+              class="w-full h-full">
+            </video>
+            @if (videoEnded()) {
+              <div class="free-countdown-overlay">
+                <span class="text-5xl block mb-2">⏳</span>
+                <p class="text-sm text-gray-400 uppercase tracking-widest font-semibold">Tempo livre</p>
+                <p class="text-4xl font-mono font-bold text-yellow-400 my-1">{{ formatTime(freeCountdownSec) }}</p>
+                <p class="text-xs text-gray-500">até o fim do bloco</p>
+              </div>
+            }
+            <div class="live-controls">
+              <button (click)="togglePlay()" class="live-btn" [attr.aria-label]="isPlaying() ? 'Pausar' : 'Reproduzir'">{{ isPlaying() ? '⏸' : '▶' }}</button>
+              <span class="live-badge"><span class="live-dot"></span>AO VIVO</span>
+              <div class="flex-1"></div>
+              <button (click)="toggleMute()" class="live-btn" aria-label="Mudo">{{ isMuted() ? '🔇' : '🔊' }}</button>
+              <input type="range" min="0" max="1" step="0.05" [value]="volume()" (input)="onVolumeInput($event)" class="live-volume" aria-label="Volume" />
+              <button (click)="toggleFullscreen()" class="live-btn" aria-label="Tela cheia">⛶</button>
+            </div>
+          </div>
         } @else {
           <div class="text-center text-gray-500">
             <span class="text-6xl block mb-3">🎬</span>
@@ -117,7 +139,7 @@
             @if (waitSeconds() > 0) {
               <span class="text-yellow-400 font-mono">Aguardando {{ formatTime(waitSeconds()) }}</span>
             } @else {
-              <span class="text-gray-300 font-mono">{{ formatTime(seekSeconds()) }} / --:--:--</span>
+              <span class="text-gray-300 font-mono">{{ formatTime(liveElapsed) }} ao vivo</span>
             }
           </div>
         </div>
