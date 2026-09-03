@@ -56,6 +56,7 @@ export class Grade implements OnInit, OnDestroy {
   private slotPositionMap = new Map<string, number>();
   private episodioCache = new Map<number, EpisodioInfo | null>();
   private sameDayBlocosCache = new Map<string, BlocoOutput[]>();
+  private weekendBlocosCache = new Map<number, BlocoOutput[]>();
   private displacedEpisodeShift = new Map<number, number>();
 
   readonly modalOpen = signal(false);
@@ -351,12 +352,12 @@ export class Grade implements OnInit, OnDestroy {
           const weekendDias = diasQuePassa.filter(d => d === 5 || d === 6);
           let pageSize = this.EPISODES_PER_PAGE;
           if (weekendDias.length > 0) {
-            let minSlots = Infinity;
-            for (const wd of weekendDias) {
-              const count = blocos.filter(b => b.aPrograma?.aId === pid && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(this.dias[wd])).length;
-              if (count > 0 && count < minSlots) minSlots = count;
-            }
-            if (minSlots < Infinity && minSlots > 0) pageSize = minSlots;
+            const wkTotal = blocos.filter(b => {
+              if (b.aPrograma?.aId !== pid) return false;
+              const dn = this.normalizeDia(b.aDiaSemanaDesc ?? '');
+              return dn === this.normalizeDia(this.dias[5]) || dn === this.normalizeDia(this.dias[6]);
+            }).length;
+            if (wkTotal > 0) pageSize = wkTotal;
           }
           const progPages = Math.max(1, Math.ceil(eps.length / pageSize));
           if (progPages > maxPages) maxPages = progPages;
@@ -462,6 +463,29 @@ export class Grade implements OnInit, OnDestroy {
     for (const [key, list] of grouped) {
       this.sameDayBlocosCache.set(key, list.sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? '')));
     }
+    this.weekendBlocosCache.clear();
+    const wkGrouped = new Map<number, BlocoOutput[]>();
+    for (const b of this.filteredBlocos) {
+      if (!b.aPrograma || !b.aDiaSemanaDesc) continue;
+      const dIdx = diasIndice.get(b.aDiaSemanaDesc) ?? diasIndiceNorm.get(this.normalizeDia(b.aDiaSemanaDesc)) ?? -1;
+      if (dIdx !== 5 && dIdx !== 6) continue;
+      const pid = b.aPrograma.aId;
+      if (!wkGrouped.has(pid)) wkGrouped.set(pid, []);
+      wkGrouped.get(pid)!.push(b);
+    }
+    const dayOf = (b: BlocoOutput): number =>
+      diasIndice.get(b.aDiaSemanaDesc ?? '') ?? diasIndiceNorm.get(this.normalizeDia(b.aDiaSemanaDesc ?? '')) ?? -1;
+    for (const [pid, list] of wkGrouped) {
+      list.sort((a, b) => dayOf(a) - dayOf(b) || (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      this.weekendBlocosCache.set(pid, list);
+    }
+  }
+
+  private weekendBlocosFor(programaId: number, diaIdx: number): BlocoOutput[] {
+    const wk = this.weekendBlocosCache.get(programaId);
+    if (wk && wk.length > 0) return wk;
+    const cacheKey = `${programaId}|${diaIdx}`;
+    return this.sameDayBlocosCache.get(cacheKey) ?? [];
   }
 
   private rebuildEpisodioCache(): void {
@@ -489,8 +513,7 @@ export class Grade implements OnInit, OnDestroy {
 
     if (this.isFimDeSemana(this.dias[diaIdx])) {
       const programaId = bloco.aPrograma.aId;
-      const cacheKey = `${programaId}|${diaIdx}`;
-      const sameDayBlocos = this.sameDayBlocosCache.get(cacheKey) ?? [];
+      const sameDayBlocos = this.weekendBlocosFor(programaId, diaIdx);
       const numSlots = sameDayBlocos.length;
       if (numSlots === 0) return null;
       const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
@@ -546,9 +569,7 @@ export class Grade implements OnInit, OnDestroy {
     const diaName = this.dias[diaIdx];
     if (this.isFimDeSemana(diaName)) {
       const programaId = bloco.aPrograma.aId;
-      const sameDayBlocos = this.filteredBlocos
-        .filter(b => b.aPrograma?.aId === programaId && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(diaName))
-        .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      const sameDayBlocos = this.weekendBlocosFor(programaId, diaIdx);
       const numSlots = sameDayBlocos.length;
       const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
       const pageOffset = this.currentPage() * numSlots;
@@ -990,15 +1011,16 @@ export class Grade implements OnInit, OnDestroy {
       });
       if (mesmoDiaSameEp) return 'Reprise';
 
-      const sameDayBlocos = this.filteredBlocos
-        .filter(b => b.aPrograma?.aId === programaId && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia))
-        .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
-      const numSlots = sameDayBlocos.length;
+      const diaIdxWk = this.dias.indexOf(dia);
+      const wkBlocos = this.weekendBlocosFor(programaId, diaIdxWk);
+      const numSlots = wkBlocos.length;
 
       for (let p = 0; p < this.currentPage(); p++) {
         const pOffset = p * numSlots;
         for (let s = 0; s < numSlots; s++) {
-          const prevIdx = (pOffset + s) % eps.length;
+          const slotBloco = wkBlocos[s];
+          const sh = programaId === 13 ? 0 : (this.displacedEpisodeShift.get(slotBloco.aId) ?? 0);
+          const prevIdx = (((pOffset + s) - sh) % eps.length + eps.length) % eps.length;
           if (epThis && eps[prevIdx]?.aId === epThis.aId) return 'Reprise';
         }
       }
