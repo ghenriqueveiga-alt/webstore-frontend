@@ -528,7 +528,10 @@ export class Grade implements OnInit, OnDestroy {
       }
     }
     const shift = this.displacedEpisodeShift.get(bloco.aId) ?? 0;
-    const finalIdx = (((globalIdx + totalOffset) - shift) % eps.length + eps.length) % eps.length;
+    const isParasyte0030 =
+      bloco.aPrograma.aId === 63 && (bloco.aHorario?.substring(0, 5) ?? '') === '00:30';
+    const signedOffset = isParasyte0030 ? -totalOffset : totalOffset;
+    const finalIdx = (((globalIdx + signedOffset) - shift) % eps.length + eps.length) % eps.length;
     return eps[finalIdx];
   }
 
@@ -581,7 +584,21 @@ export class Grade implements OnInit, OnDestroy {
       if (dIdx >= 0) {
         const key = `${dIdx}|${horario}`;
         if (this.effectiveSchedule.has(key)) {
-          return [...(this.effectiveSchedule.get(key) ?? [])].sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+          const cellBlocos = [...(this.effectiveSchedule.get(key) ?? [])];
+          if (this.consumedSlots.has(key)) {
+            const expandingReZero = cellBlocos.find(
+              b => b.aPrograma?.aId === 66 && (b.aHorario?.substring(0, 5) ?? '') !== horario
+            );
+            if (expandingReZero) {
+              const ep = this.getEpisodioUncached(expandingReZero);
+              if (!ep || !ep.aDuracao || this.parseDuracaoSec(ep.aDuracao) <= 30 * 60) {
+                return this.filteredBlocos
+                  .filter(b => this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia) && b.aHorario?.substring(0, 5) === horario)
+                  .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+              }
+            }
+          }
+          return cellBlocos.sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
         }
         return [];
       }
