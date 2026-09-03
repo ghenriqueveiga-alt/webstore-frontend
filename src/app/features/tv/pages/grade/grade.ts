@@ -56,6 +56,7 @@ export class Grade implements OnInit, OnDestroy {
   private slotPositionMap = new Map<string, number>();
   private episodioCache = new Map<number, EpisodioInfo | null>();
   private sameDayBlocosCache = new Map<string, BlocoOutput[]>();
+  private displacedEpisodeShift = new Map<number, number>();
 
   readonly modalOpen = signal(false);
   readonly modalDia = signal('');
@@ -201,6 +202,7 @@ export class Grade implements OnInit, OnDestroy {
     this.effectiveSchedule.clear();
     this.consumedSlots.clear();
     this.slotPositionMap.clear();
+    this.displacedEpisodeShift.clear();
 
     const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
     const diasIndiceNorm = new Map(this.dias.map((d, i) => [this.normalizeDia(d), i]));
@@ -221,6 +223,8 @@ export class Grade implements OnInit, OnDestroy {
 
     const sortedHorarios = [...this.horarios].sort((a, b) => a.localeCompare(b));
 
+    const displacedByDay = new Map<number, { bloco: BlocoOutput; fromTime: string }[]>();
+
     for (let d = 0; d < 7; d++) {
       for (const t of sortedHorarios) {
         const key = `${d}|${t}`;
@@ -230,7 +234,7 @@ export class Grade implements OnInit, OnDestroy {
         for (const bloco of [...cellBlocos]) {
           if (bloco.aPrograma?.aId === 35) continue;
           if (bloco.aHorario?.substring(0, 5) !== t) continue;
-          const ep = this.getEpisodioRaw(bloco, d);
+          const ep = this.getEpisodioBase(bloco, d);
           if (!ep || !ep.aDuracao) continue;
           const epSec = this.parseDuracaoSec(ep.aDuracao);
           if (epSec <= 30 * 60) continue;
@@ -258,9 +262,34 @@ export class Grade implements OnInit, OnDestroy {
                 const curList = this.effectiveSchedule.get(consumedKey)!;
                 const idx = curList.findIndex(b => b.aId === displaced.aId);
                 if (idx >= 0) curList.splice(idx, 1);
+                if (!displacedByDay.has(d)) displacedByDay.set(d, []);
+                displacedByDay.get(d)!.push({ bloco: displaced, fromTime: consumedTime });
               }
             }
           }
+        }
+      }
+    }
+
+    for (const [d, displacedList] of displacedByDay) {
+      for (const { bloco: displaced, fromTime } of displacedList) {
+        if (this.displacedEpisodeShift.has(displaced.aId)) continue;
+        let shift = 0;
+        let nextTime = fromTime;
+        for (let attempt = 0; attempt < 20; attempt++) {
+          nextTime = this.addTime(nextTime, 30);
+          shift++;
+          const nextKey = `${d}|${nextTime}`;
+          if (this.consumedSlots.has(nextKey)) continue;
+          if (!this.effectiveSchedule.has(nextKey)) {
+            this.effectiveSchedule.set(nextKey, []);
+          }
+          const existingList = this.effectiveSchedule.get(nextKey)!;
+          if (existingList.length > 0) continue;
+          existingList.push(displaced);
+          this.slotPositionMap.set(nextKey, shift);
+          this.displacedEpisodeShift.set(displaced.aId, shift);
+          break;
         }
       }
     }
@@ -340,8 +369,8 @@ export class Grade implements OnInit, OnDestroy {
         }
 
         this.computeBaseRemovedDias();
-        this.computeEffectiveSchedule();
         this.buildSameDayBlocosCache();
+        this.computeEffectiveSchedule();
         this.rebuildEpisodioCache();
         this.loading.set(false);
       },
@@ -354,8 +383,9 @@ export class Grade implements OnInit, OnDestroy {
   filterByGrade(gradeId: number | null): void {
     this.selectedGradeId.set(gradeId);
     if (this.allEpisodiosMap.size > 0) {
-      this.computeEffectiveSchedule();
+      this.computeBaseRemovedDias();
       this.buildSameDayBlocosCache();
+      this.computeEffectiveSchedule();
       this.rebuildEpisodioCache();
     }
   }
@@ -466,7 +496,8 @@ export class Grade implements OnInit, OnDestroy {
       const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
       if (slotOffset < 0) return null;
       const pageOffset = this.currentPage() * numSlots;
-      const finalIdx = (pageOffset + slotOffset) % eps.length;
+      const shift = this.displacedEpisodeShift.get(bloco.aId) ?? 0;
+      const finalIdx = (((pageOffset + slotOffset) - shift) % eps.length + eps.length) % eps.length;
       return eps[finalIdx];
     }
 
@@ -496,7 +527,8 @@ export class Grade implements OnInit, OnDestroy {
         if (isConsumed) totalOffset++;
       }
     }
-    const finalIdx = (globalIdx + totalOffset) % eps.length;
+    const shift = this.displacedEpisodeShift.get(bloco.aId) ?? 0;
+    const finalIdx = (((globalIdx + totalOffset) - shift) % eps.length + eps.length) % eps.length;
     return eps[finalIdx];
   }
 
