@@ -1,0 +1,163 @@
+<div class="min-h-screen" style="background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);">
+
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.9) 100%); border-bottom: 1px solid rgba(148,163,184,0.08); backdrop-filter: blur(12px);"
+       class="px-6 py-4 flex items-center gap-4">
+    <div class="flex items-center gap-3">
+      <div style="background: linear-gradient(135deg, #f59e0b, #ef4444);"
+           class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg">
+        <span class="text-lg">⏳</span>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-tight">Tempo Livre por Bloco</h1>
+        <p class="text-[10px] text-gray-500 mt-0.5">Visualize o tempo livre de cada bloco da grade</p>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <a routerLink="/tv/grade"
+         class="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-white/5">
+        &larr; Grade
+      </a>
+      <a routerLink="/tv/ao-vivo"
+         class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+         style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5;">
+        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+        Ao Vivo
+      </a>
+    </div>
+  </div>
+
+  <!-- Pagination Tabs -->
+  @if (totalPages() > 1) {
+    <div style="background: rgba(15,23,42,0.35); border-bottom: 1px solid rgba(148,163,184,0.04);"
+         class="px-6 py-2 flex items-center gap-2 overflow-x-auto">
+      <span class="text-[10px] text-gray-600 font-semibold uppercase tracking-widest mr-1 shrink-0">Episodios</span>
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage() === 0"
+        class="filter-tab"
+        [style.opacity]="currentPage() === 0 ? 0.3 : 1">
+        &lsaquo;
+      </button>
+      @for (label of pageLabels; track label; let i = $index) {
+        <button
+          (click)="goToPage(i)"
+          class="filter-tab"
+          [class.active]="currentPage() === i"
+          [class.inactive]="currentPage() !== i">
+          {{ label }}
+        </button>
+      }
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage() >= totalPages() - 1"
+        class="filter-tab"
+        [style.opacity]="currentPage() >= totalPages() - 1 ? 0.3 : 1">
+        &rsaquo;
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="p-20 text-center">
+      <div class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl"
+           style="background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.08);">
+        <div class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+        <span class="text-sm text-gray-400 font-medium">Carregando tempos livres...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="p-4 max-w-[1200px] mx-auto">
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+        <div class="summary-card">
+          <p class="summary-label">Blocos</p>
+          <p class="summary-value">{{ rows.length }}</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">Tempo livre total</p>
+          <p class="summary-value text-yellow-300 font-mono">{{ formatSec(totalLivreSec) }}</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">Multibloco (&gt;30min)</p>
+          <p class="summary-value">{{ multiCount }}</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">Página</p>
+          <p class="summary-value">{{ currentPage() + 1 }} / {{ totalPages() }}</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <input
+          type="text"
+          [value]="searchText()"
+          (input)="onSearch($event)"
+          placeholder="Buscar programa ou episódio..."
+          class="grade-input" />
+        <select [value]="selectedDay()" (change)="onDayChange($event)" class="grade-input">
+          <option value="">Todos os dias</option>
+          @for (d of dias; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+        <label class="flex items-center gap-2 text-xs text-gray-400 px-3 py-2 rounded-lg cursor-pointer"
+               style="background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.08);">
+          <input type="checkbox" [checked]="onlyMulti()" (change)="toggleMulti($event)" class="accent-amber-400" />
+          Só multibloco
+        </label>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="tl-table">
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>Hora</th>
+              <th>Programa</th>
+              <th>Episódio</th>
+              <th>Duração</th>
+              <th title="Tempo livre no topo (acima do bloco)">Livre topo</th>
+              <th title="Tempo livre na base (abaixo do bloco)">Livre base</th>
+              <th>Total livre</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows; track r.blocoId) {
+              <tr [class.multi-row]="r.isMulti">
+                <td class="whitespace-nowrap">{{ r.dia }}</td>
+                <td class="font-mono font-bold">{{ r.horario }}</td>
+                <td class="font-semibold">{{ r.programa }}</td>
+                <td>
+                  <span class="font-mono text-[11px] text-blue-300">{{ epLabel(r.episodio) }}</span>
+                  @if (r.episodio?.aTitulo) {
+                    <span class="text-gray-400 text-[11px] ml-1">{{ r.episodio!.aTitulo }}</span>
+                  }
+                </td>
+                <td class="font-mono">{{ formatDuracao(r.episodio?.aDuracao ?? null) }}</td>
+                <td class="font-mono text-yellow-200">{{ formatSec(r.topoSec) }}</td>
+                <td class="font-mono text-yellow-200">{{ formatSec(r.baixoSec) }}</td>
+                <td class="font-mono font-bold text-yellow-300">{{ formatSec(r.totalSec) }}</td>
+                <td>
+                  @if (r.isMulti) {
+                    <span class="badge-multi">{{ r.slots }} blocos</span>
+                  }
+                </td>
+              </tr>
+            }
+            @if (rows.length === 0) {
+              <tr>
+                <td colspan="9" class="text-center text-gray-500 py-8">Nenhum bloco encontrado</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  }
+</div>
