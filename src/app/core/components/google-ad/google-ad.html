@@ -2,8 +2,8 @@
   @if (configured()) {
     <ins class="adsbygoogle"
          style="display:block"
-         [attr.data-ad-client]="adClient"
-         [attr.data-ad-slot]="adSlot"
+         [attr.data-ad-client]="adClient || environment.adsense.publisherId"
+         [attr.data-ad-slot]="adSlot || environment.adsense.slotSideRail"
          data-ad-format="auto"
          data-full-width-responsive="true"></ins>
   } @else {

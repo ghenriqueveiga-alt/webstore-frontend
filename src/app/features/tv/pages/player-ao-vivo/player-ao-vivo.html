@@ -17,7 +17,7 @@
   </div>
 
   <div class="ads-layout">
-    <!-- Google AdSense: preencha adClient (ca-pub-...) e adSlot para ativar -->
+    <!-- Google AdSense: configure publisherId e slotSideRail em environments/environment.ts -->
     <app-google-ad class="ad-rail ad-rail-left" label="Anúncio" />
 
   @if (loading()) {
@@ -45,7 +45,6 @@
         </div>
         <div class="tv-bezel-bottom"><span class="tv-led standby"></span></div>
       </div>
-      <div class="tv-stand"><div class="tv-neck"></div><div class="tv-base"></div></div>
     </div>
   } @else {
     <div class="tv-stage">
@@ -92,7 +91,6 @@
       <div class="tv-set">
         <div class="tv-bezel-top">
           <span class="tv-cam"></span>
-          <span class="tv-brand-top">HVS &middot; TV</span>
         </div>
 
         <div #playerWrap class="tv-screen select-none" (contextmenu)="$event.preventDefault()" (mousemove)="onFsMouseMove($event)" (mouseleave)="onFsMouseLeave()" (click)="onScreenClick()" [class.hide-cursor]="isFullscreen() && !showFsUi()">
@@ -189,10 +187,8 @@
 
         <div class="tv-bezel-bottom">
           <span class="tv-led"></span>
-          <span class="tv-brand-bottom">HVS</span>
         </div>
       </div>
-      <div class="tv-stand"><div class="tv-neck"></div><div class="tv-base"></div></div>
 
     </div>
     <div class="tv-below">
@@ -337,7 +333,7 @@
 
     </div>
   }
-    <!-- Google AdSense: preencha adClient (ca-pub-...) e adSlot para ativar -->
+    <!-- Google AdSense: configure publisherId e slotSideRail em environments/environment.ts -->
     <app-google-ad class="ad-rail ad-rail-right" label="Anúncio" />
   </div>
 </div>

@@ -5,35 +5,43 @@
     radial-gradient(1200px 500px at 50% -10%, rgba(59, 130, 246, 0.12), transparent 60%),
     radial-gradient(900px 600px at 85% 110%, rgba(239, 68, 68, 0.07), transparent 60%),
     linear-gradient(180deg, #05070f 0%, #0b1220 60%, #05070f 100%);
-  padding-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
 
 .tv-topbar {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.875rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(3, 5, 10, 0.7);
   backdrop-filter: blur(8px);
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
+  flex-shrink: 0;
 }
 
 .tv-stage {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0.75rem 1rem 0;
+  padding: 1rem 1.25rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
+  min-height: 0;
 }
 
 .ads-layout {
   display: grid;
   grid-template-columns: 1fr;
   justify-items: center;
+  flex: 1;
+  min-height: 0;
+  overflow: visible;
 }
 
 .ads-layout .tv-stage {
@@ -48,7 +56,7 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem 0;
+  padding: 1.25rem 1.25rem 0;
 }
 
 @media (min-width: 1400px) {
@@ -69,7 +77,7 @@
   .tv-below {
     grid-column: 2;
     grid-row: 2;
-    padding: 1rem 1rem 0;
+    padding: 1.25rem 1.25rem 0;
   }
 
   .ad-rail-left {
@@ -97,11 +105,18 @@
   background: linear-gradient(180deg, #17171b 0%, #0a0a0d 100%);
   border: 1px solid #2a2a31;
   border-radius: 1.25rem;
-  padding: 0.625rem;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0;
   box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.7),
     0 0 0 1px rgba(0, 0, 0, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  flex: 1;
+  min-height: 0;
 }
 
 .tv-bezel-top,
@@ -112,6 +127,7 @@
   gap: 0.5rem;
   padding: 0.375rem 0.5rem;
   position: relative;
+  width: 100%;
 }
 
 .tv-cam {
@@ -125,21 +141,6 @@
   border-radius: 9999px;
   background: radial-gradient(circle at 35% 35%, #1e3a5f, #000);
   box-shadow: inset 0 0 2px rgba(80, 140, 255, 0.6);
-}
-
-.tv-brand-top {
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.35em;
-  color: #52525b;
-}
-
-.tv-brand-bottom {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.4em;
-  color: #71717a;
-  text-indent: 0.4em;
 }
 
 .tv-led {
@@ -159,13 +160,23 @@
 
 .tv-screen {
   position: relative;
-  width: min(100%, calc(62vh * 16 / 9));
+  width: min(100%, 100%);
   aspect-ratio: 16 / 9;
   margin-inline: auto;
   background: #000;
   border-radius: 0.625rem;
   overflow: hidden;
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.9);
+  align-self: stretch;
+  max-height: 100%;
+  height: 100%;
+}
+
+.tv-bezel-bottom {
+  min-height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 0.375rem;
 }
 
 .tv-video {
@@ -288,38 +299,16 @@
   text-shadow: 1px 1px 0 #000;
 }
 
-/* ============ STAND ============ */
-
-.tv-stand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: -0.25rem;
-}
-
-.tv-neck {
-  width: 4.5rem;
-  height: 1.75rem;
-  background: linear-gradient(180deg, #26262c, #101014);
-  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
-}
-
-.tv-base {
-  width: 15rem;
-  height: 0.875rem;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #2e2e35, #0c0c0f);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
-}
-
 /* ============ EPG BAR ============ */
 
 .epg-bar {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
@@ -332,7 +321,7 @@
   background: rgba(17, 24, 39, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: 0.875rem;
-  padding: 0.5rem 1.125rem;
+  padding: 0.75rem 1.25rem;
   backdrop-filter: blur(6px);
 }
 
@@ -357,8 +346,8 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
+  margin-top: 0;
 }
 
 @media (min-width: 1024px) {
@@ -371,7 +360,7 @@
   background: rgba(17, 24, 39, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: 0.875rem;
-  padding: 1.125rem 1.25rem;
+  padding: 1.25rem 1.5rem;
   backdrop-filter: blur(6px);
 }
 
@@ -537,6 +526,14 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(6px);
   transition: opacity 0.3s;
+}
+
+@media (max-width: 640px) {
+  .tv-screen {
+    width: 100%;
+    max-height: 100%;
+    aspect-ratio: unset;
+  }
 }
 
 .osd-top.fs-hidden,
