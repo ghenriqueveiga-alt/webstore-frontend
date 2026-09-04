@@ -27,10 +27,28 @@
       <!-- Player -->
       <div class="flex-1 bg-black flex items-center justify-center min-h-[300px]">
         @if (waitSeconds() > 0) {
-          <div class="text-center">
+          <div class="text-center px-6">
             <span class="text-6xl block mb-3">⏳</span>
             <p class="text-lg text-gray-300 mb-2">Episódio começa em</p>
             <p class="text-4xl font-mono font-bold text-yellow-400">{{ formatTime(waitSeconds()) }}</p>
+            <div class="slate slate-wait">
+              <p class="slate-kicker">A seguir</p>
+              <p class="slate-title">{{ currentBloco()?.aPrograma?.aNome ?? 'Próximo programa' }} <span class="slate-hora">{{ currentBloco()?.aHorario?.substring(0, 5) }}</span></p>
+              @if (currentEpisodio()) {
+                <p class="slate-ep">
+                  @if (currentEpisodio()!.aTemporada) {
+                    <span class="font-mono font-bold">T{{ currentEpisodio()!.aTemporada!.toString().padStart(2, '0') }}</span>
+                  }
+                  @if (currentEpisodio()!.aNumero) {
+                    <span class="font-mono font-bold">E{{ currentEpisodio()!.aNumero!.toString().padStart(2, '0') }}</span>
+                  }
+                  @if (currentEpisodio()!.aTitulo) {
+                    <span class="ml-1">{{ currentEpisodio()!.aTitulo }}</span>
+                  }
+                </p>
+              }
+              <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(waitSeconds()) }}</span> para começar o programa <span class="font-bold text-white">{{ currentBloco()?.aPrograma?.aNome }}</span></p>
+            </div>
           </div>
         } @else if (videoUrl()) {
           <div #playerWrap class="relative w-full h-full max-h-[calc(100vh-65px)] bg-black select-none" (contextmenu)="$event.preventDefault()">
@@ -53,6 +71,13 @@
                 <p class="text-sm text-gray-400 uppercase tracking-widest font-semibold">Tempo livre</p>
                 <p class="text-4xl font-mono font-bold text-yellow-400 my-1">{{ formatTime(freeCountdownSec) }}</p>
                 <p class="text-xs text-gray-500">até o fim do bloco</p>
+                <div class="slate slate-next">
+                  <p class="slate-kicker">Na sequência</p>
+                  @if (nextBloco?.aPrograma) {
+                    <p class="slate-title">{{ nextBloco!.aPrograma!.aNome }} <span class="slate-hora">{{ nextBloco!.aHorario?.substring(0, 5) }}</span></p>
+                  }
+                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(freeCountdownSec) }}</span> para o próximo bloco</p>
+                </div>
               </div>
             }
             <div class="live-controls">
@@ -73,48 +98,117 @@
       </div>
 
       <!-- Info Sidebar -->
-      <aside class="w-full lg:w-80 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700 p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
+      <aside class="w-full lg:w-96 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700 p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
 
         <!-- Status -->
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-          <span class="text-xs font-bold text-red-400 uppercase tracking-wider">Ao Vivo</span>
+          <span class="text-xs font-bold text-red-400 uppercase tracking-wider">No ar agora</span>
           <span class="text-xs text-gray-500 ml-auto">{{ nowTimeFormatted }}</span>
         </div>
 
-        <!-- Program Card -->
-        @if (currentBloco()!.aPrograma) {
-          <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
-            <div class="flex items-center gap-3 mb-3">
-              @if (currentBloco()!.aPrograma!.aCapaUrl) {
-                <img [src]="currentBloco()!.aPrograma!.aCapaUrl" class="w-12 h-12 rounded-lg object-cover shrink-0" />
-              } @else {
-                <div class="w-12 h-12 rounded-lg bg-gray-700 flex items-center justify-center shrink-0">
-                  <span class="text-xl">🎬</span>
-                </div>
-              }
-              <div class="min-w-0">
-                <p class="text-sm font-bold text-white truncate">{{ currentBloco()!.aPrograma!.aNome }}</p>
-                @if (currentBloco()!.aGrade) {
-                  <p class="text-[11px] text-gray-400">{{ currentBloco()!.aGrade!.aNome }}</p>
-                }
-              </div>
-            </div>
+        <!-- Capa -->
+        @if (capaUrl) {
+          <img [src]="capaUrl" [alt]="currentBloco()!.aPrograma!.aNome" class="w-full rounded-xl object-cover border border-gray-700" />
+        } @else {
+          <div class="w-full h-44 rounded-xl bg-gray-700 flex items-center justify-center shrink-0">
+            <span class="text-5xl">🎬</span>
+          </div>
+        }
 
-            <!-- Episode Info -->
-            @if (currentEpisodio()) {
-              <div class="bg-gray-800 rounded px-3 py-2 mt-2">
-                <p class="text-xs text-gray-300">
-                  @if (currentEpisodio()!.aTemporada) {
-                    <span class="text-purple-400 font-mono font-bold">T{{ currentEpisodio()!.aTemporada!.toString().padStart(2, '0') }}</span>
-                  }
-                  @if (currentEpisodio()!.aNumero) {
-                    <span class="text-blue-400 font-mono font-bold">E{{ currentEpisodio()!.aNumero!.toString().padStart(2, '0') }}</span>
-                  }
-                  @if (currentEpisodio()!.aTitulo) {
-                    <span class="ml-1">{{ currentEpisodio()!.aTitulo }}</span>
-                  }
-                </p>
+        <!-- Nome + badges -->
+        <div>
+          <h2 class="text-lg font-bold text-white leading-tight">{{ currentBloco()!.aPrograma!.aNome }}</h2>
+          @if (programaDetalhe()?.aTituloAlternativo) {
+            <p class="text-xs text-gray-400 mt-0.5">{{ programaDetalhe()!.aTituloAlternativo }}</p>
+          }
+          <div class="flex flex-wrap items-center gap-1.5 mt-2">
+            @if (programaDetalhe()?.aClassificacaoEtariaDesc) {
+              <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" [class]="classificacaoBadgeClass(programaDetalhe()?.aClassificacaoEtariaDesc)">{{ programaDetalhe()!.aClassificacaoEtariaDesc }}</span>
+            }
+            @if (programaDetalhe()?.aTemporadas) {
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-700 text-gray-200">{{ programaDetalhe()!.aTemporadas }} temp.</span>
+            }
+            @if (programaDetalhe()?.aTipoCode) {
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-700 text-gray-200">{{ programaDetalhe()!.aTipoCode }}</span>
+            }
+            @if (currentBloco()!.aGrade) {
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-900/50 border border-blue-700 text-blue-200">{{ currentBloco()!.aGrade!.aNome }}</span>
+            }
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-700 text-gray-200">{{ isReprise() ? 'Reprise' : 'Inédito' }}</span>
+          </div>
+          @if (programaDetalhe()?.aGeneros?.length) {
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              @for (g of programaDetalhe()!.aGeneros!; track g.aId) {
+                <span class="text-[11px] px-2 py-0.5 rounded-full bg-purple-900/50 border border-purple-700 text-purple-200">{{ g.aNome }}</span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Sinopse -->
+        @if (programaDetalhe()?.aSinopse) {
+          <p class="text-xs text-gray-300 leading-relaxed">{{ programaDetalhe()!.aSinopse }}</p>
+        } @else if (programaErro()) {
+          <p class="text-xs text-gray-600 italic">Não foi possível carregar a sinopse.</p>
+        } @else if (programaDetalhe()) {
+          <p class="text-xs text-gray-600 italic">Sinopse não disponível para este programa.</p>
+        } @else {
+          <p class="text-xs text-gray-600 italic">Carregando sinopse...</p>
+        }
+
+        <!-- Episódio em exibição -->
+        @if (currentEpisodio()) {
+          <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
+            <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-1.5">Episódio em exibição</p>
+            <p class="text-sm text-gray-200">
+              @if (currentEpisodio()!.aTemporada) {
+                <span class="text-purple-400 font-mono font-bold">T{{ currentEpisodio()!.aTemporada!.toString().padStart(2, '0') }}</span>
+              }
+              @if (currentEpisodio()!.aNumero) {
+                <span class="text-blue-400 font-mono font-bold">E{{ currentEpisodio()!.aNumero!.toString().padStart(2, '0') }}</span>
+              }
+              @if (currentEpisodio()!.aTitulo) {
+                <span class="ml-1 font-semibold">{{ currentEpisodio()!.aTitulo }}</span>
+              }
+            </p>
+            @if (currentEpisodio()!.aDuracao) {
+              <p class="text-[11px] text-gray-500 mt-1 font-mono">Duração {{ currentEpisodio()!.aDuracao }}</p>
+            }
+          </div>
+        }
+
+        <!-- Ficha técnica -->
+        @if (programaDetalhe()) {
+          <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 space-y-2">
+            @if (programaDetalhe()!.aEstudio) {
+              <div class="flex justify-between text-xs gap-2">
+                <span class="text-gray-500">Estúdio</span>
+                <span class="text-gray-300 text-right">{{ programaDetalhe()!.aEstudio }}</span>
+              </div>
+            }
+            @if (programaDetalhe()!.aDiretor) {
+              <div class="flex justify-between text-xs gap-2">
+                <span class="text-gray-500">Diretor</span>
+                <span class="text-gray-300 text-right">{{ programaDetalhe()!.aDiretor }}</span>
+              </div>
+            }
+            @if (programaDetalhe()!.aRedeOriginal) {
+              <div class="flex justify-between text-xs gap-2">
+                <span class="text-gray-500">Rede original</span>
+                <span class="text-gray-300 text-right">{{ programaDetalhe()!.aRedeOriginal }}</span>
+              </div>
+            }
+            @if (programaDetalhe()!.aLancamento) {
+              <div class="flex justify-between text-xs gap-2">
+                <span class="text-gray-500">Lançamento</span>
+                <span class="text-gray-300 text-right">{{ programaDetalhe()!.aLancamento }}</span>
+              </div>
+            }
+            @if (programaDetalhe()!.aEncerramento) {
+              <div class="flex justify-between text-xs gap-2">
+                <span class="text-gray-500">Encerramento</span>
+                <span class="text-gray-300 text-right">{{ programaDetalhe()!.aEncerramento }}</span>
               </div>
             }
           </div>

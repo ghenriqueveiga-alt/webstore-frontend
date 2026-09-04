@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgStyle } from '@angular/common';
@@ -24,6 +24,8 @@ export class Grade implements OnInit, OnDestroy {
 
   readonly tvService = inject(TvService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private pendingPage = 0;
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly grades = signal<GradeOutput[]>([]);
@@ -81,6 +83,7 @@ export class Grade implements OnInit, OnDestroy {
   readonly EPISODES_PER_PAGE = 5;
   readonly totalPages = signal(1);
   readonly pageLabels: string[] = [];
+  private static readonly ROLLOVER_KEY = 'grade-last-rollover';
 
   readonly diasCodigo: Record<string, string> = {
     'Segunda-feira': 'SE', 'Terça-feira': 'TE', 'Quarta-feira': 'QA',
@@ -95,7 +98,13 @@ export class Grade implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this._timerInterval = setInterval(() => this.currentTime.set(new Date()), 30000);
+    const qp = this.route.snapshot.queryParamMap.get('page');
+    const parsed = qp !== null ? parseInt(qp, 10) : NaN;
+    this.pendingPage = !isNaN(parsed) && parsed > 0 ? parsed : 0;
+    this._timerInterval = setInterval(() => {
+      this.currentTime.set(new Date());
+      this.maybeRolloverPage();
+    }, 30000);
     this.tvService.listGrades(0, 100).subscribe({
       next: (res) => {
         this.grades.set(res.aGrades);
@@ -364,6 +373,9 @@ export class Grade implements OnInit, OnDestroy {
         }
 
         this.totalPages.set(maxPages);
+        const restored = Math.max(0, Math.min(this.pendingPage, maxPages - 1));
+        if (restored > 0) this.currentPage.set(restored);
+        this.pendingPage = 0;
         this.pageLabels.length = 0;
         for (let p = 0; p < maxPages; p++) {
           this.pageLabels.push(`Página ${p + 1}`);
@@ -374,6 +386,7 @@ export class Grade implements OnInit, OnDestroy {
         this.computeEffectiveSchedule();
         this.rebuildEpisodioCache();
         this.loading.set(false);
+        this.maybeRolloverPage();
       },
       error: () => {
         this.loading.set(false);
@@ -394,6 +407,12 @@ export class Grade implements OnInit, OnDestroy {
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages()) return;
     this.currentPage.set(page);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: page > 0 ? { page } : { page: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
     this.rebuildEpisodioCache();
   }
 
@@ -403,6 +422,22 @@ export class Grade implements OnInit, OnDestroy {
 
   prevPage(): void {
     this.goToPage(this.currentPage() - 1);
+  }
+
+  private maybeRolloverPage(): void {
+    if (this.loading() || this.totalPages() <= 1) return;
+    const now = this.currentTime();
+    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    if (dayIdx !== 0) return;
+    if (now.getHours() !== 0 || now.getMinutes() >= 30) return;
+    const weekKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+    try {
+      if (localStorage.getItem(Grade.ROLLOVER_KEY) === weekKey) return;
+      localStorage.setItem(Grade.ROLLOVER_KEY, weekKey);
+    } catch {
+      /* sem persistência: segue mesmo assim */
+    }
+    this.goToPage((this.currentPage() + 1) % this.totalPages());
   }
 
   get filteredBlocos(): BlocoOutput[] {

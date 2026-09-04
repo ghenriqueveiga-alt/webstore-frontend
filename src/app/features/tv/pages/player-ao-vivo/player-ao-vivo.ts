@@ -1,6 +1,6 @@
 import { Component, signal, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TvService, BlocoOutput } from '../../services/tv.service';
+import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
 import { PlayerService } from '../../../player/services/player.service';
 
 interface EpisodioInfo {
@@ -43,6 +43,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly seekSeconds = signal(0);
   readonly isReprise = signal(false);
   readonly waitSeconds = signal(0);
+  readonly programaDetalhe = signal<ProgramaDetalhe | null>(null);
+  readonly programaErro = signal(false);
+
+  private programaCache = new Map<number, ProgramaDetalhe>();
+  private lastDetalheProgramaId = 0;
 
   private _timerInterval: any;
 
@@ -209,6 +214,8 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       this.currentEpisodio.set(null);
       this.videoUrl.set(null);
       this.videoEnded.set(false);
+      this.lastDetalheProgramaId = 0;
+      this.programaDetalhe.set(null);
       return;
     }
 
@@ -218,6 +225,10 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario && this.videoUrl()) return;
 
     this.currentBloco.set(bloco);
+
+    if (bloco.aPrograma) {
+      this.loadProgramaDetalhe(bloco.aPrograma.aId);
+    }
 
     const blocoStart = bloco.aHorario!.substring(0, 5);
     const [bh, bm] = blocoStart.split(':').map(Number);
@@ -253,6 +264,30 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (bloco.aPrograma) {
       this.loadVideo(bloco.aPrograma.aId, nowIdx);
     }
+  }
+
+  private loadProgramaDetalhe(programaId: number): void {
+    if (programaId === this.lastDetalheProgramaId) return;
+    this.lastDetalheProgramaId = programaId;
+    const cached = this.programaCache.get(programaId);
+    if (cached) {
+      this.programaDetalhe.set(cached);
+      return;
+    }
+    this.programaDetalhe.set(null);
+    this.programaErro.set(false);
+    this.tvService.getPrograma(programaId).subscribe({
+      next: (d) => {
+        this.programaCache.set(programaId, d);
+        if (this.lastDetalheProgramaId === programaId) this.programaDetalhe.set(d);
+      },
+      error: () => {
+        if (this.lastDetalheProgramaId === programaId) {
+          this.programaDetalhe.set(null);
+          this.programaErro.set(true);
+        }
+      },
+    });
   }
 
   private loadVideo(programaId: number, dayIdx: number): void {
@@ -414,6 +449,10 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     return this.currentBloco()?.aGrade?.aNome ?? '';
   }
 
+  get capaUrl(): string | null {
+    return this.programaDetalhe()?.aCapaUrl ?? this.currentBloco()?.aPrograma?.aCapaUrl ?? null;
+  }
+
   get currentFaixa(): string {
     const h = this.currentTime().getHours();
     if (h < 6) return 'Madrugada';
@@ -421,6 +460,16 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (h < 18) return 'Tarde';
     if (h < 22) return 'Noite';
     return 'Prime Time';
+  }
+
+  classificacaoBadgeClass(desc: string | null | undefined): string {
+    if (!desc) return 'bg-gray-600 text-white';
+    if (desc.includes('18')) return 'bg-black text-white border border-red-600';
+    if (desc.includes('16')) return 'bg-red-600 text-white';
+    if (desc.includes('14')) return 'bg-orange-500 text-white';
+    if (desc.includes('12')) return 'bg-yellow-400 text-black';
+    if (desc.includes('10')) return 'bg-blue-500 text-white';
+    return 'bg-green-600 text-white';
   }
 
   formatTime(seconds: number): string {
@@ -450,5 +499,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       )
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''))
       .slice(0, 8);
+  }
+
+  get nextBloco(): BlocoOutput | null {
+    const cur = this.currentBloco();
+    const list = this.upcomingBlocos.filter(b => b.aId !== cur?.aId);
+    return list.length > 0 ? list[0] : null;
   }
 }

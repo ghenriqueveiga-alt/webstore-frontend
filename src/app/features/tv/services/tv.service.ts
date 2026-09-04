@@ -85,6 +85,25 @@ export interface PaginatedGrades {
   aGrades: GradeOutput[];
 }
 
+export interface ProgramaDetalhe {
+  aId: number;
+  aUuid: string;
+  aNome: string;
+  aSinopse: string | null;
+  aCapaUrl: string | null;
+  aTemporadas: number | null;
+  aTipoCode: string | null;
+  aEmProducao: boolean | null;
+  aLancamento: string | null;
+  aEncerramento: string | null;
+  aClassificacaoEtariaDesc: string | null;
+  aEstudio: string | null;
+  aDiretor: string | null;
+  aRedeOriginal: string | null;
+  aTituloAlternativo: string | null;
+  aGeneros: { aId: number; aNome: string }[] | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TvService {
 
@@ -99,6 +118,10 @@ export class TvService {
       .set('direction', 'asc');
     if (search) params = params.set('search', search);
     return this.http.get<PaginatedProgramas>(`${this.baseUrl}/programa`, { params });
+  }
+
+  getPrograma(id: number): Observable<ProgramaDetalhe> {
+    return this.http.get<ProgramaDetalhe>(`${this.baseUrl}/programa/id/${id}`);
   }
 
   listEpisodios(page: number, size: number, programaId?: number, search: string = ''): Observable<PaginatedEpisodios> {
