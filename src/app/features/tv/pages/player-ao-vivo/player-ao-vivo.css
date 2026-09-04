@@ -29,6 +29,66 @@
   align-items: center;
 }
 
+.ads-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.ads-layout .tv-stage {
+  width: 100%;
+}
+
+.ad-rail {
+  display: none;
+}
+
+.tv-below {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+@media (min-width: 1400px) {
+  .ads-layout {
+    grid-template-columns: 200px minmax(0, 1200px) 200px;
+    justify-content: center;
+    gap: 0 1rem;
+    align-items: stretch;
+  }
+
+  .ads-layout .tv-stage {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    padding-bottom: 0;
+  }
+
+  .tv-below {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 1rem 1rem 3rem;
+  }
+
+  .ad-rail-left {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .ad-rail-right {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  .ad-rail {
+    display: block;
+    width: 200px;
+    align-self: stretch;
+    padding-top: 0.75rem;
+  }
+}
+
 /* ============ TV SET ============ */
 
 .tv-set {

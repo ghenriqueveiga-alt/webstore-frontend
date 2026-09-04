@@ -16,6 +16,10 @@
     </div>
   </div>
 
+  <div class="ads-layout">
+    <!-- Google AdSense: preencha adClient (ca-pub-...) e adSlot para ativar -->
+    <app-google-ad class="ad-rail ad-rail-left" label="Anúncio" />
+
   @if (loading()) {
     <div class="tv-stage">
       <div class="tv-set">
@@ -190,6 +194,9 @@
       </div>
       <div class="tv-stand"><div class="tv-neck"></div><div class="tv-base"></div></div>
 
+    </div>
+    <div class="tv-below">
+
       <!-- INFO GRID -->
       <div class="tv-info-grid">
         <section class="info-card">
@@ -330,4 +337,7 @@
 
     </div>
   }
+    <!-- Google AdSense: preencha adClient (ca-pub-...) e adSlot para ativar -->
+    <app-google-ad class="ad-rail ad-rail-right" label="Anúncio" />
+  </div>
 </div>

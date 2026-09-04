@@ -1,0 +1,15 @@
+<div class="ad-slot">
+  @if (configured()) {
+    <ins class="adsbygoogle"
+         style="display:block"
+         [attr.data-ad-client]="adClient"
+         [attr.data-ad-slot]="adSlot"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  } @else {
+    <div class="ad-placeholder">
+      <span class="ad-tag">{{ label }}</span>
+      <span class="ad-size">Espaço reservado<br />para anúncio</span>
+    </div>
+  }
+</div>
