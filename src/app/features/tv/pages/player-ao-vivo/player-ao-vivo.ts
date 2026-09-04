@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
 import { PlayerService } from '../../../player/services/player.service';
@@ -45,6 +45,37 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly waitSeconds = signal(0);
   readonly programaDetalhe = signal<ProgramaDetalhe | null>(null);
   readonly programaErro = signal(false);
+  readonly isFullscreen = signal(false);
+  readonly showFsUi = signal(true);
+  readonly dismissed = signal(false);
+  readonly uiHidden = computed(
+    () => (this.isFullscreen() && !this.showFsUi()) || (!this.isFullscreen() && this.dismissed()),
+  );
+
+  private fsIdleTimer: any;
+  private lastMouseX = -1;
+  private lastMouseY = -1;
+  private readonly docClickHandler = (ev: MouseEvent) => {
+    if (this.isFullscreen()) return;
+    const t = ev.target as HTMLElement | null;
+    if (t && t.closest && t.closest('.tv-screen')) return;
+    this.dismissed.set(true);
+  };
+
+  private readonly fsChangeHandler = () => {
+    const fs = !!document.fullscreenElement;
+    this.isFullscreen.set(fs);
+    this.lastMouseX = -1;
+    this.lastMouseY = -1;
+    if (fs) {
+      this.showFsUi.set(false);
+      this.scheduleFsHide();
+    } else {
+      this.showFsUi.set(true);
+      this.dismissed.set(false);
+      if (this.fsIdleTimer) clearTimeout(this.fsIdleTimer);
+    }
+  };
 
   private programaCache = new Map<number, ProgramaDetalhe>();
   private lastDetalheProgramaId = 0;
@@ -141,11 +172,48 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       this.updateCurrentBloco();
     }, 1000);
 
+    document.addEventListener('fullscreenchange', this.fsChangeHandler);
+    document.addEventListener('click', this.docClickHandler);
     this.loadBlocos();
   }
 
   ngOnDestroy(): void {
     if (this._timerInterval) clearInterval(this._timerInterval);
+    document.removeEventListener('fullscreenchange', this.fsChangeHandler);
+    document.removeEventListener('click', this.docClickHandler);
+    if (this.fsIdleTimer) clearTimeout(this.fsIdleTimer);
+  }
+
+  onFsMouseMove(event: MouseEvent): void {
+    if (this.isFullscreen()) {
+      if (event.clientX === this.lastMouseX && event.clientY === this.lastMouseY) return;
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+      this.showFsUi.set(true);
+      this.scheduleFsHide();
+      return;
+    }
+    this.dismissed.set(false);
+  }
+
+  onScreenClick(): void {
+    if (!this.isFullscreen()) this.dismissed.set(false);
+  }
+
+  onFsMouseLeave(): void {
+    if (this.fsIdleTimer) clearTimeout(this.fsIdleTimer);
+    if (this.isFullscreen()) {
+      this.showFsUi.set(false);
+    } else {
+      this.dismissed.set(true);
+    }
+  }
+
+  private scheduleFsHide(): void {
+    if (this.fsIdleTimer) clearTimeout(this.fsIdleTimer);
+    this.fsIdleTimer = setTimeout(() => {
+      if (this.isFullscreen()) this.showFsUi.set(false);
+    }, 2500);
   }
 
   private loadBlocos(): void {
@@ -453,6 +521,19 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     return this.programaDetalhe()?.aCapaUrl ?? this.currentBloco()?.aPrograma?.aCapaUrl ?? null;
   }
 
+  get channelNumber(): string {
+    const bloco = this.currentBloco();
+    if (!bloco?.aHorario) return '--';
+    const now = this.currentTime();
+    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const dia = this.dias[dayIdx];
+    const list = this.blocos
+      .filter(b => b.aDiaSemanaDesc === dia && b.aHorario)
+      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+    const idx = list.findIndex(b => b.aId === bloco.aId);
+    return (idx >= 0 ? idx + 1 : 1).toString().padStart(2, '0');
+  }
+
   get currentFaixa(): string {
     const h = this.currentTime().getHours();
     if (h < 6) return 'Madrugada';
@@ -498,7 +579,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
         (!gradeId || b.aGrade?.aId === gradeId)
       )
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''))
-      .slice(0, 8);
+      .slice(0, 9);
   }
 
   get nextBloco(): BlocoOutput | null {
