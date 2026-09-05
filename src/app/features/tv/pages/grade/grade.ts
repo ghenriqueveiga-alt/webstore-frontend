@@ -972,6 +972,32 @@ export class Grade implements OnInit, OnDestroy {
     return (now.getMinutes() % 30) / 30;
   }
 
+  nowLineVisible(): boolean {
+    const now = this.currentTime();
+    const slotH = now.getHours();
+    const slotM = now.getMinutes() < 30 ? 0 : 30;
+    const slot = `${slotH.toString().padStart(2,'0')}:${slotM.toString().padStart(2,'0')}`;
+    const dayName = this.dias[this.nowDayIndex];
+
+    const todayBloco = this.filteredBlocos.find(b =>
+      this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dayName) &&
+      b.aHorario?.substring(0, 5) === slot
+    );
+    if (!todayBloco?.aPrograma) return false;
+
+    const eps = this.allEpisodiosMap.get(todayBloco.aPrograma.aId);
+    if (!eps || eps.length === 0) return false;
+
+    const ep = this.getEpisodio(todayBloco, dayName);
+    if (!ep) return false;
+
+    const epIdx = eps.findIndex(e => e.aId === ep.aId);
+    if (epIdx < 0) return false;
+
+    const epPage = Math.floor(epIdx / this.EPISODES_PER_PAGE);
+    return epPage === this.currentPage();
+  }
+
   nowLineStyle(): Record<string, string> {
     const now = this.currentTime();
     const slotH = now.getHours();
