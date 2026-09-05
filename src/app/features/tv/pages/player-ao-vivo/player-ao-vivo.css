@@ -121,47 +121,32 @@
 
 .tv-bezel-top,
 .tv-bezel-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.5rem;
-  position: relative;
   width: 100%;
 }
 
-.tv-cam {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  margin-left: -5rem;
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 9999px;
-  background: radial-gradient(circle at 35% 35%, #1e3a5f, #000);
-  box-shadow: inset 0 0 2px rgba(80, 140, 255, 0.6);
+.tv-bezel-top {
+  padding: 0.375rem 0.5rem;
 }
 
-.tv-led {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 9999px;
-  background: #ef4444;
-  box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.7);
-  animation: live-pulse 2s ease-in-out infinite;
+.tv-bezel-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.5rem;
 }
 
-.tv-led.standby {
-  background: #f59e0b;
-  box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.6);
-  animation: none;
+.tv-brand-bottom {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.45em;
+  color: #71717a;
 }
 
 .tv-screen {
   position: relative;
   width: min(100%, 100%);
-  aspect-ratio: 16 / 8.2;
+  aspect-ratio: 16 / 8;
   margin-inline: auto;
   background: #000;
   border-radius: 0.625rem;
@@ -170,13 +155,6 @@
   align-self: stretch;
   max-height: 100%;
   height: 100%;
-}
-
-.tv-bezel-bottom {
-  min-height: 100%;
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 0.375rem;
 }
 
 .tv-video {
@@ -338,6 +316,15 @@
 
 .epg-kicker.next {
   color: #93c5fd;
+}
+
+.epg-card.epg-next {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
 }
 
 /* ============ INFO ============ */

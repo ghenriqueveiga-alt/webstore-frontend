@@ -23,27 +23,27 @@
   @if (loading()) {
     <div class="tv-stage">
       <div class="tv-set">
-        <div class="tv-bezel-top"><span class="tv-cam"></span></div>
+        <div class="tv-bezel-top"></div>
         <div class="tv-screen tv-center">
           <div class="inline-flex items-center gap-3">
             <div class="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
             <span class="text-sm text-gray-400 font-medium">Sintonizando...</span>
           </div>
         </div>
-        <div class="tv-bezel-bottom"><span class="tv-led"></span></div>
+        <div class="tv-bezel-bottom"><span class="tv-brand-bottom">H V S</span></div>
       </div>
     </div>
   } @else if (!currentBloco()) {
     <div class="tv-stage">
       <div class="tv-set">
-        <div class="tv-bezel-top"><span class="tv-cam"></span></div>
+        <div class="tv-bezel-top"></div>
         <div class="tv-screen tv-center tv-static">
           <span class="text-5xl block mb-3">📺</span>
           <p class="text-lg font-bold tracking-widest">SEM SINAL</p>
           <p class="text-sm text-gray-500 mt-1">Nenhum programa no ar agora</p>
           <p class="text-xs text-gray-600 mt-1 font-mono">{{ nowTimeFormatted }} &middot; {{ currentFaixa }}</p>
         </div>
-        <div class="tv-bezel-bottom"><span class="tv-led standby"></span></div>
+        <div class="tv-bezel-bottom"><span class="tv-brand-bottom">H V S</span></div>
       </div>
     </div>
   } @else {
@@ -89,9 +89,7 @@
 
       <!-- TV SET -->
       <div class="tv-set">
-        <div class="tv-bezel-top">
-          <span class="tv-cam"></span>
-        </div>
+        <div class="tv-bezel-top"></div>
 
         <div #playerWrap class="tv-screen select-none" (contextmenu)="$event.preventDefault()" (mousemove)="onFsMouseMove($event)" (mouseleave)="onFsMouseLeave()" (click)="onScreenClick()" [class.hide-cursor]="isFullscreen() && !showFsUi()">
 
@@ -186,7 +184,7 @@
         </div>
 
         <div class="tv-bezel-bottom">
-          <span class="tv-led"></span>
+          <span class="tv-brand-bottom">H V S</span>
         </div>
       </div>
 
@@ -273,11 +271,26 @@
               @if (programaDetalhe()!.aRedeOriginal) {
                 <div class="fact"><span>Rede original</span><span>{{ programaDetalhe()!.aRedeOriginal }}</span></div>
               }
+              @if (programaDetalhe()!.aTemporadaOriginal) {
+                <div class="fact"><span>Temporada original</span><span>{{ programaDetalhe()!.aTemporadaOriginal }}</span></div>
+              }
+              @if (programaDetalhe()!.aTipoExibicaoDesc) {
+                <div class="fact"><span>Tipo de exibição</span><span>{{ programaDetalhe()!.aTipoExibicaoDesc }}</span></div>
+              }
               @if (programaDetalhe()!.aLancamento) {
                 <div class="fact"><span>Lançamento</span><span>{{ programaDetalhe()!.aLancamento }}</span></div>
               }
               @if (programaDetalhe()!.aEncerramento) {
                 <div class="fact"><span>Encerramento</span><span>{{ programaDetalhe()!.aEncerramento }}</span></div>
+              }
+              @if (programaDetalhe()!.aAudioIdiomas) {
+                <div class="fact"><span>Áudio</span><span>{{ programaDetalhe()!.aAudioIdiomas }}</span></div>
+              }
+              @if (programaDetalhe()!.aLegendasDisponiveis) {
+                <div class="fact"><span>Legendas</span><span>{{ programaDetalhe()!.aLegendasDisponiveis }}</span></div>
+              }
+              @if (programaDetalhe()!.aSiteOficial) {
+                <div class="fact"><span>Site oficial</span><a [href]="programaDetalhe()!.aSiteOficial!" target="_blank" class="text-blue-400 hover:underline truncate">{{ programaDetalhe()!.aSiteOficial }}</a></div>
               }
             </div>
           }

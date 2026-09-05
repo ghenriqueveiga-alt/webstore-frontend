@@ -305,11 +305,10 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const currentTotalSeconds = h * 3600 + m * 60 + s;
     const elapsedSeconds = currentTotalSeconds - blocoTotalSeconds;
 
-    const nowIdx = this.dias.indexOf(dia);
     const eps = bloco.aPrograma ? this.allEpisodiosMap.get(bloco.aPrograma.aId) : null;
     if (eps && eps.length > 0) {
-      const idx = nowIdx % eps.length;
-      this.currentEpisodio.set(eps[idx]);
+      const epIdx = this.getEpisodeIndex(bloco, dia);
+      this.currentEpisodio.set(eps[epIdx % eps.length]);
     } else {
       this.currentEpisodio.set(null);
     }
@@ -331,7 +330,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     this.isReprise.set(primeiroHorario !== bloco.aHorario?.substring(0, 5));
 
     if (bloco.aPrograma) {
-      this.loadVideo(bloco.aPrograma.aId, nowIdx);
+      this.loadVideo(bloco.aPrograma.aId, dia);
     }
   }
 
@@ -359,12 +358,15 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     });
   }
 
-  private loadVideo(programaId: number, dayIdx: number): void {
+  private loadVideo(programaId: number, dia: string): void {
     const eps = this.allEpisodiosMap.get(programaId);
     if (!eps || eps.length === 0) return;
 
-    const idx = dayIdx % eps.length;
-    const ep = eps[idx];
+    const bloco = this.currentBloco();
+    if (!bloco) return;
+
+    const epIdx = this.getEpisodeIndex(bloco, dia);
+    const ep = eps[epIdx % eps.length];
 
     this.videoUrl.set(null);
 
@@ -375,9 +377,19 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        setTimeout(() => this.loadVideo(programaId, dayIdx), 3000);
+        setTimeout(() => this.loadVideo(programaId, dia), 3000);
       },
     });
+  }
+
+  private getEpisodeIndex(bloco: BlocoOutput, dia: string): number {
+    const programaId = bloco.aPrograma?.aId;
+    if (!programaId) return 0;
+    const sameDayBlocos = this.blocos
+      .filter(b => b.aPrograma?.aId === programaId && b.aDiaSemanaDesc === dia && b.aHorario && b.aStatusCode !== 'DE')
+      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+    const pos = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
+    return pos >= 0 ? pos : 0;
   }
 
   private findFirstBlocoForProgram(programaId: number, dia: string): string | null {
@@ -546,11 +558,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   classificacaoBadgeClass(desc: string | null | undefined): string {
     if (!desc) return 'bg-gray-600 text-white';
-    if (desc.includes('18')) return 'bg-black text-white border border-red-600';
+    if (desc.includes('18') || desc.includes('MA')) return 'bg-black text-white border border-red-600';
     if (desc.includes('16')) return 'bg-red-600 text-white';
     if (desc.includes('14')) return 'bg-orange-500 text-white';
     if (desc.includes('12')) return 'bg-yellow-400 text-black';
-    if (desc.includes('10')) return 'bg-blue-500 text-white';
+    if (desc.includes('10') || desc.includes('Y7')) return 'bg-blue-500 text-white';
     return 'bg-green-600 text-white';
   }
 
@@ -567,20 +579,39 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const dia = this.dias[dayIdx];
     const h = now.getHours();
     const m = now.getMinutes();
-    const s = now.getSeconds();
-    const currentTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    const currentTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 
     const gradeId = this.currentBloco()?.aGrade?.aId;
 
-    return this.blocos
+    const cutoff = '15:30';
+
+    const todayUpcoming = this.blocos
       .filter(b =>
         b.aDiaSemanaDesc === dia &&
         b.aHorario &&
-        b.aHorario.substring(0, 5) >= currentTime.substring(0, 5) &&
+        b.aHorario.substring(0, 5) >= currentTime &&
+        b.aHorario.substring(0, 5) <= cutoff &&
         (!gradeId || b.aGrade?.aId === gradeId)
-      )
+      );
+
+    let result = todayUpcoming;
+
+    if (todayUpcoming.length < 10) {
+      const nextDayIdx = (dayIdx + 1) % 7;
+      const nextDia = this.dias[nextDayIdx];
+      const tomorrowBlocos = this.blocos
+        .filter(b =>
+          b.aDiaSemanaDesc === nextDia &&
+          b.aHorario &&
+          b.aHorario.substring(0, 5) <= cutoff &&
+          (!gradeId || b.aGrade?.aId === gradeId)
+        );
+      result = [...todayUpcoming, ...tomorrowBlocos];
+    }
+
+    return result
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''))
-      .slice(0, 9);
+      .slice(0, 15);
   }
 
   get nextBloco(): BlocoOutput | null {

@@ -101,6 +101,11 @@ export interface ProgramaDetalhe {
   aDiretor: string | null;
   aRedeOriginal: string | null;
   aTituloAlternativo: string | null;
+  aTemporadaOriginal: string | null;
+  aTipoExibicaoDesc: string | null;
+  aAudioIdiomas: string | null;
+  aLegendasDisponiveis: string | null;
+  aSiteOficial: string | null;
   aGeneros: { aId: number; aNome: string }[] | null;
 }
 
