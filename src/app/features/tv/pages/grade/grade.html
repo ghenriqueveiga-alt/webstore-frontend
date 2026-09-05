@@ -89,6 +89,14 @@
         [style.opacity]="currentPage() >= totalPages() - 1 ? 0.3 : 1">
         &rsaquo;
       </button>
+      <button
+        (click)="goToPage(0)"
+        class="reset-now-btn"
+        [style.opacity]="currentPage() === 0 ? 0.4 : 1"
+        [style.pointerEvents]="currentPage() === 0 ? 'none' : 'auto'">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+        Voltar ao agora
+      </button>
     </div>
   }
 

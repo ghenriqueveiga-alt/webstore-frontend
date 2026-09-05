@@ -326,8 +326,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
     this.waitSeconds.set(0);
 
-    const primeiroHorario = this.findFirstBlocoForProgram(bloco.aPrograma?.aId ?? 0, dia);
-    this.isReprise.set(primeiroHorario !== bloco.aHorario?.substring(0, 5));
+    this.isReprise.set(!!bloco.aTipoBlocoDesc?.includes('Rep'));
 
     if (bloco.aPrograma) {
       this.loadVideo(bloco.aPrograma.aId, dia);
@@ -390,14 +389,6 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
     const pos = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
     return pos >= 0 ? pos : 0;
-  }
-
-  private findFirstBlocoForProgram(programaId: number, dia: string): string | null {
-    const blocos = this.blocos
-      .filter(b => b.aPrograma?.aId === programaId && b.aDiaSemanaDesc === dia && b.aHorario)
-      .map(b => b.aHorario!.substring(0, 5))
-      .sort();
-    return blocos.length > 0 ? blocos[0] : null;
   }
 
   onVideoLoaded(): void {
@@ -583,14 +574,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
     const gradeId = this.currentBloco()?.aGrade?.aId;
 
-    const cutoff = '15:30';
-
     const todayUpcoming = this.blocos
       .filter(b =>
         b.aDiaSemanaDesc === dia &&
         b.aHorario &&
         b.aHorario.substring(0, 5) >= currentTime &&
-        b.aHorario.substring(0, 5) <= cutoff &&
         (!gradeId || b.aGrade?.aId === gradeId)
       );
 
@@ -603,7 +591,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
         .filter(b =>
           b.aDiaSemanaDesc === nextDia &&
           b.aHorario &&
-          b.aHorario.substring(0, 5) <= cutoff &&
+          b.aHorario.substring(0, 5) <= '05:00' &&
           (!gradeId || b.aGrade?.aId === gradeId)
         );
       result = [...todayUpcoming, ...tomorrowBlocos];
@@ -611,7 +599,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
     return result
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''))
-      .slice(0, 15);
+      .slice(0, 11);
   }
 
   get nextBloco(): BlocoOutput | null {
