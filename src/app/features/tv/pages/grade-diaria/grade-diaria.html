@@ -1,0 +1,139 @@
+<div class="min-h-screen" style="background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);">
+
+  <!-- Header -->
+  <div class="header-bar">
+    <div class="flex items-center gap-3">
+      <div class="header-icon">
+        <span class="text-lg">📅</span>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-tight">Grade Diária</h1>
+        <p class="text-[10px] text-gray-500 mt-0.5">Visualize a programação do dia</p>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <a routerLink="/tv/grade" class="header-link">
+        📋 Grade Semanal
+      </a>
+      <a routerLink="/tv" class="header-link">
+        &larr; Programas
+      </a>
+    </div>
+  </div>
+
+  <!-- Day Selector -->
+  <div class="day-selector">
+    @for (dia of dias; track dia; let i = $index) {
+      <button
+        (click)="selectDay(i)"
+        class="day-btn"
+        [class.day-btn-active]="selectedDay() === i"
+        [class.day-btn-inactive]="selectedDay() !== i"
+        [class.day-btn-today]="isToday(i)">
+        <span class="day-icon">{{ diasIcons[i] }}</span>
+        <span class="day-label">{{ dia.substring(0, 3) }}</span>
+        @if (isToday(i)) {
+          <span class="today-dot"></span>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- Content -->
+  @if (loading()) {
+    <div class="p-20 text-center">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <span class="text-sm text-gray-400 font-medium">Carregando programação...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="p-6 max-w-4xl mx-auto">
+
+      <!-- Day Title -->
+      <div class="day-title-bar">
+        <span class="text-2xl">{{ diasIcons[selectedDay()] }}</span>
+        <h2 class="text-xl font-bold text-white">{{ dias[selectedDay()] }}</h2>
+        @if (isToday(selectedDay())) {
+          <span class="today-badge">HOJE</span>
+        }
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline">
+        @for (bloco of filteredBlocos; track bloco.aId; let i = $index) {
+          <div class="timeline-item" [class.timeline-item-active]="isCurrentSlot(bloco)">
+            <div class="timeline-connector">
+              <div class="timeline-dot" [style.background]="blocoAccentColor(bloco.aTipoBlocoDesc)"></div>
+              @if (i < filteredBlocos.length - 1) {
+                <div class="timeline-line"></div>
+              }
+            </div>
+
+            <div class="timeline-card" [class.timeline-card-active]="isCurrentSlot(bloco)">
+              <!-- Time Badge -->
+              <div class="time-badge">
+                <span class="font-mono font-bold text-white">{{ bloco.aHorario?.substring(0, 5) }}</span>
+              </div>
+
+              <!-- Program Info -->
+              <div class="program-info">
+                <div class="flex items-center gap-2 mb-2">
+                  @if (bloco.aPrograma?.aCapaUrl) {
+                    <img [src]="bloco.aPrograma!.aCapaUrl" class="w-12 h-12 rounded-xl object-cover shadow-lg" />
+                  } @else {
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                         style="background: rgba(99,102,241,0.15);">
+                      📺
+                    </div>
+                  }
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-white truncate">{{ bloco.aPrograma?.aNome }}</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="badge" [ngClass]="tipoBadgeClass(bloco.aTipoBlocoDesc)">
+                        {{ bloco.aTipoBlocoDesc }}
+                      </span>
+                      @if (getEpisodio(bloco); as ep) {
+                        <span class="text-[10px] text-gray-500 font-mono">{{ formatDuracao(ep.aDuracao) }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                @if (getEpisodio(bloco); as ep) {
+                  <div class="episode-info">
+                    <div class="flex items-center gap-2">
+                      <span [innerHTML]="formatTxExPx(ep)" class="font-mono text-xs"></span>
+                      @if (ep.aTitulo) {
+                        <span class="text-xs text-gray-400 truncate">{{ ep.aTitulo }}</span>
+                      }
+                    </div>
+                    <button class="watch-btn" (click)="navigateToPlayer(ep.aId)">
+                      ▶ Assistir
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <!-- Active Indicator -->
+              @if (isCurrentSlot(bloco)) {
+                <div class="active-indicator">
+                  <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                  <span class="text-[10px] font-bold text-red-400 uppercase tracking-wider">Ao Vivo</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (filteredBlocos.length === 0) {
+          <div class="empty-state">
+            <span class="text-4xl">📺</span>
+            <p class="text-gray-400 text-sm mt-3">Nenhum programa encontrado para este dia</p>
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+</div>

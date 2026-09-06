@@ -4,4 +4,5 @@ export const environment = {
     publisherId: 'ca-pub-6258304823757222',  // ca-pub-XXXXXXXXXXXXXXXX
     slotSideRail: '4510159406', // Slot ID for left/right rail ads
   },
+  API_URL: 'http://localhost:8081',
 };

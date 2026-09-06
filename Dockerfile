@@ -16,10 +16,10 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-RUN npm install -g http-server
+RUN npm install -g serve
 
-COPY --from=builder /app/dist/front /app/dist
+COPY --from=builder /app/dist/front/browser /app/dist
 
 EXPOSE 4200
 
-CMD ["http-server", "dist", "-p", "4200", "--gzip", "-c-1"]
+CMD ["serve", "-s", "dist", "-l", "4200"]

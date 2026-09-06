@@ -1,0 +1,121 @@
+<div class="min-h-screen" style="background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);">
+
+  <!-- Header -->
+  <div class="header-bar">
+    <div class="flex items-center gap-3">
+      <div class="header-icon">
+        <span class="text-lg">⏳</span>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-tight">Grade Timeline</h1>
+        <p class="text-[10px] text-gray-500 mt-0.5">Linha do tempo horizontal</p>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <button (click)="scrollToCurrentTime()" class="nav-btn">⏱ Agora</button>
+      <button (click)="scrollToStart()" class="nav-btn">◀ Início</button>
+      <button (click)="scrollToEnd()" class="nav-btn">▶ Fim</button>
+      <a routerLink="/tv/grade" class="header-link">📋 Grade Semanal</a>
+      <a routerLink="/tv" class="header-link">&larr; Programas</a>
+    </div>
+  </div>
+
+  <!-- Day Selector -->
+  <div class="day-selector">
+    @for (dia of diasShort; track dia; let i = $index) {
+      <button
+        (click)="selectDay(i)"
+        class="day-btn"
+        [class.day-btn-active]="selectedDay() === i"
+        [class.day-btn-inactive]="selectedDay() !== i"
+        [class.day-btn-today]="isToday(i)">
+        {{ dia }}
+        @if (isToday(i)) {
+          <span class="today-dot"></span>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- Timeline Container -->
+  @if (loading()) {
+    <div class="p-20 text-center">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <span class="text-sm text-gray-400 font-medium">Carregando timeline...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="timeline-wrapper">
+      <div class="timeline-scroll" #timelineScroll (scroll)="onScroll($event)">
+
+        <!-- Time Markers -->
+        <div class="time-markers">
+          @for (marker of timeMarkers; track marker) {
+            <div class="time-marker">
+              <span class="marker-label">{{ marker }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Timeline Track -->
+        <div class="timeline-track">
+          @for (bloco of filteredBlocos; track bloco.aId) {
+            <div class="timeline-slot" [class.timeline-slot-active]="isCurrentSlot(bloco)">
+              <div class="slot-accent" [style.background]="tipoColor(bloco.aTipoBlocoDesc)"></div>
+
+              <div class="slot-content">
+                @if (bloco.aPrograma?.aCapaUrl) {
+                  <img [src]="bloco.aPrograma!.aCapaUrl" class="slot-cover" />
+                } @else {
+                  <div class="slot-cover-placeholder">📺</div>
+                }
+
+                <div class="slot-info">
+                  <span class="slot-time">{{ bloco.aHorario?.substring(0, 5) }}</span>
+                  <p class="slot-name">{{ bloco.aPrograma?.aNome }}</p>
+
+                  @if (getEpisodio(bloco); as ep) {
+                    <div class="slot-ep">
+                      <span [innerHTML]="formatTxExPx(ep)" class="font-mono text-[9px]"></span>
+                      @if (ep.aTitulo) {
+                        <span class="slot-ep-title">{{ ep.aTitulo }}</span>
+                      }
+                    </div>
+                  }
+
+                  <div class="slot-meta">
+                    <span class="badge" [ngClass]="tipoBadgeClass(bloco.aTipoBlocoDesc)">{{ bloco.aTipoBlocoDesc }}</span>
+                    @if (getEpisodio(bloco); as ep) {
+                      <span class="slot-duration">{{ formatDuracao(ep.aDuracao) }}</span>
+                    }
+                  </div>
+                </div>
+
+                @if (isCurrentSlot(bloco)) {
+                  <div class="slot-live">
+                    <span class="live-dot"></span>
+                    <span>AO VIVO</span>
+                  </div>
+                }
+
+                <button class="slot-play" (click)="navigateToPlayer(getEpisodio(bloco)!.aId)">
+                  ▶
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Current Time Indicator -->
+        @if (isToday(selectedDay())) {
+          <div class="current-time-line" [style.left.px]="(currentTime().getHours() * 160) + (currentTime().getMinutes() / 60 * 160)">
+            <div class="time-line-dot"></div>
+            <div class="time-line-label">{{ currentTime().getHours().toString().padStart(2,'0') }}:{{ currentTime().getMinutes().toString().padStart(2,'0') }}</div>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+</div>

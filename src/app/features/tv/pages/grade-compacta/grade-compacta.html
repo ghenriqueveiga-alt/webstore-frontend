@@ -1,0 +1,125 @@
+<div class="min-h-screen" style="background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);">
+
+  <!-- Header -->
+  <div class="header-bar">
+    <div class="flex items-center gap-3">
+      <div class="header-icon">
+        <span class="text-lg">📋</span>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-tight">Grade Compacta</h1>
+        <p class="text-[10px] text-gray-500 mt-0.5">Visão condensada da programação</p>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <button (click)="toggleView()" class="view-toggle">
+        {{ viewMode() === 'grid' ? '☰ Lista' : '⊞ Grade' }}
+      </button>
+      <a routerLink="/tv/grade" class="header-link">
+        📋 Grade Semanal
+      </a>
+      <a routerLink="/tv" class="header-link">
+        &larr; Programas
+      </a>
+    </div>
+  </div>
+
+  <!-- Day Selector -->
+  <div class="day-selector">
+    @for (dia of dias; track dia; let i = $index) {
+      <button
+        (click)="selectDay(i)"
+        class="day-btn"
+        [class.day-btn-active]="selectedDay() === i"
+        [class.day-btn-inactive]="selectedDay() !== i"
+        [class.day-btn-today]="isToday(i)">
+        <span class="day-label">{{ dia }}</span>
+        @if (isToday(i)) {
+          <span class="today-dot"></span>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <span class="stat-item">
+      <span class="stat-num">{{ filteredBlocos.length }}</span>
+      <span class="stat-label">blocos</span>
+    </span>
+    <span class="stat-sep">|</span>
+    @for (f of faixaCount | keyvalue; track f.key) {
+      <span class="stat-item">
+        <span class="stat-num">{{ f.value }}</span>
+        <span class="stat-label">{{ f.key }}</span>
+      </span>
+      <span class="stat-sep">·</span>
+    }
+  </div>
+
+  <!-- Content -->
+  @if (loading()) {
+    <div class="p-20 text-center">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <span class="text-sm text-gray-400 font-medium">Carregando...</span>
+      </div>
+    </div>
+  } @else {
+
+    <!-- Grid View -->
+    @if (viewMode() === 'grid') {
+      <div class="compact-grid">
+        @for (bloco of filteredBlocos; track bloco.aId) {
+          <div class="compact-cell" [class.compact-cell-active]="isCurrentSlot(bloco)">
+            <div class="cell-time">{{ bloco.aHorario?.substring(0, 5) }}</div>
+            @if (bloco.aPrograma?.aCapaUrl) {
+              <img [src]="bloco.aPrograma!.aCapaUrl" class="cell-cover" />
+            } @else {
+              <div class="cell-cover-placeholder">📺</div>
+            }
+            <div class="cell-info">
+              <p class="cell-name">{{ bloco.aPrograma?.aNome }}</p>
+              <div class="cell-meta">
+                <span class="badge" [ngClass]="tipoBadgeClass(bloco.aTipoBlocoDesc)">{{ bloco.aTipoBlocoDesc }}</span>
+                @if (getEpisodio(bloco); as ep) {
+                  <span class="cell-ep" [innerHTML]="formatTxExPx(ep)"></span>
+                }
+              </div>
+            </div>
+            @if (isCurrentSlot(bloco)) {
+              <div class="cell-live">AO VIVO</div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- List View -->
+    @if (viewMode() === 'list') {
+      <div class="compact-list">
+        @for (bloco of filteredBlocos; track bloco.aId) {
+          <div class="list-row" [class.list-row-active]="isCurrentSlot(bloco)">
+            <span class="list-time">{{ bloco.aHorario?.substring(0, 5) }}</span>
+            @if (bloco.aPrograma?.aCapaUrl) {
+              <img [src]="bloco.aPrograma!.aCapaUrl" class="list-cover" />
+            } @else {
+              <div class="list-cover-placeholder">📺</div>
+            }
+            <div class="list-info">
+              <span class="list-name">{{ bloco.aPrograma?.aNome }}</span>
+              @if (getEpisodio(bloco); as ep) {
+                <span class="list-ep" [innerHTML]="formatTxExPx(ep)"></span>
+              }
+            </div>
+            <span class="badge" [ngClass]="tipoBadgeClass(bloco.aTipoBlocoDesc)">{{ bloco.aTipoBlocoDesc }}</span>
+            @if (isCurrentSlot(bloco)) {
+              <span class="list-live">●</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  }
+</div>
