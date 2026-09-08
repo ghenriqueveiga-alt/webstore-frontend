@@ -86,7 +86,82 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly dias = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
 
   private allEpisodiosMap = new Map<number, EpisodioInfo[]>();
+  private diasProgramaMap = new Map<number, number[]>();
+  private deslocamentos: { programaId: number; pagina: number; dia: number }[] = [];
   private blocos: BlocoOutput[] = [];
+  private readonly EPISODES_PER_PAGE = 5;
+
+  private normalizeDia(d: string): string {
+    return d.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  private addTime(time: string, addMin: number): string {
+    const [h, m] = time.split(':').map(Number);
+    let total = h * 60 + m + addMin;
+    total = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+    const nh = Math.floor(total / 60).toString().padStart(2, '0');
+    const nm = (total % 60).toString().padStart(2, '0');
+    return `${nh}:${nm}`;
+  }
+
+  private contarDeslocamentosAntes(programaId: number, pagina: number, diaIdx: number): number {
+    let n = 0;
+    for (const e of this.deslocamentos) {
+      if (e.programaId !== programaId) continue;
+      if (e.pagina < pagina || (e.pagina === pagina && e.dia < diaIdx)) n++;
+    }
+    return n;
+  }
+
+  private computeSlipCascade(): void {
+    this.deslocamentos = [];
+    const dbByDayTime = new Map<string, BlocoOutput[]>();
+    for (const b of this.blocos) {
+      if (b.aStatusCode !== 'AT' || !b.aDiaSemanaDesc || !b.aHorario) continue;
+      const key = `${this.normalizeDia(b.aDiaSemanaDesc)}|${b.aHorario.substring(0, 5)}`;
+      if (!dbByDayTime.has(key)) dbByDayTime.set(key, []);
+      dbByDayTime.get(key)!.push(b);
+    }
+    const horarios = [...new Set(
+      this.blocos.filter(b => b.aHorario).map(b => b.aHorario!.substring(0, 5))
+    )].sort((a, b) => a.localeCompare(b));
+    const slipRun = new Map<number, number>();
+    const contados = new Set<string>();
+    for (const dia of this.dias) {
+      const dIdx = this.dias.indexOf(dia);
+      for (const t of horarios) {
+        const cellBlocos = dbByDayTime.get(`${this.normalizeDia(dia)}|${t}`);
+        if (!cellBlocos) continue;
+        for (const bloco of cellBlocos) {
+          if (!bloco.aPrograma || bloco.aHorario?.substring(0, 5) !== t) continue;
+          const eps = this.allEpisodiosMap.get(bloco.aPrograma.aId);
+          const diasQ = this.diasProgramaMap.get(bloco.aPrograma.aId);
+          if (!eps || eps.length === 0 || !diasQ || diasQ.length === 0) continue;
+          const dayPos = diasQ.indexOf(dIdx);
+          if (dayPos < 0) continue;
+          const slip = slipRun.get(bloco.aPrograma.aId) ?? 0;
+          const idx = (((dayPos - slip) % eps.length) + eps.length) % eps.length;
+          const ep = eps[idx];
+          if (!ep || !ep.aDuracao || this.parseDurationSec(ep.aDuracao) <= 30 * 60) continue;
+          const need = Math.ceil(this.parseDurationSec(ep.aDuracao) / (30 * 60));
+          for (let s = 1; s < need; s++) {
+            const ct = this.addTime(t, s * 30);
+            if (ct <= t) continue;
+            const atSlot = dbByDayTime.get(`${this.normalizeDia(dia)}|${ct}`);
+            if (!atSlot) continue;
+            for (const disp of atSlot) {
+              if (!disp.aPrograma || disp.aId === bloco.aId) continue;
+              const ck = `${dIdx}|${disp.aId}`;
+              if (contados.has(ck)) continue;
+              contados.add(ck);
+              this.deslocamentos.push({ programaId: disp.aPrograma.aId, pagina: 0, dia: dIdx });
+              slipRun.set(disp.aPrograma.aId, (slipRun.get(disp.aPrograma.aId) ?? 0) + 1);
+            }
+          }
+        }
+      }
+    }
+  }
 
   private parseDurationSec(duracao: string | null): number {
     if (!duracao) return 0;
@@ -229,7 +304,17 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
           return;
         }
 
-        this.tvService.listPrimeirosEpisodiosPorPrograma(programIds, 30).subscribe({
+        this.diasProgramaMap.clear();
+        for (const pid of programIds) {
+          const diasQuePassa = [...new Set(
+            res.aBlocos
+              .filter(b => b.aPrograma?.aId === pid && b.aStatusCode === 'AT' && b.aDiaSemanaDesc)
+              .map(b => this.dias.indexOf(b.aDiaSemanaDesc!))
+          )].filter(d => d >= 0).sort((a, b) => a - b);
+          this.diasProgramaMap.set(pid, diasQuePassa);
+        }
+
+        this.tvService.listPrimeirosEpisodiosPorPrograma(programIds, 10000).subscribe({
           next: (rows) => {
             this.allEpisodiosMap.clear();
             const grouped = new Map<number, EpisodioInfo[]>();
@@ -250,6 +335,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
               this.allEpisodiosMap.set(pid, eps);
             }
 
+            this.computeSlipCascade();
             this.loading.set(false);
             this.updateCurrentBloco();
           },
@@ -289,7 +375,9 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     }
 
     matching.sort((a, b) => (b.aHorario ?? '').localeCompare(a.aHorario ?? ''));
-    const bloco = matching[0];
+    let bloco = matching[0];
+    const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
+    if (efetivo) bloco = efetivo;
 
     if (this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario && this.videoUrl()) return;
 
@@ -381,14 +469,58 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     });
   }
 
+  private episodioPagina0(bloco: BlocoOutput, diaIdx: number): EpisodioInfo | null {
+    const programaId = bloco.aPrograma?.aId;
+    if (!programaId) return null;
+    const eps = this.allEpisodiosMap.get(programaId);
+    if (!eps || eps.length === 0) return null;
+    const diasQ = this.diasProgramaMap.get(programaId) ?? [];
+    const dayPos = diasQ.indexOf(diaIdx);
+    if (dayPos < 0) return null;
+    const slip = this.contarDeslocamentosAntes(programaId, 0, diaIdx);
+    return eps[(((dayPos - slip) % eps.length) + eps.length) % eps.length];
+  }
+
   private getEpisodeIndex(bloco: BlocoOutput, dia: string): number {
     const programaId = bloco.aPrograma?.aId;
     if (!programaId) return 0;
-    const sameDayBlocos = this.blocos
-      .filter(b => b.aPrograma?.aId === programaId && b.aDiaSemanaDesc === dia && b.aHorario && b.aStatusCode !== 'DE')
-      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
-    const pos = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
-    return pos >= 0 ? pos : 0;
+    const eps = this.allEpisodiosMap.get(programaId);
+    if (!eps || eps.length === 0) return 0;
+    const ep = this.episodioPagina0(bloco, this.dias.indexOf(dia));
+    if (!ep) return 0;
+    const idx = eps.indexOf(ep);
+    return idx >= 0 ? idx : 0;
+  }
+
+  private blocoEfetivoAgora(dia: string, agoraHHMM: string): BlocoOutput | null {
+    const diaIdx = this.dias.indexOf(dia);
+    const occ = new Map<string, BlocoOutput[]>();
+    for (const b of this.blocos) {
+      if (b.aStatusCode !== 'AT' || !b.aDiaSemanaDesc || !b.aHorario) continue;
+      if (this.normalizeDia(b.aDiaSemanaDesc) !== this.normalizeDia(dia)) continue;
+      const t = b.aHorario.substring(0, 5);
+      if (!occ.has(t)) occ.set(t, []);
+      occ.get(t)!.push(b);
+    }
+    for (const t of [...occ.keys()].sort((a, b) => a.localeCompare(b))) {
+      for (const bloco of [...(occ.get(t) ?? [])]) {
+        if (!bloco.aPrograma || bloco.aHorario?.substring(0, 5) !== t) continue;
+        const ep = this.episodioPagina0(bloco, diaIdx);
+        if (!ep || !ep.aDuracao || this.parseDurationSec(ep.aDuracao) <= 30 * 60) continue;
+        const need = Math.ceil(this.parseDurationSec(ep.aDuracao) / (30 * 60));
+        for (let s = 1; s < need; s++) {
+          const ct = this.addTime(t, s * 30);
+          if (ct <= t) continue;
+          if (!occ.has(ct)) occ.set(ct, []);
+          occ.set(ct, (occ.get(ct) ?? []).filter(x => x.aHorario?.substring(0, 5) !== ct));
+          if (!occ.get(ct)!.some(x => x.aId === bloco.aId)) occ.get(ct)!.push(bloco);
+        }
+      }
+    }
+    const slot = [...occ.keys()].filter(t => t <= agoraHHMM).sort((a, b) => a.localeCompare(b)).pop();
+    if (!slot) return null;
+    const list = occ.get(slot) ?? [];
+    return list.length > 0 ? list[0] : null;
   }
 
   onVideoLoaded(): void {

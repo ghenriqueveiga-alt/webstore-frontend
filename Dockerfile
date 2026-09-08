@@ -19,6 +19,7 @@ WORKDIR /app
 RUN npm install -g serve
 
 COPY --from=builder /app/dist/front/browser /app/dist
+COPY --from=builder /app/serve.json /app/serve.json
 
 EXPOSE 4200
 
