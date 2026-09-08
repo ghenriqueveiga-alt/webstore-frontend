@@ -12,6 +12,21 @@
         <h1 class="text-base font-bold text-white tracking-tight">Grade de Programação</h1>
         <p class="text-[10px] text-gray-500 mt-0.5">Gerencie a programação semanal</p>
       </div>
+      <div class="flex items-center gap-2 ml-2">
+        <button (click)="linhaParaInicio()"
+           title="Leva a barra vermelha para o início da grade (00:00)"
+           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+           style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); color: #a5b4fc;">
+          ⏮ 00:00
+        </button>
+        <button (click)="linhaParaAgora()"
+           title="Traz a barra vermelha de volta para o horário atual"
+           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+           style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5;">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          Agora
+        </button>
+      </div>
     </div>
     <div class="ml-auto flex items-center gap-3">
       <a routerLink="/tv/ao-vivo"
@@ -88,14 +103,6 @@
         [class.inactive]="currentPage() < totalPages() - 1"
         [style.opacity]="currentPage() >= totalPages() - 1 ? 0.3 : 1">
         &rsaquo;
-      </button>
-      <button
-        (click)="goToPage(0)"
-        class="reset-now-btn"
-        [style.opacity]="currentPage() === 0 ? 0.4 : 1"
-        [style.pointerEvents]="currentPage() === 0 ? 'none' : 'auto'">
-        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-        Voltar ao agora
       </button>
     </div>
   }

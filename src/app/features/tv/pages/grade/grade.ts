@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgStyle } from '@angular/common';
 import { TvService, GradeOutput, BlocoOutput, ProgramaOutput } from '../../services/tv.service';
+import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
 
 interface EpisodioInfo {
   aId: number;
@@ -23,6 +24,7 @@ interface EpisodioInfo {
 export class Grade implements OnInit, OnDestroy {
 
   readonly tvService = inject(TvService);
+  readonly linhaService = inject(LinhaVermelhaService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private pendingPage = 0;
@@ -411,6 +413,7 @@ export class Grade implements OnInit, OnDestroy {
         this.totalPages.set(maxPages);
         const restored = Math.max(0, Math.min(this.pendingPage, maxPages - 1));
         if (restored > 0) this.currentPage.set(restored);
+        this.linhaService.acompanharPagina(this.currentPage());
         this.pendingPage = 0;
         this.pageLabels.length = 0;
         for (let p = 0; p < maxPages; p++) {
@@ -443,6 +446,7 @@ export class Grade implements OnInit, OnDestroy {
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages()) return;
     this.currentPage.set(page);
+    this.linhaService.acompanharPagina(page);
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: page > 0 ? { page } : { page: null },
@@ -977,7 +981,35 @@ export class Grade implements OnInit, OnDestroy {
     return dia === this.dias[this.nowDayIndex];
   }
 
+  readonly nowLineOverride = signal<string | null>(null);
+
+  linhaParaInicio(): void {
+    this.nowLineOverride.set('00:00');
+    this.linhaService.definir('00:00', this.currentPage());
+    this.scrollParaSlot('00:00');
+  }
+
+  linhaParaAgora(): void {
+    this.nowLineOverride.set(null);
+    this.linhaService.limpar();
+    const now = this.currentTime();
+    const slot = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes() < 30 ? '00' : '30'}`;
+    this.scrollParaSlot(slot);
+  }
+
+  private scrollParaSlot(slot: string): void {
+    const labels = document.querySelectorAll('.time-label');
+    for (const el of Array.from(labels)) {
+      if ((el.textContent ?? '').trim().startsWith(slot)) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
+      }
+    }
+  }
+
   nowTimeSlot(): string {
+    const override = this.nowLineOverride();
+    if (override) return override;
     const now = this.currentTime();
     const h = now.getHours().toString().padStart(2, '0');
     const m = now.getMinutes() < 30 ? '00' : '30';
@@ -985,11 +1017,13 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   nowMinuteFraction(): number {
+    if (this.nowLineOverride()) return 0;
     const now = this.currentTime();
     return (now.getMinutes() % 30) / 30;
   }
 
   nowLineVisible(): boolean {
+    if (this.nowLineOverride()) return true;
     const now = this.currentTime();
     const slotH = now.getHours();
     const slotM = now.getMinutes() < 30 ? 0 : 30;
@@ -1017,9 +1051,7 @@ export class Grade implements OnInit, OnDestroy {
 
   nowLineStyle(): Record<string, string> {
     const now = this.currentTime();
-    const slotH = now.getHours();
-    const slotM = now.getMinutes() < 30 ? 0 : 30;
-    const slot = `${slotH.toString().padStart(2,'0')}:${slotM.toString().padStart(2,'0')}`;
+    const slot = this.nowTimeSlot();
     const dayName = this.dias[this.nowDayIndex];
 
     const todayBloco = this.filteredBlocos.find(b =>
@@ -1049,7 +1081,7 @@ export class Grade implements OnInit, OnDestroy {
     const es = parseInt(parts[2]) || 0;
     const episodeSec = eh * 3600 + em * 60 + es;
     const topFreeSec = Math.floor((1800 - episodeSec) / 2);
-    const currentSecInSlot = (now.getMinutes() % 30) * 60 + now.getSeconds();
+    const currentSecInSlot = this.nowLineOverride() ? 0 : (now.getMinutes() % 30) * 60 + now.getSeconds();
     const topFreeFrac = topFreeSec / 1800;
     const episodeFrac = episodeSec / 1800;
     const rawFrac = currentSecInSlot / 1800;

@@ -2,6 +2,7 @@ import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, Elem
 import { RouterLink } from '@angular/router';
 import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
+import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
 import { PlayerService } from '../../../player/services/player.service';
 
 interface EpisodioInfo {
@@ -23,6 +24,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   readonly tvService = inject(TvService);
   readonly playerService = inject(PlayerService);
+  readonly linhaService = inject(LinhaVermelhaService);
+
+  private paginaAlvo(): number {
+    return this.linhaService.slot() ? this.linhaService.pagina() : 0;
+  }
 
   @ViewChild('videoPlayer') videoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('playerWrap') wrapRef!: ElementRef<HTMLDivElement>;
@@ -113,7 +119,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     return n;
   }
 
-  private computeSlipCascade(): void {
+  private computeSlipCascade(paginaAlvo: number): void {
     this.deslocamentos = [];
     const dbByDayTime = new Map<string, BlocoOutput[]>();
     for (const b of this.blocos) {
@@ -127,6 +133,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     )].sort((a, b) => a.localeCompare(b));
     const slipRun = new Map<number, number>();
     const contados = new Set<string>();
+    for (let p = 0; p <= paginaAlvo; p++) {
     for (const dia of this.dias) {
       const dIdx = this.dias.indexOf(dia);
       for (const t of horarios) {
@@ -140,7 +147,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
           const dayPos = diasQ.indexOf(dIdx);
           if (dayPos < 0) continue;
           const slip = slipRun.get(bloco.aPrograma.aId) ?? 0;
-          const idx = (((dayPos - slip) % eps.length) + eps.length) % eps.length;
+          const idx = (((dayPos + p * this.EPISODES_PER_PAGE - slip) % eps.length) + eps.length) % eps.length;
           const ep = eps[idx];
           if (!ep || !ep.aDuracao || this.parseDurationSec(ep.aDuracao) <= 30 * 60) continue;
           const need = Math.ceil(this.parseDurationSec(ep.aDuracao) / (30 * 60));
@@ -151,15 +158,16 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
             if (!atSlot) continue;
             for (const disp of atSlot) {
               if (!disp.aPrograma || disp.aId === bloco.aId) continue;
-              const ck = `${dIdx}|${disp.aId}`;
+              const ck = `${p}|${dIdx}|${disp.aId}`;
               if (contados.has(ck)) continue;
               contados.add(ck);
-              this.deslocamentos.push({ programaId: disp.aPrograma.aId, pagina: 0, dia: dIdx });
+              this.deslocamentos.push({ programaId: disp.aPrograma.aId, pagina: p, dia: dIdx });
               slipRun.set(disp.aPrograma.aId, (slipRun.get(disp.aPrograma.aId) ?? 0) + 1);
             }
           }
         }
       }
+    }
     }
   }
 
@@ -335,7 +343,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
               this.allEpisodiosMap.set(pid, eps);
             }
 
-            this.computeSlipCascade();
+            this.computeSlipCascade(this.paginaAlvo());
             this.loading.set(false);
             this.updateCurrentBloco();
           },
@@ -376,8 +384,18 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
     matching.sort((a, b) => (b.aHorario ?? '').localeCompare(a.aHorario ?? ''));
     let bloco = matching[0];
-    const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
-    if (efetivo) bloco = efetivo;
+    let doInicio = false;
+    const overrideSlot = this.linhaService.slot();
+    if (overrideSlot) {
+      const blocoLinha = this.blocoEfetivoAgora(dia, overrideSlot);
+      if (blocoLinha) {
+        bloco = blocoLinha;
+        doInicio = true;
+      }
+    } else {
+      const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
+      if (efetivo) bloco = efetivo;
+    }
 
     if (this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario && this.videoUrl()) return;
 
@@ -402,7 +420,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     }
 
     const topFree = this.getTopFreeSeconds();
-    const adjustedSeek = elapsedSeconds - topFree;
+    const adjustedSeek = doInicio ? 0 : elapsedSeconds - topFree;
     this.seekSeconds.set(adjustedSeek > 0 ? adjustedSeek : 0);
 
     if (adjustedSeek < 0) {
@@ -469,7 +487,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     });
   }
 
-  private episodioPagina0(bloco: BlocoOutput, diaIdx: number): EpisodioInfo | null {
+  private episodioPagina0(bloco: BlocoOutput, diaIdx: number, pagina?: number): EpisodioInfo | null {
     const programaId = bloco.aPrograma?.aId;
     if (!programaId) return null;
     const eps = this.allEpisodiosMap.get(programaId);
@@ -477,8 +495,9 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const diasQ = this.diasProgramaMap.get(programaId) ?? [];
     const dayPos = diasQ.indexOf(diaIdx);
     if (dayPos < 0) return null;
-    const slip = this.contarDeslocamentosAntes(programaId, 0, diaIdx);
-    return eps[(((dayPos - slip) % eps.length) + eps.length) % eps.length];
+    const pag = pagina ?? this.paginaAlvo();
+    const slip = this.contarDeslocamentosAntes(programaId, pag, diaIdx);
+    return eps[(((dayPos + pag * this.EPISODES_PER_PAGE - slip) % eps.length) + eps.length) % eps.length];
   }
 
   private getEpisodeIndex(bloco: BlocoOutput, dia: string): number {
