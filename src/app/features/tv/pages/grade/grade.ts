@@ -60,6 +60,7 @@ export class Grade implements OnInit, OnDestroy {
   private sameDayBlocosCache = new Map<string, BlocoOutput[]>();
   private weekendBlocosCache = new Map<number, BlocoOutput[]>();
   private displacedEpisodeShift = new Map<number, number>();
+  private deslocamentos: { programaId: number; pagina: number; dia: number }[] = [];
 
   readonly modalOpen = signal(false);
   readonly modalDia = signal('');
@@ -163,9 +164,71 @@ export class Grade implements OnInit, OnDestroy {
     return `${nh}:${nm}`;
   }
 
+  private contarDeslocamentosAntes(programaId: number, pagina: number, diaIdx: number): number {
+    let n = 0;
+    for (const e of this.deslocamentos) {
+      if (e.programaId !== programaId) continue;
+      if (e.pagina < pagina || (e.pagina === pagina && e.dia < diaIdx)) n++;
+    }
+    return n;
+  }
+
+  private computeSlipCascade(): void {
+    this.deslocamentos = [];
+    const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
+    const diasIndiceNorm = new Map(this.dias.map((d, i) => [this.normalizeDia(d), i]));
+    const dbSchedule = new Map<string, BlocoOutput[]>();
+    for (const b of this.filteredBlocos) {
+      const dIdx = diasIndice.get(b.aDiaSemanaDesc ?? '') ?? diasIndiceNorm.get(this.normalizeDia(b.aDiaSemanaDesc ?? '')) ?? -1;
+      if (dIdx < 0 || !b.aHorario) continue;
+      const key = `${dIdx}|${b.aHorario.substring(0, 5)}`;
+      if (!dbSchedule.has(key)) dbSchedule.set(key, []);
+      dbSchedule.get(key)!.push(b);
+    }
+    const sortedHorarios = [...this.horarios].sort((a, b) => a.localeCompare(b));
+    const slipRun = new Map<number, number>();
+    const contados = new Set<string>();
+    for (let p = 0; p <= this.currentPage(); p++) {
+      for (let d = 0; d < 7; d++) {
+        for (const t of sortedHorarios) {
+          const cellBlocos = dbSchedule.get(`${d}|${t}`);
+          if (!cellBlocos) continue;
+          for (const bloco of cellBlocos) {
+            if (!bloco.aPrograma || bloco.aPrograma.aId === 35) continue;
+            const eps = this.allEpisodiosMap.get(bloco.aPrograma.aId);
+            const diasQ = this.diasProgramaMap.get(bloco.aPrograma.aId);
+            if (!eps || eps.length === 0 || !diasQ || diasQ.length === 0) continue;
+            const dayPos = diasQ.indexOf(d);
+            if (dayPos < 0) continue;
+            const slip = slipRun.get(bloco.aPrograma.aId) ?? 0;
+            const idx = (((dayPos + p * this.EPISODES_PER_PAGE - slip) % eps.length) + eps.length) % eps.length;
+            const ep = eps[idx];
+            if (!ep || !ep.aDuracao || this.parseDuracaoSec(ep.aDuracao) <= 30 * 60) continue;
+            const need = Math.ceil(this.parseDuracaoSec(ep.aDuracao) / (30 * 60));
+            for (let s = 1; s < need; s++) {
+              const ct = this.addTime(t, s * 30);
+              if (ct <= t) continue;
+              const atSlot = dbSchedule.get(`${d}|${ct}`);
+              if (!atSlot) continue;
+              for (const disp of atSlot) {
+                if (!disp.aPrograma || disp.aId === bloco.aId || disp.aPrograma.aId === 35) continue;
+                const ck = `${p}|${d}|${disp.aId}`;
+                if (contados.has(ck)) continue;
+                contados.add(ck);
+                this.deslocamentos.push({ programaId: disp.aPrograma.aId, pagina: p, dia: d });
+                slipRun.set(disp.aPrograma.aId, (slipRun.get(disp.aPrograma.aId) ?? 0) + 1);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   private computeBaseRemovedDias(): void {
     this.programaRemovedDias.clear();
     this.displacedOriginalDay.clear();
+    this.computeSlipCascade();
     const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
     const diasIndiceNorm = new Map(this.dias.map((d, i) => [this.normalizeDia(d), i]));
     const dbSchedule = new Map<string, BlocoOutput[]>();
@@ -184,7 +247,7 @@ export class Grade implements OnInit, OnDestroy {
         if (!cellBlocos) continue;
         for (const bloco of cellBlocos) {
           if (bloco.aPrograma?.aId === 35) continue;
-          const ep = this.getEpisodioBase(bloco, d);
+          const ep = this.getEpisodioUncached(bloco);
           if (!ep || !ep.aDuracao) continue;
           if (this.parseDuracaoSec(ep.aDuracao) <= 30*60) continue;
           const slotsNeeded = Math.ceil(this.parseDuracaoSec(ep.aDuracao) / (30*60));
@@ -233,8 +296,6 @@ export class Grade implements OnInit, OnDestroy {
 
     const sortedHorarios = [...this.horarios].sort((a, b) => a.localeCompare(b));
 
-    const displacedByDay = new Map<number, { bloco: BlocoOutput; fromTime: string }[]>();
-
     for (let d = 0; d < 7; d++) {
       for (const t of sortedHorarios) {
         const key = `${d}|${t}`;
@@ -244,7 +305,7 @@ export class Grade implements OnInit, OnDestroy {
         for (const bloco of [...cellBlocos]) {
           if (bloco.aPrograma?.aId === 35) continue;
           if (bloco.aHorario?.substring(0, 5) !== t) continue;
-          const ep = this.getEpisodioBase(bloco, d);
+          const ep = this.getEpisodioUncached(bloco);
           if (!ep || !ep.aDuracao) continue;
           const epSec = this.parseDuracaoSec(ep.aDuracao);
           if (epSec <= 30 * 60) continue;
@@ -272,34 +333,9 @@ export class Grade implements OnInit, OnDestroy {
                 const curList = this.effectiveSchedule.get(consumedKey)!;
                 const idx = curList.findIndex(b => b.aId === displaced.aId);
                 if (idx >= 0) curList.splice(idx, 1);
-                if (!displacedByDay.has(d)) displacedByDay.set(d, []);
-                displacedByDay.get(d)!.push({ bloco: displaced, fromTime: consumedTime });
               }
             }
           }
-        }
-      }
-    }
-
-    for (const [d, displacedList] of displacedByDay) {
-      for (const { bloco: displaced, fromTime } of displacedList) {
-        if (this.displacedEpisodeShift.has(displaced.aId)) continue;
-        let shift = 0;
-        let nextTime = fromTime;
-        for (let attempt = 0; attempt < 20; attempt++) {
-          nextTime = this.addTime(nextTime, 30);
-          shift++;
-          const nextKey = `${d}|${nextTime}`;
-          if (this.consumedSlots.has(nextKey)) continue;
-          if (!this.effectiveSchedule.has(nextKey)) {
-            this.effectiveSchedule.set(nextKey, []);
-          }
-          const existingList = this.effectiveSchedule.get(nextKey)!;
-          if (existingList.length > 0) continue;
-          existingList.push(displaced);
-          this.slotPositionMap.set(nextKey, shift);
-          this.displacedEpisodeShift.set(displaced.aId, shift);
-          break;
         }
       }
     }
@@ -413,7 +449,11 @@ export class Grade implements OnInit, OnDestroy {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
-    this.rebuildEpisodioCache();
+    if (this.allEpisodiosMap.size > 0) {
+      this.computeBaseRemovedDias();
+      this.computeEffectiveSchedule();
+      this.rebuildEpisodioCache();
+    }
   }
 
   nextPage(): void {
@@ -561,35 +601,12 @@ export class Grade implements OnInit, OnDestroy {
 
     const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
     const globalIdx = dayPosition + pageOffset;
-    const removedDias = this.programaRemovedDias.get(bloco.aPrograma.aId) ?? [];
-    let totalOffset = 0;
-    for (const rd of removedDias) {
-      const rdPos = diasQuePassa.indexOf(rd);
-      if (rdPos < 0) continue;
-      for (let p = 0; p <= this.currentPage(); p++) {
-        const globalRemoved = rdPos + p * this.EPISODES_PER_PAGE;
-        if (globalRemoved >= globalIdx) break;
-        let isConsumed = false;
-        for (const b of this.filteredBlocos) {
-          if (this.normalizeDia(b.aDiaSemanaDesc ?? '') !== this.normalizeDia(this.dias[rd])) continue;
-          if ((b.aHorario?.substring(0,5) ?? '') !== '00:00') continue;
-          const eps2 = this.allEpisodiosMap.get(b.aPrograma!.aId);
-          const dias2 = this.diasProgramaMap.get(b.aPrograma!.aId);
-          if (!eps2 || !dias2) continue;
-          const pos2 = dias2.indexOf(rd);
-          if (pos2 < 0) continue;
-          const idx2 = (pos2 + p * this.EPISODES_PER_PAGE) % eps2.length;
-          const ep2 = eps2[idx2];
-          if (ep2 && this.parseDuracaoSec(ep2.aDuracao) > 30*60) { isConsumed = true; break; }
-        }
-        if (isConsumed) totalOffset++;
-      }
+    if (this.displacedEpisodeShift.has(bloco.aId)) {
+      const naturalIdx = ((globalIdx % eps.length) + eps.length) % eps.length;
+      return eps[naturalIdx];
     }
-    const shift = this.displacedEpisodeShift.get(bloco.aId) ?? 0;
-    const isParasyte0030 =
-      bloco.aPrograma.aId === 63 && (bloco.aHorario?.substring(0, 5) ?? '') === '00:30';
-    const signedOffset = isParasyte0030 ? -totalOffset : totalOffset;
-    const finalIdx = (((globalIdx + signedOffset) - shift) % eps.length + eps.length) % eps.length;
+    const slip = this.contarDeslocamentosAntes(bloco.aPrograma.aId, this.currentPage(), diaIdx);
+    const finalIdx = (((globalIdx - slip) % eps.length) + eps.length) % eps.length;
     return eps[finalIdx];
   }
 
