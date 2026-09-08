@@ -148,7 +148,7 @@
             <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Horário</span>
           </div>
           @for (dia of diasAbrev; track dia; let i = $index) {
-            <div class="day-header" [class.today]="isToday(dias[i])">
+            <div class="day-header" [class.today]="isToday(dias[i])" (click)="linhaParaDia(i)" title="Mover a barra vermelha para {{ dias[i] }}" style="cursor: pointer;">
               <span class="day-abbr" [class.text-blue-400]="isToday(dias[i])" [class.text-gray-300]="!isToday(dias[i])">{{ dia }}</span>
               <div class="day-full text-gray-500">{{ dias[i] }}</div>
               @if (isToday(dias[i])) {
@@ -174,7 +174,7 @@
             }
 
             <!-- Hour Label -->
-            <div class="time-label">
+            <div class="time-label" (click)="linhaParaSlot(horario)" title="Mover a barra vermelha para {{ horario }}" style="cursor: pointer;">
               <span class="text-xs font-mono font-bold text-gray-300 tracking-wider">{{ horario }}</span>
             </div>
 

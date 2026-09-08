@@ -53,7 +53,7 @@
       <div class="epg-bar">
         <div class="epg-card epg-now">
           @if (linhaService.slot()) {
-            <p class="epg-kicker now">◉ Linha &middot; {{ linhaService.slot() }}</p>
+            <p class="epg-kicker now">◉ Linha &middot; {{ linhaDiaAbrev }} {{ linhaService.slot() }}</p>
           } @else {
             <p class="epg-kicker now">● Agora &middot; {{ currentBloco()!.aHorario?.substring(0, 5) }}</p>
           }

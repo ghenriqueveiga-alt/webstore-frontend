@@ -985,8 +985,19 @@ export class Grade implements OnInit, OnDestroy {
 
   linhaParaInicio(): void {
     this.nowLineOverride.set('00:00');
-    this.linhaService.definir('00:00', this.currentPage());
+    this.linhaService.definir('00:00', this.currentPage(), this.nowDayIndex);
     this.scrollParaSlot('00:00');
+  }
+
+  linhaParaSlot(horario: string): void {
+    this.nowLineOverride.set(horario);
+    this.linhaService.definir(horario, this.currentPage(), this.nowDayIndex);
+  }
+
+  linhaParaDia(idx: number): void {
+    const slot = this.nowLineOverride() ?? this.nowTimeSlot();
+    this.nowLineOverride.set(slot);
+    this.linhaService.definir(slot, this.currentPage(), idx);
   }
 
   linhaParaAgora(): void {
@@ -1059,7 +1070,7 @@ export class Grade implements OnInit, OnDestroy {
       b.aHorario?.substring(0, 5) === slot
     );
 
-    const i = this.nowDayIndex;
+    const i = this.linhaService.diaIdx() ?? this.nowDayIndex;
     const offset = `calc(121px + ${i} * ((100% - 126px) / 7))`;
     const width = 'calc((100% - 126px) / 7)';
 

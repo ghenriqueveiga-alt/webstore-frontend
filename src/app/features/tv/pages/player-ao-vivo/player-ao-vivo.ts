@@ -90,6 +90,21 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   private _timerInterval: any;
 
   readonly dias = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+  readonly diasAbrev = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
+
+  private diaAlvo(): { dia: string; diaIdx: number } {
+    const now = this.currentTime();
+    const nowIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const ovDia = this.linhaService.slot() !== null ? this.linhaService.diaIdx() : null;
+    const idx = ovDia ?? nowIdx;
+    return { dia: this.dias[idx], diaIdx: idx };
+  }
+
+  get linhaDiaAbrev(): string {
+    const ov = this.linhaService.slot() !== null ? this.linhaService.diaIdx() : null;
+    if (ov === null || ov === undefined) return '';
+    return this.diasAbrev[ov] ?? '';
+  }
 
   private allEpisodiosMap = new Map<number, EpisodioInfo[]>();
   private diasProgramaMap = new Map<number, number[]>();
@@ -361,8 +376,9 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   private updateCurrentBloco(): void {
     const now = this.currentTime();
-    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
-    const dia = this.dias[dayIdx];
+    const alvo = this.diaAlvo();
+    const dayIdx = alvo.diaIdx;
+    const dia = alvo.dia;
     const h = now.getHours();
     const m = now.getMinutes();
     const s = now.getSeconds();
@@ -679,9 +695,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   get channelNumber(): string {
     const bloco = this.currentBloco();
     if (!bloco?.aHorario) return '--';
-    const now = this.currentTime();
-    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
-    const dia = this.dias[dayIdx];
+    const dia = this.diaAlvo().dia;
     const list = this.blocos
       .filter(b => b.aDiaSemanaDesc === dia && b.aHorario)
       .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
@@ -717,11 +731,13 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   get upcomingBlocos(): BlocoOutput[] {
     const now = this.currentTime();
-    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
-    const dia = this.dias[dayIdx];
+    const alvo = this.diaAlvo();
+    const dayIdx = alvo.diaIdx;
+    const dia = alvo.dia;
     const h = now.getHours();
     const m = now.getMinutes();
-    const currentTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    const relogio = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    const currentTime = this.linhaService.slot() ?? relogio;
 
     const gradeId = this.currentBloco()?.aGrade?.aId;
 
