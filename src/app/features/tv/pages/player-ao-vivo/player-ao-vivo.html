@@ -130,7 +130,7 @@
               (loadeddata)="onVideoLoaded()"
               (seeking)="onSeeking()"
               (play)="onPlayState(true)"
-              (pause)="onPlayState(false)"
+              (pause)="onPauseBlocked()"
               (ended)="onVideoEnded()"
               autoplay
               preload="auto"
@@ -178,7 +178,6 @@
           <div class="tv-scanlines"></div>
 
           <div class="live-controls" [class.fs-hidden]="uiHidden()">
-            <button (click)="togglePlay()" class="live-btn" [attr.aria-label]="isPlaying() ? 'Pausar' : 'Reproduzir'">{{ isPlaying() ? '⏸' : '▶' }}</button>
             <span class="live-badge"><span class="live-dot"></span>AO VIVO</span>
             <div class="flex-1"></div>
             <button (click)="toggleMute()" class="live-btn" aria-label="Mudo">{{ isMuted() ? '🔇' : '🔊' }}</button>

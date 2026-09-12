@@ -42,8 +42,8 @@
             (click)="selectPrograma(prog)"
             class="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group">
             <div class="aspect-[2/3] bg-gray-700 flex items-center justify-center">
-              @if (prog.aCapaUrl) {
-                <img [src]="prog.aCapaUrl" [alt]="prog.aNome" class="w-full h-full object-cover" />
+              @if (tvService.getProgramaCapaUrl(prog.aId); as capa) {
+                <img [src]="capa" [alt]="prog.aNome" class="w-full h-full object-cover" />
               } @else {
                 <span class="text-5xl group-hover:scale-110 transition-transform">📺</span>
               }

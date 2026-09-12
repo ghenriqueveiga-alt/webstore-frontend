@@ -180,8 +180,7 @@
 
             <!-- Day Cells -->
             @for (dia of dias; track dia; let i = $index) {
-              <div class="grid-cell"
-                   (click)="openCellModal(dia, horario)">
+              <div class="grid-cell">
                 @for (bloco of blocosFor(dia, horario); track bloco.aId) {
                   <div class="tempo-livre">
                     <span class="text-[8px] font-bold uppercase tracking-widest"
@@ -189,9 +188,9 @@
                     <span class="text-[11px] font-mono font-bold"
                           style="color: rgba(253,224,71,0.9);">{{ getTempoLivreTopo(bloco, dia, horario) }}</span>
                   </div>
-                   <div class="bloco-card"
+                       <div class="bloco-card"
                        [attr.data-tipo]="getTipoDinamico(bloco, dia).includes('Inédito') ? 'inedito' : getTipoDinamico(bloco, dia).includes('Rep') ? 'reprise' : getTipoDinamico(bloco, dia).includes('Maratona') ? 'maratona' : getTipoDinamico(bloco, dia).includes('Especial') ? 'especial' : 'default'"
-                       (click)="selectBloco(bloco, dia); $event.stopPropagation()">
+                       (click)="selectBloco(bloco, dia, horario)">
                     <!-- Left accent bar -->
                     <div class="bloco-accent-bar"
                          [class.accent-inedito]="getTipoDinamico(bloco, dia).includes('Inédito')"
@@ -208,31 +207,46 @@
                         {{ bloco.aPrograma?.aNome }}
                       </p>
                       @if (getEpisodio(bloco, dia); as ep) {
-                        <!-- Episode info row -->
-                        <div class="flex items-center gap-1.5 mb-1.5">
-                          <span [innerHTML]="formatTxExPx(ep)" class="font-mono text-[10px]"></span>
-                          @if (ep.aTitulo) {
-                            <span class="text-[10px] text-gray-400 leading-tight truncate flex-1">{{ ep.aTitulo }}</span>
-                          }
-                        </div>
-                        <!-- Meta row -->
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                          <span class="badge"
-                                [class.badge-inedito]="getTipoDinamico(bloco, dia).includes('Inédito')"
-                                [class.badge-reprise]="getTipoDinamico(bloco, dia).includes('Rep')"
-                                [class.badge-maratona]="getTipoDinamico(bloco, dia).includes('Maratona')"
-                                [class.badge-especial]="getTipoDinamico(bloco, dia).includes('Especial')"
-                                [class.badge-default]="!getTipoDinamico(bloco, dia).includes('Inédito') && !getTipoDinamico(bloco, dia).includes('Rep') && !getTipoDinamico(bloco, dia).includes('Maratona') && !getTipoDinamico(bloco, dia).includes('Especial')">
-                            {{ getTipoDinamico(bloco, dia) }}
-                          </span>
-                          @if (ep.aDuracao) {
-                            <span class="inline-flex items-center gap-0.5 text-[9px] font-mono text-gray-500">
-                              <svg class="w-2.5 h-2.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                              </svg>
-                              {{ formatDuracao(ep.aDuracao) }}
-                            </span>
-                          }
+                        <!-- Cover + Episode info -->
+                        <div class="flex items-start gap-1.5 mb-1.5">
+                          <div class="relative flex-shrink-0" style="width: 24px; height: 32px; min-width: 24px;">
+                            @if (getCapaUrl(ep); as capaUrl) {
+                              <img [src]="capaUrl"
+                                   class="absolute inset-0 w-full h-full object-cover rounded"
+                                   alt=""
+                                   onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                              <div class="absolute inset-0 rounded ep-placeholder" style="display: none;"></div>
+                            } @else {
+                              <div class="absolute inset-0 rounded ep-placeholder"></div>
+                            }
+                          </div>
+                          <div class="flex flex-col min-w-0">
+                            <div class="flex items-center gap-1.5 whitespace-nowrap">
+                              <span [innerHTML]="formatTxExPx(ep)" class="font-mono text-[10px] whitespace-nowrap"></span>
+                              @if (ep.aTitulo) {
+                                <span class="text-[10px] text-gray-400 leading-tight truncate">{{ ep.aTitulo }}</span>
+                              }
+                            </div>
+                            <!-- Meta row -->
+                            <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <span class="badge"
+                                    [class.badge-inedito]="getTipoDinamico(bloco, dia).includes('Inédito')"
+                                    [class.badge-reprise]="getTipoDinamico(bloco, dia).includes('Rep')"
+                                    [class.badge-maratona]="getTipoDinamico(bloco, dia).includes('Maratona')"
+                                    [class.badge-especial]="getTipoDinamico(bloco, dia).includes('Especial')"
+                                    [class.badge-default]="!getTipoDinamico(bloco, dia).includes('Inédito') && !getTipoDinamico(bloco, dia).includes('Rep') && !getTipoDinamico(bloco, dia).includes('Maratona') && !getTipoDinamico(bloco, dia).includes('Especial')">
+                                {{ getTipoDinamico(bloco, dia) }}
+                              </span>
+                              @if (ep.aDuracao) {
+                                <span class="inline-flex items-center gap-0.5 text-[9px] font-mono text-gray-500">
+                                  <svg class="w-2.5 h-2.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                  </svg>
+                                  {{ formatDuracao(ep.aDuracao) }}
+                                </span>
+                              }
+                            </div>
+                          </div>
                         </div>
                       }
                     </div>
@@ -292,8 +306,8 @@
                 @for (p of modalProgramas(); track p.aId) {
                   <div class="search-dropdown-item"
                        (click)="selectProgramaModal(p)">
-                    @if (p.aCapaUrl) {
-                      <img [src]="p.aCapaUrl" class="w-6 h-6 rounded-lg object-cover" />
+                    @if (tvService.getProgramaCapaUrl(p.aId); as capa) {
+                      <img [src]="capa" class="w-6 h-6 rounded-lg object-cover" />
                     }
                     {{ p.aNome }}
                   </div>
@@ -303,8 +317,8 @@
             @if (modalSelectedPrograma()) {
               <div class="mt-1.5 flex items-center gap-2 px-3 py-2 rounded-lg"
                    style="background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2);">
-                @if (modalSelectedPrograma()!.aCapaUrl) {
-                  <img [src]="modalSelectedPrograma()!.aCapaUrl" class="w-6 h-6 rounded-lg object-cover" />
+                @if (tvService.getProgramaCapaUrl(modalSelectedPrograma()!.aId); as capa) {
+                  <img [src]="capa" class="w-6 h-6 rounded-lg object-cover" />
                 }
                 <span class="text-sm text-blue-200 flex-1 font-medium">{{ modalSelectedPrograma()!.aNome }}</span>
                 <button (click)="modalSelectedPrograma.set(null); modalProgramaSearch.set(''); modalEpisodios.set([]); modalSelectedEpisodio.set(null)"
@@ -406,8 +420,8 @@
           @if (detailBloco()!.aPrograma) {
             <div class="flex items-center gap-3 p-3 rounded-xl"
                  style="background: rgba(2,6,23,0.4); border: 1px solid rgba(148,163,184,0.06);">
-              @if (detailBloco()!.aPrograma!.aCapaUrl) {
-                <img [src]="detailBloco()!.aPrograma!.aCapaUrl" class="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              @if (tvService.getProgramaCapaUrl(detailBloco()!.aPrograma!.aId); as capa) {
+                <img [src]="capa" class="w-10 h-10 rounded-xl object-cover shadow-lg" />
               }
               <div>
                 <p class="text-sm font-semibold text-white">{{ detailBloco()!.aPrograma!.aNome }}</p>
@@ -420,12 +434,12 @@
 
           @if (detailEpisodio()) {
             <div class="detail-info-box space-y-1.5">
-              <p class="text-xs text-gray-300 flex items-center gap-2">
-                <span [innerHTML]="formatTxExPx(detailEpisodio()!)" class="font-mono"></span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span [innerHTML]="formatTxExPx(detailEpisodio()!)" class="font-mono text-xs whitespace-nowrap"></span>
                 @if (detailEpisodio()!.aTitulo) {
-                  <span class="text-gray-400">{{ detailEpisodio()!.aTitulo }}</span>
+                  <span class="text-xs text-gray-400">{{ detailEpisodio()!.aTitulo }}</span>
                 }
-              </p>
+              </div>
               @if (detailEpisodio()!.aDuracao) {
                 <p class="text-[11px] text-gray-500 flex items-center gap-1.5">
                   <span>⏱</span> Duração: {{ formatDuracao(detailEpisodio()!.aDuracao) }}
@@ -440,13 +454,8 @@
           }
         </div>
 
-        <div class="px-5 py-3 flex justify-between"
+        <div class="px-5 py-3 flex justify-center"
              style="border-top: 1px solid rgba(148,163,184,0.08);">
-          <button (click)="deleteBloco()"
-                  [disabled]="detailDeleting()"
-                  class="btn-danger">
-            {{ detailDeleting() ? 'Excluindo...' : 'Excluir' }}
-          </button>
           <button (click)="watchBloco()" class="btn-primary">
             ▶ Assistir
           </button>

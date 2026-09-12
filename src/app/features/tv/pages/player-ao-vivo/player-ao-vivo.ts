@@ -1,5 +1,5 @@
 import { Component, signal, effect, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
@@ -25,6 +25,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly tvService = inject(TvService);
   readonly playerService = inject(PlayerService);
   readonly linhaService = inject(LinhaVermelhaService);
+  private readonly route = inject(ActivatedRoute);
 
   private readonly linhaEffect = effect(() => this._atualizarPosicaoProporcional(), { allowSignalWrites: false });
 
@@ -63,6 +64,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly programaDetalhe = signal<ProgramaDetalhe | null>(null);
   readonly programaErro = signal(false);
   readonly isFullscreen = signal(false);
+  private initialSeekOffset = 0;
   readonly showFsUi = signal(true);
   readonly dismissed = signal(false);
   readonly uiHidden = computed(
@@ -276,6 +278,10 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const seekParam = this.route.snapshot.queryParamMap.get('seek');
+    if (seekParam) {
+      this.initialSeekOffset = parseInt(seekParam, 10);
+    }
     this._timerInterval = setInterval(() => {
       this.currentTime.set(new Date());
       this.updateCurrentBloco();
@@ -423,7 +429,18 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       if (efetivo) bloco = efetivo;
     }
 
-    if (this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario && this.videoUrl()) return;
+    if (this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario && this.videoUrl()) {
+      if (this.initialSeekOffset > 0) {
+        const video = this.videoRef?.nativeElement;
+        if (video) {
+          video.currentTime = this.initialSeekOffset;
+          this.liveBase = this.initialSeekOffset;
+          this.tuneInAt = Date.now();
+          this.initialSeekOffset = 0;
+        }
+      }
+      return;
+    }
 
     this.currentBloco.set(bloco);
 
@@ -575,9 +592,12 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (video) {
       this.videoEnded.set(false);
       this.suppressSeekGuard = true;
-      this.liveBase = this.seekSeconds();
+      const offset = this.initialSeekOffset;
+      this.initialSeekOffset = 0;
+      const seekPos = offset > 0 ? offset : this.seekSeconds();
+      this.liveBase = seekPos;
       this.tuneInAt = Date.now();
-      video.currentTime = this.seekSeconds();
+      video.currentTime = seekPos;
       video.muted = this.isMuted();
       video.volume = this.volume();
       const playPromise = video.play();
@@ -629,6 +649,14 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
           setTimeout(() => (this.suppressSeekGuard = false), 400);
         }
       }
+    }
+  }
+
+  onPauseBlocked(): void {
+    this.isPlaying.set(true);
+    const video = this.videoRef?.nativeElement;
+    if (video && video.paused) {
+      video.play().catch(() => {});
     }
   }
 
@@ -701,7 +729,9 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   }
 
   get capaUrl(): string | null {
-    return this.programaDetalhe()?.aCapaUrl ?? this.currentBloco()?.aPrograma?.aCapaUrl ?? null;
+    const detalheId = this.programaDetalhe()?.aId;
+    if (detalheId) return this.tvService.getProgramaCapaUrl(detalheId);
+    return this.tvService.getProgramaCapaUrl(this.currentBloco()?.aPrograma?.aId);
   }
 
   get channelNumber(): string {

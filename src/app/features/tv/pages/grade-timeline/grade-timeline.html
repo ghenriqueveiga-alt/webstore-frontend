@@ -65,8 +65,8 @@
               <div class="slot-accent" [style.background]="tipoColor(bloco.aTipoBlocoDesc)"></div>
 
               <div class="slot-content">
-                @if (bloco.aPrograma?.aCapaUrl) {
-                  <img [src]="bloco.aPrograma!.aCapaUrl" class="slot-cover" />
+                @if (tvService.getProgramaCapaUrl(bloco.aPrograma?.aId); as capa) {
+                  <img [src]="capa" class="slot-cover" />
                 } @else {
                   <div class="slot-cover-placeholder">📺</div>
                 }

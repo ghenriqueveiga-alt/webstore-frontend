@@ -56,9 +56,13 @@ export class Player implements OnInit {
   readonly addCorteError = signal<string | null>(null);
   readonly pausedAt = signal<number | null>(null);
   readonly corteInicio = signal<number | null>(null);
+  private initialSeek: number | null = null;
 
   ngOnInit(): void {
     const episodioId = this.route.snapshot.queryParamMap.get('episodio');
+    const seekParam = this.route.snapshot.queryParamMap.get('seek');
+    this.initialSeek = seekParam ? parseInt(seekParam, 10) : null;
+    this.pendingSeek.set(this.initialSeek);
     this.loadEpisodios(episodioId ? +episodioId : null);
   }
 
@@ -145,7 +149,6 @@ export class Player implements OnInit {
     this.selectedEpisodio.set(ep);
     this.loadingCortes.set(true);
     this.cortesTempo.set([]);
-    this.pendingSeek.set(null);
     this.pausedAt.set(null);
     this.corteInicio.set(null);
     this.videoReady = false;

@@ -125,6 +125,11 @@ export class TvService {
     return this.http.get<PaginatedProgramas>(`${this.baseUrl}/programa`, { params });
   }
 
+  getProgramaCapaUrl(programaId: number | null | undefined): string | null {
+    if (!programaId) return null;
+    return `${this.baseUrl}/programa/${programaId}/capa`;
+  }
+
   getPrograma(id: number): Observable<ProgramaDetalhe> {
     return this.http.get<ProgramaDetalhe>(`${this.baseUrl}/programa/id/${id}`);
   }

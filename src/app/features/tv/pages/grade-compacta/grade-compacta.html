@@ -73,8 +73,8 @@
         @for (bloco of filteredBlocos; track bloco.aId) {
           <div class="compact-cell" [class.compact-cell-active]="isCurrentSlot(bloco)">
             <div class="cell-time">{{ bloco.aHorario?.substring(0, 5) }}</div>
-            @if (bloco.aPrograma?.aCapaUrl) {
-              <img [src]="bloco.aPrograma!.aCapaUrl" class="cell-cover" />
+            @if (tvService.getProgramaCapaUrl(bloco.aPrograma?.aId); as capa) {
+              <img [src]="capa" class="cell-cover" />
             } @else {
               <div class="cell-cover-placeholder">📺</div>
             }
@@ -101,8 +101,8 @@
         @for (bloco of filteredBlocos; track bloco.aId) {
           <div class="list-row" [class.list-row-active]="isCurrentSlot(bloco)">
             <span class="list-time">{{ bloco.aHorario?.substring(0, 5) }}</span>
-            @if (bloco.aPrograma?.aCapaUrl) {
-              <img [src]="bloco.aPrograma!.aCapaUrl" class="list-cover" />
+            @if (tvService.getProgramaCapaUrl(bloco.aPrograma?.aId); as capa) {
+              <img [src]="capa" class="list-cover" />
             } @else {
               <div class="list-cover-placeholder">📺</div>
             }

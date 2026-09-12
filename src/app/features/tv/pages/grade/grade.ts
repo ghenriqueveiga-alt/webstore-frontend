@@ -5,6 +5,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgStyle } from '@angular/common';
 import { TvService, GradeOutput, BlocoOutput, ProgramaOutput } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
+import { environment } from '../../../../../environments/environment';
 
 interface EpisodioInfo {
   aId: number;
@@ -13,6 +14,7 @@ interface EpisodioInfo {
   aParte: number | null;
   aTitulo: string | null;
   aDuracao: string | null;
+  aCapaUrl: string | null;
 }
 
 @Component({
@@ -80,6 +82,7 @@ export class Grade implements OnInit, OnDestroy {
   readonly detailBloco = signal<BlocoOutput | null>(null);
   readonly detailEpisodio = signal<EpisodioInfo | null>(null);
   readonly detailDia = signal('');
+  readonly detailHorario = signal('');
   readonly detailDeleting = signal(false);
 
   readonly currentPage = signal(0);
@@ -390,6 +393,7 @@ export class Grade implements OnInit, OnDestroy {
             aParte: row.aParte,
             aTitulo: row.aTitulo,
             aDuracao: row.aDuracao ?? null,
+            aCapaUrl: (row as any).aCapaUrl ?? null,
           });
         }
 
@@ -493,10 +497,11 @@ export class Grade implements OnInit, OnDestroy {
     return list;
   }
 
-  selectBloco(bloco: BlocoOutput, dia: string): void {
+  selectBloco(bloco: BlocoOutput, dia: string, horario: string): void {
     this.detailBloco.set(bloco);
     this.detailEpisodio.set(this.getEpisodio(bloco, dia));
     this.detailDia.set(dia);
+    this.detailHorario.set(horario);
     this.detailDeleting.set(false);
     this.detailOpen.set(true);
   }
@@ -507,9 +512,24 @@ export class Grade implements OnInit, OnDestroy {
 
   watchBloco(): void {
     const ep = this.detailEpisodio();
+    const bloco = this.detailBloco();
+    const clickedHorario = this.detailHorario();
     if (ep) {
       this.closeDetail();
-      this.router.navigate(['/player'], { queryParams: { episodio: ep.aId } });
+      let seek: number | null = null;
+      if (bloco?.aHorario && clickedHorario) {
+        const [bh, bm] = bloco.aHorario.substring(0, 5).split(':').map(Number);
+        const [ch, cm] = clickedHorario.substring(0, 5).split(':').map(Number);
+        const blocoStartSec = bh * 3600 + bm * 60;
+        const clickedSec = ch * 3600 + cm * 60;
+        const elapsed = clickedSec - blocoStartSec;
+        if (elapsed > 0) {
+          seek = elapsed;
+        }
+      }
+      const params: any = { episodio: ep.aId };
+      if (seek !== null) params.seek = seek;
+      this.router.navigate(['/player'], { queryParams: params });
     }
   }
 
@@ -819,6 +839,11 @@ export class Grade implements OnInit, OnDestroy {
     const m = Math.floor(sec / 60);
     const s = Math.round(sec) % 60;
     return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  }
+
+  getCapaUrl(ep: EpisodioInfo): string | null {
+    if (!ep.aCapaUrl) return null;
+    return `${environment.API_URL}/api/v1/episodio/${ep.aId}/capa`;
   }
 
   getTempoLivre(ep: EpisodioInfo): string | null {

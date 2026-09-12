@@ -79,8 +79,8 @@
               <!-- Program Info -->
               <div class="program-info">
                 <div class="flex items-center gap-2 mb-2">
-                  @if (bloco.aPrograma?.aCapaUrl) {
-                    <img [src]="bloco.aPrograma!.aCapaUrl" class="w-12 h-12 rounded-xl object-cover shadow-lg" />
+                  @if (tvService.getProgramaCapaUrl(bloco.aPrograma?.aId); as capa) {
+                    <img [src]="capa" class="w-12 h-12 rounded-xl object-cover shadow-lg" />
                   } @else {
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
                          style="background: rgba(99,102,241,0.15);">
