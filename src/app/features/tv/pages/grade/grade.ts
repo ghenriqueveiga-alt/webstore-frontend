@@ -191,6 +191,8 @@ export class Grade implements OnInit, OnDestroy {
     const slipRun = new Map<number, number>();
     const contados = new Set<string>();
     for (let p = 0; p <= this.currentPage(); p++) {
+      // Reset slipRun a cada página para evitar acúmulo acumulado
+      slipRun.clear();
       for (let d = 0; d < 7; d++) {
         for (const t of sortedHorarios) {
           const cellBlocos = dbSchedule.get(`${d}|${t}`);
@@ -387,7 +389,7 @@ export class Grade implements OnInit, OnDestroy {
             aTemporada: row.aTemporada,
             aParte: row.aParte,
             aTitulo: row.aTitulo,
-            aDuracao: (row as any).aDuracao ?? null,
+            aDuracao: row.aDuracao ?? null,
           });
         }
 
@@ -990,8 +992,9 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   linhaParaSlot(horario: string): void {
+    const diaAtual = this.linhaService.diaIdx() ?? this.nowDayIndex;
     this.nowLineOverride.set(horario);
-    this.linhaService.definir(horario, this.currentPage(), this.nowDayIndex);
+    this.linhaService.definir(horario, this.currentPage(), diaAtual);
   }
 
   linhaParaDia(idx: number): void {

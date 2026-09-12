@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, effect, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
@@ -25,6 +25,16 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly tvService = inject(TvService);
   readonly playerService = inject(PlayerService);
   readonly linhaService = inject(LinhaVermelhaService);
+
+  private readonly linhaEffect = effect(() => this._atualizarPosicaoProporcional(), { allowSignalWrites: false });
+
+  private _atualizarPosicaoProporcional(): void {
+    // Atualiza a posição proporcional da linha sempre que a hora muda
+    // Isso afeta tanto a grade quanto o ao-vivo
+    this.seekSeconds.set(0);
+    this.waitSeconds.set(0);
+    this.updateCurrentBloco();
+  }
 
   private paginaAlvo(): number {
     return this.linhaService.slot() ? this.linhaService.pagina() : 0;
@@ -426,7 +436,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const blocoTotalSeconds = bh * 3600 + bm * 60;
     const currentTotalSeconds = h * 3600 + m * 60 + s;
     const elapsedSeconds = currentTotalSeconds - blocoTotalSeconds;
-
+    const segundosNoBloco = this.linhaService.segundosDentroBloco();
     const eps = bloco.aPrograma ? this.allEpisodiosMap.get(bloco.aPrograma.aId) : null;
     if (eps && eps.length > 0) {
       const epIdx = this.getEpisodeIndex(bloco, dia);
@@ -434,9 +444,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     } else {
       this.currentEpisodio.set(null);
     }
-
     const topFree = this.getTopFreeSeconds();
-    const adjustedSeek = doInicio ? 0 : elapsedSeconds - topFree;
+    // Se a linha vermelha está ativa, usa a posição proporcional dentro do bloco
+    // senão, usa o tempo decorrido normal
+    const seekBase = this.linhaService.slot() ? segundosNoBloco : elapsedSeconds;
+    const adjustedSeek = doInicio ? 0 : seekBase - topFree;
     this.seekSeconds.set(adjustedSeek > 0 ? adjustedSeek : 0);
 
     if (adjustedSeek < 0) {

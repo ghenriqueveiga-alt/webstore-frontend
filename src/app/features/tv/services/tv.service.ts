@@ -10,7 +10,6 @@ export interface ArquivoOutput {
   aTipo: string;
   aTamanho: number;
   aCaminho: string;
-  aDuracao: string;
 }
 
 export interface ProgramaOutput {
@@ -33,7 +32,7 @@ export interface EpisodioOutput {
   aParte: number | null;
   aCapaUrl: string | null;
   aPrograma: { aId: number; aUuid: string; aNome: string } | null;
-  aProcessado: boolean | null;
+  aDuracao: string | null;
 }
 
 export interface PaginatedProgramas {
@@ -134,7 +133,7 @@ export class TvService {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
-      .set('sort', 'temporada')
+      .set('sort', 'temporada,parte,numero')
       .set('direction', 'asc');
     if (programaId) params = params.set('programaId', programaId.toString());
     if (search) params = params.set('search', search);

@@ -30,7 +30,6 @@ export interface EpisodioOutput {
   aTemporada: number | null;
   aCapaUrl: string | null;
   aPrograma: ProgramaOutput | null;
-  aProcessado: boolean | null;
 }
 
 export interface CorteOutput {
