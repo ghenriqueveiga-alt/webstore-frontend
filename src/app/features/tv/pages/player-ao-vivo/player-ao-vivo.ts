@@ -1,9 +1,10 @@
-import { Component, signal, effect, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
 import { PlayerService } from '../../../player/services/player.service';
+import { Subscription } from 'rxjs';
 
 interface EpisodioInfo {
   aId: number;
@@ -27,15 +28,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly linhaService = inject(LinhaVermelhaService);
   private readonly route = inject(ActivatedRoute);
 
-  private readonly linhaEffect = effect(() => this._atualizarPosicaoProporcional(), { allowSignalWrites: false });
-
-  private _atualizarPosicaoProporcional(): void {
-    // Atualiza a posição proporcional da linha sempre que a hora muda
-    // Isso afeta tanto a grade quanto o ao-vivo
-    this.seekSeconds.set(0);
-    this.waitSeconds.set(0);
-    this.updateCurrentBloco();
-  }
+  private _linhaSub?: Subscription;
 
   private paginaAlvo(): number {
     return this.linhaService.slot() ? this.linhaService.pagina() : 0;
@@ -98,6 +91,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   private programaCache = new Map<number, ProgramaDetalhe>();
   private lastDetalheProgramaId = 0;
+  private _lastOverrideSlot: string | null = null;
 
   private _timerInterval: any;
 
@@ -287,6 +281,10 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       this.updateCurrentBloco();
     }, 1000);
 
+    this._linhaSub = this.linhaService.mudanca$.subscribe(() => {
+      this.updateCurrentBloco();
+    });
+
     document.addEventListener('fullscreenchange', this.fsChangeHandler);
     document.addEventListener('click', this.docClickHandler);
     this.loadBlocos();
@@ -294,6 +292,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this._timerInterval) clearInterval(this._timerInterval);
+    this._linhaSub?.unsubscribe();
     document.removeEventListener('fullscreenchange', this.fsChangeHandler);
     document.removeEventListener('click', this.docClickHandler);
     if (this.fsIdleTimer) clearTimeout(this.fsIdleTimer);
@@ -400,36 +399,43 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const s = now.getSeconds();
     const currentTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
-    const matching = this.blocos.filter(b =>
-      b.aDiaSemanaDesc === dia && b.aHorario && b.aHorario.substring(0, 5) <= currentTime.substring(0, 5)
-    );
-
-    if (matching.length === 0) {
-      this.currentBloco.set(null);
-      this.currentEpisodio.set(null);
-      this.videoUrl.set(null);
-      this.videoEnded.set(false);
-      this.lastDetalheProgramaId = 0;
-      this.programaDetalhe.set(null);
-      return;
-    }
-
-    matching.sort((a, b) => (b.aHorario ?? '').localeCompare(a.aHorario ?? ''));
-    let bloco = matching[0];
-    let doInicio = false;
     const overrideSlot = this.linhaService.slot();
+    let bloco: BlocoOutput | null = null;
+
     if (overrideSlot) {
-      const blocoLinha = this.blocoEfetivoAgora(dia, overrideSlot);
-      if (blocoLinha) {
-        bloco = blocoLinha;
-        doInicio = true;
-      }
-    } else {
-      const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
-      if (efetivo) bloco = efetivo;
+      bloco = this.blocoEfetivoAgora(dia, overrideSlot);
     }
 
-    if (this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario && this.videoUrl()) {
+    if (!bloco) {
+      const matching = this.blocos.filter(b =>
+        b.aDiaSemanaDesc === dia && b.aHorario && b.aHorario.substring(0, 5) <= currentTime.substring(0, 5)
+      );
+
+      if (matching.length === 0) {
+        this.currentBloco.set(null);
+        this.currentEpisodio.set(null);
+        this.videoUrl.set(null);
+        this.videoEnded.set(false);
+        this.lastDetalheProgramaId = 0;
+        this.programaDetalhe.set(null);
+        return;
+      }
+
+      matching.sort((a, b) => (b.aHorario ?? '').localeCompare(a.aHorario ?? ''));
+      if (!overrideSlot) {
+        const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
+        if (efetivo) bloco = efetivo;
+        else bloco = matching[0];
+      } else {
+        bloco = matching[0];
+      }
+    }
+
+    const prevSlot = this._lastOverrideSlot;
+    this._lastOverrideSlot = overrideSlot ?? null;
+
+    const sameBloco = this.currentBloco()?.aId === bloco.aId && this.currentBloco()?.aHorario === bloco.aHorario;
+    if (sameBloco && this.videoUrl() && prevSlot === overrideSlot) {
       if (this.initialSeekOffset > 0) {
         const video = this.videoRef?.nativeElement;
         if (video) {
@@ -462,10 +468,20 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       this.currentEpisodio.set(null);
     }
     const topFree = this.getTopFreeSeconds();
-    // Se a linha vermelha está ativa, usa a posição proporcional dentro do bloco
-    // senão, usa o tempo decorrido normal
-    const seekBase = this.linhaService.slot() ? segundosNoBloco : elapsedSeconds;
-    const adjustedSeek = doInicio ? 0 : seekBase - topFree;
+
+    let seekBase: number;
+    if (overrideSlot && overrideSlot !== blocoStart) {
+      const [oh, om] = overrideSlot.split(':').map(Number);
+      const overrideSeconds = oh * 3600 + om * 60;
+      seekBase = overrideSeconds - blocoTotalSeconds;
+    } else if (this.linhaService.slot()) {
+      seekBase = segundosNoBloco;
+    } else if (overrideSlot) {
+      seekBase = 0;
+    } else {
+      seekBase = elapsedSeconds;
+    }
+    const adjustedSeek = (overrideSlot && overrideSlot === blocoStart) ? 0 : seekBase - topFree;
     this.seekSeconds.set(adjustedSeek > 0 ? adjustedSeek : 0);
 
     if (adjustedSeek < 0) {
@@ -478,6 +494,16 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     this.waitSeconds.set(0);
 
     this.isReprise.set(!!bloco.aTipoBlocoDesc?.includes('Rep'));
+
+    if (sameBloco && this.videoUrl()) {
+      const video = this.videoRef?.nativeElement;
+      if (video) {
+        video.currentTime = this.seekSeconds();
+        this.liveBase = this.seekSeconds();
+        this.tuneInAt = Date.now();
+      }
+      return;
+    }
 
     if (bloco.aPrograma) {
       this.loadVideo(bloco.aPrograma.aId, dia);
@@ -813,7 +839,32 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   get nextBloco(): BlocoOutput | null {
     const cur = this.currentBloco();
-    const list = this.upcomingBlocos.filter(b => b.aId !== cur?.aId);
-    return list.length > 0 ? list[0] : null;
+    if (!cur) return null;
+
+    const curHorario = cur.aHorario?.substring(0, 5);
+    if (!curHorario) return null;
+
+    const dia = cur.aDiaSemanaDesc;
+    if (!dia) return null;
+    const diaIdx = this.dias.indexOf(dia);
+    const ep = this.episodioPagina0(cur, diaIdx);
+
+    let endHorario = curHorario;
+    if (ep && ep.aDuracao) {
+      const epSec = this.parseDurationSec(ep.aDuracao);
+      const slotsNeeded = Math.ceil(epSec / (30 * 60));
+      endHorario = this.addTime(curHorario, slotsNeeded * 30);
+    }
+
+    const gradeId = cur.aGrade?.aId;
+
+    const candidates = this.blocos.filter(b =>
+      b.aDiaSemanaDesc === dia &&
+      b.aHorario &&
+      b.aHorario.substring(0, 5) >= endHorario &&
+      (!gradeId || b.aGrade?.aId === gradeId)
+    );
+
+    return candidates.sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''))[0] ?? null;
   }
 }

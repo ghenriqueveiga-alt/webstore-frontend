@@ -1,16 +1,40 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, OnDestroy } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+export interface LinhaChangeEvent {
+  slot: string | null;
+  pagina: number;
+  diaIdx: number | null;
+}
 
 @Injectable({ providedIn: 'root' })
-export class LinhaVermelhaService {
+export class LinhaVermelhaService implements OnDestroy {
 
   readonly slot = signal<string | null>(null);
   readonly pagina = signal(0);
   readonly diaIdx = signal<number | null>(null);
   readonly desde = signal(0);
 
+  readonly mudanca$ = new BehaviorSubject<LinhaChangeEvent | null>(null);
+
+  private _storageHandler = (e: StorageEvent) => {
+    if (e.key !== this._chave()) return;
+    this._recuperar();
+    this.mudanca$.next({
+      slot: this.slot(),
+      pagina: this.pagina(),
+      diaIdx: this.diaIdx(),
+    });
+  };
+
   constructor() {
     effect(() => this._persistir(), { allowSignalWrites: false });
     this._recuperar();
+    window.addEventListener('storage', this._storageHandler);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('storage', this._storageHandler);
   }
 
   private _chave(): string {
@@ -46,6 +70,7 @@ export class LinhaVermelhaService {
     this.pagina.set(pagina);
     this.diaIdx.set(diaIdx);
     this.desde.set(Date.now());
+    this.mudanca$.next({ slot, pagina, diaIdx });
   }
 
   acompanharPagina(pagina: number): void {
@@ -57,6 +82,7 @@ export class LinhaVermelhaService {
     this.pagina.set(0);
     this.diaIdx.set(null);
     this.desde.set(0);
+    this.mudanca$.next({ slot: null, pagina: 0, diaIdx: null });
     try { localStorage.removeItem(this._chave()); } catch { }
   }
 
