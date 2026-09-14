@@ -54,6 +54,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   readonly seekSeconds = signal(0);
   readonly isReprise = signal(false);
   readonly waitSeconds = signal(0);
+  readonly waitingForNext = signal(false);
   readonly programaDetalhe = signal<ProgramaDetalhe | null>(null);
   readonly programaErro = signal(false);
   readonly isFullscreen = signal(false);
@@ -271,6 +272,23 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     return Math.floor(livre / 2);
   }
 
+  private getBottomFreeSeconds(): number {
+    const ep = this.currentEpisodio();
+    if (!ep) return 0;
+    if (this.isMultiBloco(ep)) {
+      if (this.slotIndex() !== this.slotsForEpisode(ep) - 1) return 0;
+      const totalSec = this.parseDurationSec(ep.aDuracao ?? null);
+      const slots = this.slotsForEpisode(ep);
+      const totalSlotSec = slots * 30 * 60;
+      const livre = Math.max(0, totalSlotSec - totalSec);
+      return Math.ceil(livre / 2);
+    }
+    const sec = this.parseDurationSec(ep.aDuracao ?? null);
+    const livre = 30 * 60 - sec;
+    if (livre <= 0) return 0;
+    return Math.ceil(livre / 2);
+  }
+
   ngOnInit(): void {
     const seekParam = this.route.snapshot.queryParamMap.get('seek');
     if (seekParam) {
@@ -473,7 +491,9 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (overrideSlot && overrideSlot !== blocoStart) {
       const [oh, om] = overrideSlot.split(':').map(Number);
       const overrideSeconds = oh * 3600 + om * 60;
-      seekBase = overrideSeconds - blocoTotalSeconds;
+      const slotMinutes = (om < 30) ? 0 : 30;
+      const slotIdx = (oh * 60 + slotMinutes) / 30 - (bh * 60 + bm) / 30;
+      seekBase = slotIdx * 30 * 60 + (om % 30) * 60;
     } else if (this.linhaService.slot()) {
       seekBase = segundosNoBloco;
     } else if (overrideSlot) {
@@ -481,17 +501,34 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     } else {
       seekBase = elapsedSeconds;
     }
-    const adjustedSeek = (overrideSlot && overrideSlot === blocoStart) ? 0 : seekBase - topFree;
+    const adjustedSeek = seekBase - topFree;
     this.seekSeconds.set(adjustedSeek > 0 ? adjustedSeek : 0);
 
     if (adjustedSeek < 0) {
-      this.waitSeconds.set(Math.abs(adjustedSeek));
+      const desde = this.linhaService.desde();
+      const elapsed = desde > 0 ? (Date.now() - desde) / 1000 : 0;
+      const waitRemaining = Math.max(0, Math.abs(adjustedSeek) - elapsed);
+      if (waitRemaining > 0) {
+        this.waitSeconds.set(waitRemaining);
+        this.videoUrl.set(null);
+        this.videoEnded.set(false);
+        return;
+      }
+    }
+
+    const epDuracao = this.currentEpisodio()?.aDuracao;
+    const episodeSec = epDuracao ? this.parseDurationSec(epDuracao) : 0;
+    const bottomFree = this.getBottomFreeSeconds();
+    if (bottomFree > 0 && adjustedSeek >= episodeSec) {
+      this.waitSeconds.set(0);
+      this.waitingForNext.set(true);
       this.videoUrl.set(null);
       this.videoEnded.set(false);
       return;
     }
 
     this.waitSeconds.set(0);
+    this.waitingForNext.set(false);
 
     this.isReprise.set(!!bloco.aTipoBlocoDesc?.includes('Rep'));
 

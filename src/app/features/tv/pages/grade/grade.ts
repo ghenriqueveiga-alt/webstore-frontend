@@ -1103,30 +1103,70 @@ export class Grade implements OnInit, OnDestroy {
     const width = 'calc((100% - 126px) / 7)';
 
     if (!todayBloco) {
-      return { left: offset, width, top: `${this.nowMinuteFraction() * 100}%` };
+      return { left: offset, width, top: this.nowLineOverride() ? '0%' : `${this.nowMinuteFraction() * 100}%` };
     }
 
     const ep = this.getEpisodio(todayBloco, dayName);
     if (!ep || !ep.aDuracao) {
-      return { left: offset, width, top: `${this.nowMinuteFraction() * 100}%` };
+      return { left: offset, width, top: this.nowLineOverride() ? '0%' : `${this.nowMinuteFraction() * 100}%` };
     }
 
     const parts = ep.aDuracao.split(':');
     if (parts.length !== 3) {
-      return { left: offset, width, top: `${this.nowMinuteFraction() * 100}%` };
+      return { left: offset, width, top: this.nowLineOverride() ? '0%' : `${this.nowMinuteFraction() * 100}%` };
     }
     const eh = parseInt(parts[0]) || 0;
     const em = parseInt(parts[1]) || 0;
     const es = parseInt(parts[2]) || 0;
     const episodeSec = eh * 3600 + em * 60 + es;
     const topFreeSec = Math.floor((1800 - episodeSec) / 2);
-    const currentSecInSlot = this.nowLineOverride() ? 0 : (now.getMinutes() % 30) * 60 + now.getSeconds();
-    const topFreeFrac = topFreeSec / 1800;
-    const episodeFrac = episodeSec / 1800;
-    const rawFrac = currentSecInSlot / 1800;
-    const clampedFrac = Math.max(topFreeFrac, Math.min(topFreeFrac + episodeFrac, rawFrac));
+    const bottomFreeSec = 1800 - episodeSec - topFreeSec;
+    let currentSecInSlot: number;
+    if (this.nowLineOverride()) {
+      currentSecInSlot = 0;
+      return { left: offset, width, top: '0%' };
+    } else if (this.isMultiBloco(todayBloco, dayName) && episodeSec > 30 * 60) {
+      const epStartSlot = todayBloco.aHorario!.substring(0, 5);
+      const [epsh, epsm] = epStartSlot.split(':').map(Number);
+      const epStartTotal = epsh * 3600 + epsm * 60;
+      const nowTotal = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+      const totalElapsed = nowTotal - epStartTotal;
+      currentSecInSlot = Math.min(Math.max(0, totalElapsed), episodeSec);
+    } else {
+      currentSecInSlot = (now.getMinutes() % 30) * 60 + now.getSeconds();
+    }
 
-    return { left: offset, width, top: `${clampedFrac * 100}%` };
+    const rowEl = document.querySelector('.now-line')?.closest('.grid');
+    if (rowEl) {
+      const cells = rowEl.querySelectorAll('.grid-cell');
+      const cell = cells[i] as HTMLElement | undefined;
+      if (cell) {
+        const children = Array.from(cell.children) as HTMLElement[];
+        const zones = children.filter(c => c.classList.contains('tempo-livre') || c.classList.contains('bloco-card'));
+        if (zones.length >= 3) {
+          const topFreeH = zones[0].offsetHeight;
+          const episodeH = zones[1].offsetHeight;
+          const bottomFreeH = zones[2].offsetHeight;
+          const totalH = topFreeH + episodeH + bottomFreeH;
+          if (totalH > 0) {
+            let posPx = 0;
+            if (topFreeSec > 0 && currentSecInSlot <= topFreeSec) {
+              posPx = (currentSecInSlot / topFreeSec) * topFreeH;
+            } else if (episodeSec > 0 && currentSecInSlot <= topFreeSec + episodeSec) {
+              posPx = topFreeH + ((currentSecInSlot - topFreeSec) / episodeSec) * episodeH;
+            } else if (bottomFreeSec > 0) {
+              posPx = topFreeH + episodeH + ((currentSecInSlot - topFreeSec - episodeSec) / bottomFreeSec) * bottomFreeH;
+            } else {
+              posPx = topFreeH + episodeH;
+            }
+            return { left: offset, width, top: `${(posPx / totalH) * 100}%` };
+          }
+        }
+      }
+    }
+
+    const rawFrac = currentSecInSlot / 1800;
+    return { left: offset, width, top: `${rawFrac * 100}%` };
   }
 
   getTipoDinamico(bloco: BlocoOutput, dia: string): string {

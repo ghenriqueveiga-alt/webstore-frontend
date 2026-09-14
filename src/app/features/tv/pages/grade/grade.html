@@ -169,7 +169,7 @@
             </div>
           }
           <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2 relative mt-1">
-            @if (horario === nowTimeSlot() && nowLineVisible()) {
+            @if (nowLineOverride() ? (horario === nowTimeSlot()) : (horario === nowTimeSlot() && nowLineVisible())) {
               <div class="now-line" [ngStyle]="nowLineStyle()"></div>
             }
 
