@@ -124,18 +124,20 @@
               </div>
             </div>
           } @else if (waitingForNext()) {
-            <div class="tv-scroll">
-              <div class="text-center px-6 py-6">
-                <span class="text-6xl block mb-3">📺</span>
-                <p class="text-lg text-gray-300 mb-2">Intervalo</p>
-                <div class="slate slate-wait">
-                  <p class="slate-kicker">A seguir</p>
+            <div class="free-countdown-overlay">
+              <div class="tv-scroll">
+                <span class="text-5xl block mb-2">⏳</span>
+                <p class="text-sm text-gray-400 uppercase tracking-widest font-semibold">Tempo livre</p>
+                <p class="text-4xl font-mono font-bold text-yellow-400 my-1">{{ formatTime(freeCountdownSec) }}</p>
+                <p class="text-xs text-gray-500">até o fim do bloco</p>
+                <div class="slate slate-next">
+                  <p class="slate-kicker">Na sequência</p>
                   @if (nextBloco?.aPrograma) {
                     <p class="slate-title">{{ nextBloco!.aPrograma!.aNome }} <span class="slate-hora">{{ nextBloco!.aHorario?.substring(0, 5) }}</span></p>
                   } @else {
                     <p class="slate-title">Fim da grade de hoje</p>
                   }
-                  <p class="slate-sub">Aguardando próximo programa</p>
+                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(freeCountdownSec) }}</span> para o próximo bloco</p>
                 </div>
               </div>
             </div>
@@ -148,7 +150,6 @@
               (play)="onPlayState(true)"
               (pause)="onPauseBlocked()"
               (ended)="onVideoEnded()"
-              autoplay
               preload="auto"
               playsinline
               class="tv-video">

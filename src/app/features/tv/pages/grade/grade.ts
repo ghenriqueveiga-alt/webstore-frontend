@@ -582,6 +582,21 @@ export class Grade implements OnInit, OnDestroy {
     }
   }
 
+  private areConsecutiveSlots(a: BlocoOutput, b: BlocoOutput): boolean {
+    const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
+    const diasIndiceNorm = new Map(this.dias.map((d, i) => [this.normalizeDia(d), i]));
+    const aDay = diasIndice.get(a.aDiaSemanaDesc ?? '') ?? diasIndiceNorm.get(this.normalizeDia(a.aDiaSemanaDesc ?? '')) ?? -1;
+    const bDay = diasIndice.get(b.aDiaSemanaDesc ?? '') ?? diasIndiceNorm.get(this.normalizeDia(b.aDiaSemanaDesc ?? '')) ?? -1;
+    const aTime = a.aHorario?.substring(0, 5) ?? '';
+    const bTime = b.aHorario?.substring(0, 5) ?? '';
+    if (aDay === bDay) {
+      const [ah, am] = aTime.split(':').map(Number);
+      const [bh, bm] = bTime.split(':').map(Number);
+      return (bh * 60 + bm) - (ah * 60 + am) === 30;
+    }
+    return aDay + 1 === bDay && aTime === '23:30' && bTime === '00:00';
+  }
+
   private weekendBlocosFor(programaId: number, diaIdx: number): BlocoOutput[] {
     const wk = this.weekendBlocosCache.get(programaId);
     if (wk && wk.length > 0) return wk;
@@ -1119,19 +1134,23 @@ export class Grade implements OnInit, OnDestroy {
     const em = parseInt(parts[1]) || 0;
     const es = parseInt(parts[2]) || 0;
     const episodeSec = eh * 3600 + em * 60 + es;
-    const topFreeSec = Math.floor((1800 - episodeSec) / 2);
-    const bottomFreeSec = 1800 - episodeSec - topFreeSec;
+    const isMulti = this.isMultiBloco(todayBloco, dayName) && episodeSec > 30 * 60;
+    const slots = isMulti ? this.slotsForEpisode(ep) : 1;
+    const totalSlotSec = slots * 30 * 60;
+    const totalFree = Math.max(0, totalSlotSec - episodeSec);
+    const topFreeSec = Math.floor(totalFree / 2);
+    const bottomFreeSec = totalFree - topFreeSec;
     let currentSecInSlot: number;
     if (this.nowLineOverride()) {
       currentSecInSlot = 0;
       return { left: offset, width, top: '0%' };
-    } else if (this.isMultiBloco(todayBloco, dayName) && episodeSec > 30 * 60) {
+    } else if (isMulti) {
       const epStartSlot = todayBloco.aHorario!.substring(0, 5);
       const [epsh, epsm] = epStartSlot.split(':').map(Number);
       const epStartTotal = epsh * 3600 + epsm * 60;
       const nowTotal = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
       const totalElapsed = nowTotal - epStartTotal;
-      currentSecInSlot = Math.min(Math.max(0, totalElapsed), episodeSec);
+      currentSecInSlot = Math.min(Math.max(0, totalElapsed), totalSlotSec);
     } else {
       currentSecInSlot = (now.getMinutes() % 30) * 60 + now.getSeconds();
     }
@@ -1150,14 +1169,33 @@ export class Grade implements OnInit, OnDestroy {
           const totalH = topFreeH + episodeH + bottomFreeH;
           if (totalH > 0) {
             let posPx = 0;
-            if (topFreeSec > 0 && currentSecInSlot <= topFreeSec) {
-              posPx = (currentSecInSlot / topFreeSec) * topFreeH;
-            } else if (episodeSec > 0 && currentSecInSlot <= topFreeSec + episodeSec) {
-              posPx = topFreeH + ((currentSecInSlot - topFreeSec) / episodeSec) * episodeH;
-            } else if (bottomFreeSec > 0) {
-              posPx = topFreeH + episodeH + ((currentSecInSlot - topFreeSec - episodeSec) / bottomFreeSec) * bottomFreeH;
+            if (isMulti) {
+              const slotIdx = Math.min(Math.floor(currentSecInSlot / 1800), slots - 1);
+              const secInSlot = currentSecInSlot - slotIdx * 1800;
+              if (slotIdx === 0 && topFreeSec > 0 && secInSlot < topFreeSec) {
+                posPx = (secInSlot / topFreeSec) * topFreeH;
+              } else if (slotIdx === slots - 1 && bottomFreeSec > 0) {
+                const blocoSecInSlot = 1800 - bottomFreeSec;
+                if (secInSlot < blocoSecInSlot) {
+                  posPx = (secInSlot / blocoSecInSlot) * episodeH;
+                } else {
+                  const bottomElapsed = secInSlot - blocoSecInSlot;
+                  posPx = episodeH + (bottomElapsed / bottomFreeSec) * bottomFreeH;
+                }
+              } else {
+                const blocoSecInSlot = slotIdx === 0 ? (1800 - topFreeSec) : 1800;
+                posPx = (secInSlot / blocoSecInSlot) * episodeH;
+              }
             } else {
-              posPx = topFreeH + episodeH;
+              if (topFreeSec > 0 && currentSecInSlot <= topFreeSec) {
+                posPx = (currentSecInSlot / topFreeSec) * topFreeH;
+              } else if (episodeSec > 0 && currentSecInSlot <= topFreeSec + episodeSec) {
+                posPx = topFreeH + ((currentSecInSlot - topFreeSec) / episodeSec) * episodeH;
+              } else if (bottomFreeSec > 0) {
+                posPx = topFreeH + episodeH + ((currentSecInSlot - topFreeSec - episodeSec) / bottomFreeSec) * bottomFreeH;
+              } else {
+                posPx = topFreeH + episodeH;
+              }
             }
             return { left: offset, width, top: `${(posPx / totalH) * 100}%` };
           }
@@ -1165,7 +1203,7 @@ export class Grade implements OnInit, OnDestroy {
       }
     }
 
-    const rawFrac = currentSecInSlot / 1800;
+    const rawFrac = isMulti ? (currentSecInSlot / totalSlotSec) : (currentSecInSlot / 1800);
     return { left: offset, width, top: `${rawFrac * 100}%` };
   }
 

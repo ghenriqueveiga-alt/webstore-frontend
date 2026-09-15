@@ -1,8 +1,12 @@
-<app-header />
-<main>
+@if (!isTvRoute()) {
+  <app-header />
+}
+<main [class.no-header]="isTvRoute()">
   <router-outlet />
 </main>
-<app-footer />
+@if (!isTvRoute()) {
+  <app-footer />
+}
 <app-cart-drawer />
 
 @if (fav.showAuthModal()) {

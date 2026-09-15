@@ -139,11 +139,11 @@
       </div>
     </div>
   } @else {
-    <div class="p-4 overflow-x-auto">
+    <div class="p-4 overflow-x-auto" style="max-height: calc(100vh - 160px); overflow-y: auto;">
       <div class="min-w-[960px]">
 
         <!-- Day Headers -->
-        <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2">
+        <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2" style="position: sticky; top: 0; z-index: 15; background: linear-gradient(180deg, #0f172a 0%, #0f172a 85%, transparent 100%); padding-top: 2px; padding-bottom: 8px;">
           <div class="flex items-end px-2 pb-2">
             <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Horário</span>
           </div>

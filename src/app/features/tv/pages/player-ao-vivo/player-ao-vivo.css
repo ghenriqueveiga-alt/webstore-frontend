@@ -146,7 +146,7 @@
 .tv-screen {
   position: relative;
   width: min(100%, 100%);
-  aspect-ratio: 16 / 8;
+  aspect-ratio: 16 / 8.85;
   margin-inline: auto;
   background: #000;
   border-radius: 0.625rem;
