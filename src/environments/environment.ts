@@ -5,4 +5,5 @@ export const environment = {
     slotSideRail: '4510159406', // Slot ID for left/right rail ads
   },
   API_URL: 'http://localhost:8081',
+  timezoneOffsetHours: 0,
 };

@@ -1,10 +1,11 @@
-import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgStyle } from '@angular/common';
 import { TvService, GradeOutput, BlocoOutput, ProgramaOutput } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
+import { ServerTimeService } from '../../../../core/services/server-time.service';
 import { environment } from '../../../../../environments/environment';
 
 interface EpisodioInfo {
@@ -27,10 +28,15 @@ export class Grade implements OnInit, OnDestroy {
 
   readonly tvService = inject(TvService);
   readonly linhaService = inject(LinhaVermelhaService);
+  readonly serverTime = inject(ServerTimeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private pendingPage = 0;
   private readonly sanitizer = inject(DomSanitizer);
+
+  private nowDate(): Date {
+    return this.serverTime.ready() ? this.serverTime.now() : new Date();
+  }
 
   readonly grades = signal<GradeOutput[]>([]);
   readonly blocos = signal<BlocoOutput[]>([]);
@@ -38,7 +44,7 @@ export class Grade implements OnInit, OnDestroy {
   readonly selectedGradeId = signal<number | null>(null);
 
   private _timerInterval: any;
-  readonly currentTime = signal(new Date());
+  readonly currentTime = signal(this.nowDate());
 
   readonly dias = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   readonly diasAbrev = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
@@ -108,9 +114,9 @@ export class Grade implements OnInit, OnDestroy {
     const parsed = qp !== null ? parseInt(qp, 10) : NaN;
     this.pendingPage = !isNaN(parsed) && parsed > 0 ? parsed : 0;
     this._timerInterval = setInterval(() => {
-      this.currentTime.set(new Date());
+      this.currentTime.set(this.nowDate());
       this.maybeRolloverPage();
-    }, 30000);
+    }, 1000);
     this.tvService.listGrades(0, 100).subscribe({
       next: (res) => {
         this.grades.set(res.aGrades);
@@ -477,7 +483,8 @@ export class Grade implements OnInit, OnDestroy {
   private maybeRolloverPage(): void {
     if (this.loading() || this.totalPages() <= 1) return;
     const now = this.currentTime();
-    const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const dayNum = this.serverTime.ready() ? this.serverTime.getDayOfWeek() : now.getDay();
+    const dayIdx = dayNum === 0 ? 6 : dayNum - 1;
     if (dayIdx !== 0) return;
     if (now.getHours() !== 0 || now.getMinutes() >= 30) return;
     const weekKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
@@ -1015,7 +1022,7 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   get nowDayIndex(): number {
-    const d = this.currentTime().getDay();
+    const d = this.serverTime.ready() ? this.serverTime.getDayOfWeek() : this.currentTime().getDay();
     return d === 0 ? 6 : d - 1;
   }
 
@@ -1078,29 +1085,7 @@ export class Grade implements OnInit, OnDestroy {
 
   nowLineVisible(): boolean {
     if (this.nowLineOverride()) return true;
-    const now = this.currentTime();
-    const slotH = now.getHours();
-    const slotM = now.getMinutes() < 30 ? 0 : 30;
-    const slot = `${slotH.toString().padStart(2,'0')}:${slotM.toString().padStart(2,'0')}`;
-    const dayName = this.dias[this.nowDayIndex];
-
-    const todayBloco = this.filteredBlocos.find(b =>
-      this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dayName) &&
-      b.aHorario?.substring(0, 5) === slot
-    );
-    if (!todayBloco?.aPrograma) return false;
-
-    const eps = this.allEpisodiosMap.get(todayBloco.aPrograma.aId);
-    if (!eps || eps.length === 0) return false;
-
-    const ep = this.getEpisodio(todayBloco, dayName);
-    if (!ep) return false;
-
-    const epIdx = eps.findIndex(e => e.aId === ep.aId);
-    if (epIdx < 0) return false;
-
-    const epPage = Math.floor(epIdx / this.EPISODES_PER_PAGE);
-    return epPage === this.currentPage();
+    return true;
   }
 
   nowLineStyle(): Record<string, string> {
@@ -1134,7 +1119,7 @@ export class Grade implements OnInit, OnDestroy {
     const em = parseInt(parts[1]) || 0;
     const es = parseInt(parts[2]) || 0;
     const episodeSec = eh * 3600 + em * 60 + es;
-    const isMulti = this.isMultiBloco(todayBloco, dayName) && episodeSec > 30 * 60;
+    const isMulti = !this.isFimDeSemana(dayName) && this.isMultiBloco(todayBloco, dayName) && episodeSec > 30 * 60;
     const slots = isMulti ? this.slotsForEpisode(ep) : 1;
     const totalSlotSec = slots * 30 * 60;
     const totalFree = Math.max(0, totalSlotSec - episodeSec);
@@ -1162,12 +1147,28 @@ export class Grade implements OnInit, OnDestroy {
       if (cell) {
         const children = Array.from(cell.children) as HTMLElement[];
         const zones = children.filter(c => c.classList.contains('tempo-livre') || c.classList.contains('bloco-card'));
-        if (zones.length >= 3) {
-          const topFreeH = zones[0].offsetHeight;
-          const episodeH = zones[1].offsetHeight;
-          const bottomFreeH = zones[2].offsetHeight;
-          const totalH = topFreeH + episodeH + bottomFreeH;
-          if (totalH > 0) {
+
+        let zoneStartIdx = 0;
+        let zoneCount = 3;
+        if (todayBloco && zones.length > 3) {
+          const targetCard = cell.querySelector(`.bloco-card[data-bloco-id="${todayBloco.aId}"]`) as HTMLElement | null;
+          if (targetCard) {
+            const cardIdx = zones.indexOf(targetCard);
+            if (cardIdx >= 0) {
+              zoneStartIdx = Math.max(0, cardIdx - 1);
+              zoneCount = Math.min(3, zones.length - zoneStartIdx);
+            }
+          }
+        }
+
+        if (zones.length >= zoneStartIdx + zoneCount) {
+          const topFreeH = zones[zoneStartIdx].offsetHeight;
+          const episodeH = zones[zoneStartIdx + 1].offsetHeight;
+          const bottomFreeH = zoneCount >= 3 ? zones[zoneStartIdx + 2].offsetHeight : 0;
+          const zonesH = topFreeH + episodeH + bottomFreeH;
+          const rowH = (rowEl as HTMLElement).offsetHeight;
+          if (zonesH > 0 && rowH > 0) {
+            const cellTop = cell.offsetTop;
             let posPx = 0;
             if (isMulti) {
               const slotIdx = Math.min(Math.floor(currentSecInSlot / 1800), slots - 1);
@@ -1197,7 +1198,8 @@ export class Grade implements OnInit, OnDestroy {
                 posPx = topFreeH + episodeH;
               }
             }
-            return { left: offset, width, top: `${(posPx / totalH) * 100}%` };
+            const absolutePx = cellTop + posPx;
+            return { left: offset, width, top: `${(absolutePx / rowH) * 100}%` };
           }
         }
       }

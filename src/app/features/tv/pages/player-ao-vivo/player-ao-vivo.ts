@@ -4,6 +4,7 @@ import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
 import { PlayerService } from '../../../player/services/player.service';
+import { ServerTimeService } from '../../../../core/services/server-time.service';
 import { Subscription } from 'rxjs';
 
 interface EpisodioInfo {
@@ -24,11 +25,15 @@ interface EpisodioInfo {
 export class PlayerAoVivo implements OnInit, OnDestroy {
 
   readonly tvService = inject(TvService);
-  readonly playerService = inject(PlayerService);
   readonly linhaService = inject(LinhaVermelhaService);
+  readonly playerService = inject(PlayerService);
+  readonly serverTime = inject(ServerTimeService);
   private readonly route = inject(ActivatedRoute);
-
   private _linhaSub?: Subscription;
+
+  private nowDate(): Date {
+    return this.serverTime.ready() ? this.serverTime.now() : new Date();
+  }
 
   private paginaAlvo(): number {
     return this.linhaService.slot() ? this.linhaService.pagina() : 0;
@@ -47,7 +52,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   private suppressSeekGuard = false;
 
   readonly loading = signal(true);
-  readonly currentTime = signal(new Date());
+  readonly currentTime = signal(this.nowDate());
   readonly currentBloco = signal<BlocoOutput | null>(null);
   readonly currentEpisodio = signal<EpisodioInfo | null>(null);
   readonly videoUrl = signal<string | null>(null);
@@ -103,7 +108,8 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   private diaAlvo(): { dia: string; diaIdx: number } {
     const now = this.currentTime();
-    const nowIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const dayNum = this.serverTime.ready() ? this.serverTime.getDayOfWeek() : now.getDay();
+    const nowIdx = dayNum === 0 ? 6 : dayNum - 1;
     const ovDia = this.linhaService.slot() !== null ? this.linhaService.diaIdx() : null;
     const idx = ovDia ?? nowIdx;
     return { dia: this.dias[idx], diaIdx: idx };
@@ -123,6 +129,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   private normalizeDia(d: string): string {
     return d.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  private isFimDeSemana(dia: string): boolean {
+    const idx = this.dias.indexOf(dia);
+    return idx === 5 || idx === 6;
   }
 
   private addTime(time: string, addMin: number): string {
@@ -279,7 +290,7 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       this.initialSeekOffset = parseInt(seekParam, 10);
     }
     this._timerInterval = setInterval(() => {
-      this.currentTime.set(new Date());
+      this.currentTime.set(this.nowDate());
       this.updateCurrentBloco();
     }, 1000);
 
@@ -405,10 +416,29 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     let bloco: BlocoOutput | null = null;
 
     if (overrideSlot) {
-      bloco = this.blocoEfetivoAgora(dia, overrideSlot);
+      const hasBlocoAtSlot = this.blocos.some(b =>
+        b.aStatusCode === 'AT' && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia) &&
+        b.aHorario?.substring(0, 5) === overrideSlot
+      );
+      if (hasBlocoAtSlot) {
+        bloco = this.blocoEfetivoAgora(dia, overrideSlot);
+      } else {
+        bloco = null;
+      }
+    }
+      }
     }
 
     if (!bloco) {
+      if (overrideSlot) {
+        this.currentBloco.set(null);
+        this.currentEpisodio.set(null);
+        this.videoUrl.set(null);
+        this.videoEnded.set(false);
+        this.lastDetalheProgramaId = 0;
+        this.programaDetalhe.set(null);
+        return;
+      }
       const matching = this.blocos.filter(b =>
         b.aDiaSemanaDesc === dia && b.aHorario && b.aHorario.substring(0, 5) <= currentTime.substring(0, 5)
       );
@@ -424,13 +454,9 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
       }
 
       matching.sort((a, b) => (b.aHorario ?? '').localeCompare(a.aHorario ?? ''));
-      if (!overrideSlot) {
-        const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
-        if (efetivo) bloco = efetivo;
-        else bloco = matching[0];
-      } else {
-        bloco = matching[0];
-      }
+      const efetivo = this.blocoEfetivoAgora(dia, currentTime.substring(0, 5));
+      if (efetivo) bloco = efetivo;
+      else bloco = matching[0];
     }
 
     const prevSlot = this._lastOverrideSlot;
@@ -600,15 +626,31 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   }
 
   private episodioPagina0(bloco: BlocoOutput, diaIdx: number, pagina?: number): EpisodioInfo | null {
-    const programaId = bloco.aPrograma?.aId;
-    if (!programaId) return null;
-    const eps = this.allEpisodiosMap.get(programaId);
+    const programmaId = bloco.aPrograma?.aId;
+    if (!programmaId) return null;
+    const eps = this.allEpisodiosMap.get(programmaId);
     if (!eps || eps.length === 0) return null;
-    const diasQ = this.diasProgramaMap.get(programaId) ?? [];
+    const diaName = this.dias[diaIdx];
+    const pag = pagina ?? this.paginaAlvo();
+
+    if (this.isFimDeSemana(diaName)) {
+      const weekendBlocos = this.blocos.filter(b =>
+        b.aStatusCode === 'AT' && b.aPrograma?.aId === programmaId &&
+        this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(diaName)
+      ).sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      const numSlots = weekendBlocos.length;
+      if (numSlots === 0) return null;
+      const slotOffset = weekendBlocos.findIndex(b => b.aId === bloco.aId);
+      if (slotOffset < 0) return null;
+      const pageOffset = pag * numSlots;
+      const finalIdx = ((pageOffset + slotOffset) % eps.length + eps.length) % eps.length;
+      return eps[finalIdx];
+    }
+
+    const diasQ = this.diasProgramaMap.get(programmaId) ?? [];
     const dayPos = diasQ.indexOf(diaIdx);
     if (dayPos < 0) return null;
-    const pag = pagina ?? this.paginaAlvo();
-    const slip = this.contarDeslocamentosAntes(programaId, pag, diaIdx);
+    const slip = this.contarDeslocamentosAntes(programmaId, pag, diaIdx);
     return eps[(((dayPos + pag * this.EPISODES_PER_PAGE - slip) % eps.length) + eps.length) % eps.length];
   }
 
@@ -652,6 +694,22 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (!slot) return null;
     const list = occ.get(slot) ?? [];
     return list.length > 0 ? list[0] : null;
+  }
+
+  private getExpandedSlotsForBloco(bloco: BlocoOutput, diaIdx: number): string[] {
+    const slots: string[] = [];
+    if (!bloco.aHorario) return slots;
+    slots.push(bloco.aHorario.substring(0, 5));
+    const ep = this.episodioPagina0(bloco, diaIdx);
+    if (!ep || !ep.aDuracao) return slots;
+    const sec = this.parseDurationSec(ep.aDuracao);
+    if (sec <= 30 * 60) return slots;
+    const need = Math.ceil(sec / (30 * 60));
+    const t = bloco.aHorario.substring(0, 5);
+    for (let s = 1; s < need; s++) {
+      slots.push(this.addTime(t, s * 30));
+    }
+    return slots;
   }
 
   onVideoLoaded(): void {
