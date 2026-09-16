@@ -176,8 +176,8 @@
 .btn-danger:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .now-line {
-  position: absolute; height: 2px; z-index: 10; pointer-events: none;
-  background: linear-gradient(90deg, transparent, #ef4444 10%, #ef4444 90%, transparent);
+  position: absolute; left: 0; right: 0; height: 2px; z-index: 10; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #ef4444 5%, #ef4444 95%, transparent);
   box-shadow: 0 0 8px rgba(239,68,68,0.5);
 }
 

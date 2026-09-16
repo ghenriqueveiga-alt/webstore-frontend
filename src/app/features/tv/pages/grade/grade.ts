@@ -1,8 +1,7 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { NgStyle } from '@angular/common';
 import { TvService, GradeOutput, BlocoOutput, ProgramaOutput } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
 import { ServerTimeService } from '../../../../core/services/server-time.service';
@@ -20,7 +19,7 @@ interface EpisodioInfo {
 
 @Component({
   selector: 'app-grade',
-  imports: [RouterLink, FormsModule, NgStyle],
+  imports: [RouterLink, FormsModule],
   templateUrl: './grade.html',
   styleUrl: './grade.css',
 })
@@ -33,6 +32,8 @@ export class Grade implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private pendingPage = 0;
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private _linhaSub: any;
 
   private nowDate(): Date {
     return this.serverTime.ready() ? this.serverTime.now() : new Date();
@@ -117,6 +118,9 @@ export class Grade implements OnInit, OnDestroy {
       this.currentTime.set(this.nowDate());
       this.maybeRolloverPage();
     }, 1000);
+    this._linhaSub = this.linhaService.mudanca$.subscribe(() => {
+      setTimeout(() => this.cdr.detectChanges());
+    });
     this.tvService.listGrades(0, 100).subscribe({
       next: (res) => {
         this.grades.set(res.aGrades);
@@ -131,6 +135,7 @@ export class Grade implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this._timerInterval) clearInterval(this._timerInterval);
+    if (this._linhaSub) this._linhaSub.unsubscribe();
   }
 
   loadBlocos(): void {
@@ -1042,6 +1047,7 @@ export class Grade implements OnInit, OnDestroy {
     const diaAtual = this.linhaService.diaIdx() ?? this.nowDayIndex;
     this.nowLineOverride.set(horario);
     this.linhaService.definir(horario, this.currentPage(), diaAtual);
+    this.scrollParaSlot(horario);
   }
 
   linhaParaDia(idx: number): void {
@@ -1068,146 +1074,24 @@ export class Grade implements OnInit, OnDestroy {
     }
   }
 
-  nowTimeSlot(): string {
+  readonly nowTimeSlot = computed(() => {
     const override = this.nowLineOverride();
     if (override) return override;
+    const serviceSlot = this.linhaService.slot();
+    if (serviceSlot) return serviceSlot;
     const now = this.currentTime();
     const h = now.getHours().toString().padStart(2, '0');
     const m = now.getMinutes() < 30 ? '00' : '30';
     return `${h}:${m}`;
-  }
+  });
 
-  nowMinuteFraction(): number {
-    if (this.nowLineOverride()) return 0;
+  readonly nowDaySlot = computed(() => this.linhaService.diaIdx() ?? this.nowDayIndex);
+
+  readonly nowMinuteFraction = computed(() => {
+    if (this.nowLineOverride() || this.linhaService.slot()) return 0;
     const now = this.currentTime();
     return (now.getMinutes() % 30) / 30;
-  }
-
-  nowLineVisible(): boolean {
-    if (this.nowLineOverride()) return true;
-    return true;
-  }
-
-  nowLineStyle(): Record<string, string> {
-    const now = this.currentTime();
-    const slot = this.nowTimeSlot();
-    const dayName = this.dias[this.nowDayIndex];
-
-    const todayBloco = this.filteredBlocos.find(b =>
-      this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dayName) &&
-      b.aHorario?.substring(0, 5) === slot
-    );
-
-    const i = this.linhaService.diaIdx() ?? this.nowDayIndex;
-    const offset = `calc(121px + ${i} * ((100% - 126px) / 7))`;
-    const width = 'calc((100% - 126px) / 7)';
-
-    if (!todayBloco) {
-      return { left: offset, width, top: this.nowLineOverride() ? '0%' : `${this.nowMinuteFraction() * 100}%` };
-    }
-
-    const ep = this.getEpisodio(todayBloco, dayName);
-    if (!ep || !ep.aDuracao) {
-      return { left: offset, width, top: this.nowLineOverride() ? '0%' : `${this.nowMinuteFraction() * 100}%` };
-    }
-
-    const parts = ep.aDuracao.split(':');
-    if (parts.length !== 3) {
-      return { left: offset, width, top: this.nowLineOverride() ? '0%' : `${this.nowMinuteFraction() * 100}%` };
-    }
-    const eh = parseInt(parts[0]) || 0;
-    const em = parseInt(parts[1]) || 0;
-    const es = parseInt(parts[2]) || 0;
-    const episodeSec = eh * 3600 + em * 60 + es;
-    const isMulti = !this.isFimDeSemana(dayName) && this.isMultiBloco(todayBloco, dayName) && episodeSec > 30 * 60;
-    const slots = isMulti ? this.slotsForEpisode(ep) : 1;
-    const totalSlotSec = slots * 30 * 60;
-    const totalFree = Math.max(0, totalSlotSec - episodeSec);
-    const topFreeSec = Math.floor(totalFree / 2);
-    const bottomFreeSec = totalFree - topFreeSec;
-    let currentSecInSlot: number;
-    if (this.nowLineOverride()) {
-      currentSecInSlot = 0;
-      return { left: offset, width, top: '0%' };
-    } else if (isMulti) {
-      const epStartSlot = todayBloco.aHorario!.substring(0, 5);
-      const [epsh, epsm] = epStartSlot.split(':').map(Number);
-      const epStartTotal = epsh * 3600 + epsm * 60;
-      const nowTotal = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-      const totalElapsed = nowTotal - epStartTotal;
-      currentSecInSlot = Math.min(Math.max(0, totalElapsed), totalSlotSec);
-    } else {
-      currentSecInSlot = (now.getMinutes() % 30) * 60 + now.getSeconds();
-    }
-
-    const rowEl = document.querySelector('.now-line')?.closest('.grid');
-    if (rowEl) {
-      const cells = rowEl.querySelectorAll('.grid-cell');
-      const cell = cells[i] as HTMLElement | undefined;
-      if (cell) {
-        const children = Array.from(cell.children) as HTMLElement[];
-        const zones = children.filter(c => c.classList.contains('tempo-livre') || c.classList.contains('bloco-card'));
-
-        let zoneStartIdx = 0;
-        let zoneCount = 3;
-        if (todayBloco && zones.length > 3) {
-          const targetCard = cell.querySelector(`.bloco-card[data-bloco-id="${todayBloco.aId}"]`) as HTMLElement | null;
-          if (targetCard) {
-            const cardIdx = zones.indexOf(targetCard);
-            if (cardIdx >= 0) {
-              zoneStartIdx = Math.max(0, cardIdx - 1);
-              zoneCount = Math.min(3, zones.length - zoneStartIdx);
-            }
-          }
-        }
-
-        if (zones.length >= zoneStartIdx + zoneCount) {
-          const topFreeH = zones[zoneStartIdx].offsetHeight;
-          const episodeH = zones[zoneStartIdx + 1].offsetHeight;
-          const bottomFreeH = zoneCount >= 3 ? zones[zoneStartIdx + 2].offsetHeight : 0;
-          const zonesH = topFreeH + episodeH + bottomFreeH;
-          const rowH = (rowEl as HTMLElement).offsetHeight;
-          if (zonesH > 0 && rowH > 0) {
-            const cellTop = cell.offsetTop;
-            let posPx = 0;
-            if (isMulti) {
-              const slotIdx = Math.min(Math.floor(currentSecInSlot / 1800), slots - 1);
-              const secInSlot = currentSecInSlot - slotIdx * 1800;
-              if (slotIdx === 0 && topFreeSec > 0 && secInSlot < topFreeSec) {
-                posPx = (secInSlot / topFreeSec) * topFreeH;
-              } else if (slotIdx === slots - 1 && bottomFreeSec > 0) {
-                const blocoSecInSlot = 1800 - bottomFreeSec;
-                if (secInSlot < blocoSecInSlot) {
-                  posPx = (secInSlot / blocoSecInSlot) * episodeH;
-                } else {
-                  const bottomElapsed = secInSlot - blocoSecInSlot;
-                  posPx = episodeH + (bottomElapsed / bottomFreeSec) * bottomFreeH;
-                }
-              } else {
-                const blocoSecInSlot = slotIdx === 0 ? (1800 - topFreeSec) : 1800;
-                posPx = (secInSlot / blocoSecInSlot) * episodeH;
-              }
-            } else {
-              if (topFreeSec > 0 && currentSecInSlot <= topFreeSec) {
-                posPx = (currentSecInSlot / topFreeSec) * topFreeH;
-              } else if (episodeSec > 0 && currentSecInSlot <= topFreeSec + episodeSec) {
-                posPx = topFreeH + ((currentSecInSlot - topFreeSec) / episodeSec) * episodeH;
-              } else if (bottomFreeSec > 0) {
-                posPx = topFreeH + episodeH + ((currentSecInSlot - topFreeSec - episodeSec) / bottomFreeSec) * bottomFreeH;
-              } else {
-                posPx = topFreeH + episodeH;
-              }
-            }
-            const absolutePx = cellTop + posPx;
-            return { left: offset, width, top: `${(absolutePx / rowH) * 100}%` };
-          }
-        }
-      }
-    }
-
-    const rawFrac = isMulti ? (currentSecInSlot / totalSlotSec) : (currentSecInSlot / 1800);
-    return { left: offset, width, top: `${rawFrac * 100}%` };
-  }
+  });
 
   getTipoDinamico(bloco: BlocoOutput, dia: string): string {
     const original = bloco.aTipoBlocoDesc ?? '';

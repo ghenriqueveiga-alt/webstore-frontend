@@ -416,16 +416,17 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     let bloco: BlocoOutput | null = null;
 
     if (overrideSlot) {
-      const hasBlocoAtSlot = this.blocos.some(b =>
+      const hasDirectBloco = this.blocos.some(b =>
         b.aStatusCode === 'AT' && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia) &&
-        b.aHorario?.substring(0, 5) === overrideSlot
+        b.aHorario?.substring(0, 5) === overrideSlot && b.aPrograma
       );
-      if (hasBlocoAtSlot) {
-        bloco = this.blocoEfetivoAgora(dia, overrideSlot);
+      if (hasDirectBloco) {
+        bloco = this.blocos.find(b =>
+          b.aStatusCode === 'AT' && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia) &&
+          b.aHorario?.substring(0, 5) === overrideSlot && b.aPrograma
+        ) ?? null;
       } else {
         bloco = null;
-      }
-    }
       }
     }
 

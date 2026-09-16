@@ -140,7 +140,7 @@
     </div>
   } @else {
     <div class="p-4 overflow-x-auto" style="max-height: calc(100vh - 160px); overflow-y: auto;">
-      <div class="min-w-[960px]">
+      <div class="min-w-[960px] relative">
 
         <!-- Day Headers -->
         <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2" style="position: sticky; top: 0; z-index: 15; background: linear-gradient(180deg, #0f172a 0%, #0f172a 85%, transparent 100%); padding-top: 2px; padding-bottom: 8px;">
@@ -168,10 +168,7 @@
               <div class="flex-1 h-px ml-2" style="background: linear-gradient(90deg, rgba(148,163,184,0.15), transparent);"></div>
             </div>
           }
-          <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2 relative mt-1">
-            @if (nowLineOverride() ? (horario === nowTimeSlot()) : (horario === nowTimeSlot() && nowLineVisible())) {
-              <div class="now-line" [ngStyle]="nowLineStyle()"></div>
-            }
+          <div class="grid grid-cols-[110px_repeat(7,1fr)] gap-2 mb-2 relative mt-1" [attr.data-horario]="horario">
 
             <!-- Hour Label -->
             <div class="time-label" (click)="linhaParaSlot(horario)" title="Mover a barra vermelha para {{ horario }}" style="cursor: pointer;">
@@ -250,17 +247,22 @@
                           </div>
                         </div>
                       }
-                    </div>
-                  </div>
-                  <div class="tempo-livre">
+                      </div>
+                      <div class="tempo-livre">
                     <span class="text-[8px] font-bold uppercase tracking-widest"
                           style="color: rgba(251,191,36,0.5);">Livre</span>
                     <span class="text-[11px] font-mono font-bold"
                           style="color: rgba(253,224,71,0.9);">{{ getTempoLivreBaixo(bloco, dia, horario) }}</span>
                   </div>
+                    </div>
                 }
               </div>
             }
+            <div class="now-line"
+                 [style.display]="nowTimeSlot() === horario ? '' : 'none'"
+                 [style.left]="'calc(110px + ' + nowDaySlot() + ' * ((100% - 110px - 48px) / 7 + 8px))'"
+                 [style.width]="'calc((100% - 110px - 48px) / 7)'"
+                 style="top: 0;"></div>
           </div>
         }
 
