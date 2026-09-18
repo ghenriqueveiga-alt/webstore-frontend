@@ -1,0 +1,30 @@
+@if (anuncio(); as ad) {
+  <div class="ad-slot-container" [attr.data-position]="posicao()">
+    <div class="ad-label">
+      <span class="ad-label-text">PUBLICIDADE</span>
+    </div>
+    <a [href]="ad.linkUrl"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="ad-banner-link"
+       [style.width.px]="ad.largura"
+       [style.height.px]="ad.altura">
+      @if (ad.imageUrl) {
+        <img [src]="ad.imageUrl"
+             [alt]="ad.titulo"
+             class="ad-banner-image"
+             [style.width.px]="ad.largura"
+             [style.height.px]="ad.altura">
+      } @else {
+        <div class="ad-banner-placeholder"
+             [style.width.px]="ad.largura"
+             [style.height.px]="ad.altura">
+          <span class="ad-titulo">{{ ad.titulo }}</span>
+          @if (ad.descricao) {
+            <span class="ad-descricao">{{ ad.descricao }}</span>
+          }
+        </div>
+      }
+    </a>
+  </div>
+}

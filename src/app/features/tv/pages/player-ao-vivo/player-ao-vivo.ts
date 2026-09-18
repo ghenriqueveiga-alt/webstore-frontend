@@ -1,5 +1,5 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
 import { LinhaVermelhaService } from '../../services/linha-vermelha.service';
@@ -18,7 +18,7 @@ interface EpisodioInfo {
 
 @Component({
   selector: 'app-player-ao-vivo',
-  imports: [RouterLink, GoogleAd],
+  imports: [],
   templateUrl: './player-ao-vivo.html',
   styleUrl: './player-ao-vivo.css',
 })

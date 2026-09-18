@@ -1,24 +1,50 @@
 <div class="tv-room">
 
-  <!-- Topbar -->
-  <div class="tv-topbar">
-    <div class="flex items-center gap-2">
-      <span class="text-xl">📺</span>
-      <h1 class="text-base font-bold tracking-wide">TV Ao Vivo</h1>
-    </div>
-    <div class="flex items-center gap-3 ml-auto">
-      <span class="text-xs text-gray-400 font-mono">{{ nowTimeFormatted }}</span>
-      <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-      <a routerLink="/tv/grade"
-         class="text-xs font-semibold text-blue-300 hover:text-blue-200 transition-colors border border-blue-800 rounded-full px-3 py-1">
-        Grade &rarr;
-      </a>
-    </div>
-  </div>
+  <div class="ao-vivo-main">
 
-  <div class="ads-layout">
-    <!-- Google AdSense: configure publisherId e slotSideRail em environments/environment.ts -->
-    <app-google-ad class="ad-rail ad-rail-left" label="Anúncio" />
+  <!-- FIXED QR LEFT -->
+  <aside class="qr-fixed-col qr-fixed-left">
+    <div class="crypto-card" style="--coin-color: #F7931A;">
+      <p class="crypto-coin-name">Bitcoin</p>
+      <div class="crypto-qr-placeholder">
+        <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+      </div>
+    </div>
+    <div class="crypto-card" style="--coin-color: #627EEA;">
+      <p class="crypto-coin-name">Ethereum</p>
+      <div class="crypto-qr-placeholder">
+        <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+      </div>
+    </div>
+    <div class="crypto-card" style="--coin-color: #F0B90B;">
+      <p class="crypto-coin-name">Binance</p>
+      <div class="crypto-qr-placeholder">
+        <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FIXED QR RIGHT -->
+  <aside class="qr-fixed-col qr-fixed-right">
+    <div class="crypto-card" style="--coin-color: #9945FF;">
+      <p class="crypto-coin-name">Solana</p>
+      <div class="crypto-qr-placeholder">
+        <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+      </div>
+    </div>
+    <div class="crypto-card" style="--coin-color: #BFBBBB;">
+      <p class="crypto-coin-name">Litecoin</p>
+      <div class="crypto-qr-placeholder">
+        <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+      </div>
+    </div>
+    <div class="crypto-card" style="--coin-color: #00AAE4;">
+      <p class="crypto-coin-name">XRP</p>
+      <div class="crypto-qr-placeholder">
+        <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+      </div>
+    </div>
+  </aside>
 
   @if (loading()) {
     <div class="tv-stage">
@@ -206,12 +232,10 @@
         <div class="tv-bezel-bottom">
           <span class="tv-brand-bottom">H V S</span>
         </div>
-      </div>
-
-    </div>
-    <div class="tv-below">
+      </div><!-- /tv-set -->
 
       <!-- INFO GRID -->
+      <div class="tv-below">
       <div class="tv-info-grid">
         <section class="info-card">
           <p class="info-title">Sobre o programa</p>
@@ -362,11 +386,10 @@
             </div>
           </div>
         </aside>
-      </div>
+      </div><!-- /tv-info-grid -->
+      </div><!-- /tv-below -->
 
-    </div>
+    </div><!-- /tv-stage -->
   }
-    <!-- Google AdSense: configure publisherId e slotSideRail em environments/environment.ts -->
-    <app-google-ad class="ad-rail ad-rail-right" label="Anúncio" />
-  </div>
+  </div><!-- /ao-vivo-main -->
 </div>

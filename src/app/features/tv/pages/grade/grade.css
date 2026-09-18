@@ -177,7 +177,7 @@
 
 .now-line {
   position: absolute; left: 0; right: 0; height: 2px; z-index: 10; pointer-events: none;
-  background: linear-gradient(90deg, transparent, #ef4444 5%, #ef4444 95%, transparent);
+  background: #ef4444;
   box-shadow: 0 0 8px rgba(239,68,68,0.5);
 }
 

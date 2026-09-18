@@ -258,11 +258,11 @@
                 }
               </div>
             }
-            <div class="now-line"
-                 [style.display]="nowTimeSlot() === horario ? '' : 'none'"
-                 [style.left]="'calc(110px + ' + nowDaySlot() + ' * ((100% - 110px - 48px) / 7 + 8px))'"
-                 [style.width]="'calc((100% - 110px - 48px) / 7)'"
-                 style="top: 0;"></div>
+<div class="now-line"
+     [style.display]="nowTimeSlot() === horario ? '' : 'none'"
+     [style.left]="'calc(110px + ' + nowDaySlot() + ' * ((100% - 110px - 48px) / 7 + 8px))'"
+     [style.width]="'calc((100% - 110px - 48px) / 7)'"
+     style="top: 0; bottom: 0;"></div>
           </div>
         }
 

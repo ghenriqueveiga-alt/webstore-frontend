@@ -1,0 +1,165 @@
+<div class="advertise-page">
+  <div class="max-w-5xl mx-auto px-6 py-12">
+
+    <!-- Hero -->
+    <div class="text-center mb-12">
+      <h1 class="text-3xl font-bold text-white mb-3">Anuncie com Criptomoeda</h1>
+      <p class="text-gray-400 text-sm max-w-xl mx-auto">
+        Divulgue seu negocio para milhares de usuarios. Pagamento rapido e seguro via Bitcoin, Ethereum ou Lightning Network.
+      </p>
+    </div>
+
+    @if (submitted()) {
+      <!-- Success -->
+      <div class="success-card">
+        <div class="success-icon">&#10003;</div>
+        <h2 class="success-title">Anuncio Enviado!</h2>
+        <p class="success-text">{{ successMsg() }}</p>
+        <p class="success-sub">Voce recebera uma confirmacao por email apos a verificacao do pagamento.</p>
+      </div>
+    } @else {
+
+      <!-- Plans -->
+      <div class="plans-section">
+        <h2 class="section-title">Escolha seu Plano</h2>
+        <div class="plans-grid">
+          @for (plan of plans; track plan.name) {
+            <button class="plan-card"
+                    [class.selected]="selectedPlan.name === plan.name"
+                    (click)="selectPlan(plan)">
+              <div class="plan-name">{{ plan.name }}</div>
+              <div class="plan-desc">{{ plan.desc }}</div>
+              <div class="plan-price">{{ plan.price }} BTC</div>
+              <div class="plan-size">{{ plan.largura }} x {{ plan.altura }}</div>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Payment Info -->
+      <div class="payment-section">
+        <h2 class="section-title">Como Funciona</h2>
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-title">Escolha o Plano</div>
+            <div class="step-desc">Selecione o tamanho e posicao do banner.</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-title">Envie o Crypto</div>
+            <div class="step-desc">Envie o valor para o endereco da wallet indicado.</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-title">Preencha o Formulario</div>
+            <div class="step-desc">Coloque o hash da transacao e os dados do anuncio.</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-title">Publicacao</div>
+            <div class="step-desc">Apos verificacao, seu anuncio entra no ar.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wallets -->
+      <div class="wallets-section">
+        <h2 class="section-title">Envie o Pagamento Para</h2>
+        <div class="wallets-grid">
+          @for (w of wallets; track w.symbol) {
+            <div class="wallet-card">
+              <div class="wallet-header">
+                <span class="wallet-icon" [style.background]="w.color">{{ w.icon }}</span>
+                <div>
+                  <div class="wallet-name">{{ w.coin }}</div>
+                  <div class="wallet-price">{{ w.priceRef }}</div>
+                </div>
+              </div>
+              <div class="wallet-address-box">
+                <code class="wallet-address">{{ w.address }}</code>
+              </div>
+              <img [src]="getQrUrl(w.address)" class="wallet-qr" width="100" height="100" alt="QR Code">
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="form-section">
+        <h2 class="section-title">Dados do Anuncio</h2>
+
+        @if (errorMsg()) {
+          <div class="error-banner">{{ errorMsg() }}</div>
+        }
+
+        <form (ngSubmit)="onSubmit()" class="ad-form">
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">Titulo *</label>
+              <input class="field-input" type="text" [(ngModel)]="form.titulo" name="titulo"
+                     placeholder="Nome do seu anuncio" required>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Link de Destino *</label>
+              <input class="field-input" type="url" [(ngModel)]="form.linkUrl" name="linkUrl"
+                     placeholder="https://seusite.com" required>
+            </div>
+
+            <div class="field full-width">
+              <label class="field-label">Descricao</label>
+              <input class="field-input" type="text" [(ngModel)]="form.descricao" name="descricao"
+                     placeholder="Descricao curta do anuncio">
+            </div>
+
+            <div class="field full-width">
+              <label class="field-label">URL da Imagem (banner)</label>
+              <input class="field-input" type="url" [(ngModel)]="form.imageUrl" name="imageUrl"
+                     placeholder="https://exemplo.com/banner.jpg">
+            </div>
+
+            <div class="field">
+              <label class="field-label">Moeda Utilizada</label>
+              <select class="field-input" [(ngModel)]="form.moeda" name="moeda">
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="ETH">Ethereum (ETH)</option>
+                <option value="LN">Lightning Network</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Seu Endereco de Wallet</label>
+              <input class="field-input" type="text" [(ngModel)]="form.walletAddress" name="walletAddress"
+                     placeholder="Seu endereco para contato">
+            </div>
+
+            <div class="field full-width">
+              <label class="field-label">Hash da Transacao (TX Hash) *</label>
+              <input class="field-input" type="text" [(ngModel)]="form.txHash" name="txHash"
+                     placeholder="Cole aqui o hash da sua transacao de pagamento" required>
+              <span class="field-hint">Apos enviar o pagamento, copie o hash da transacao da sua wallet.</span>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <div class="form-summary">
+              <span class="summary-label">Plano:</span>
+              <span class="summary-value">{{ selectedPlan.name }} — {{ selectedPlan.price }} BTC</span>
+            </div>
+            <button type="submit"
+                    class="submit-btn"
+                    [disabled]="submitting()">
+              @if (submitting()) {
+                <span>Enviando...</span>
+              } @else {
+                <span>Enviar Anuncio</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+  </div>
+</div>

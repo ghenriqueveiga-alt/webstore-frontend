@@ -1,0 +1,64 @@
+.ad-slot-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.ad-label {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ad-label-text {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: rgba(148, 163, 184, 0.5);
+  text-transform: uppercase;
+}
+
+.ad-banner-link {
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.ad-banner-link:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.ad-banner-image {
+  display: block;
+  object-fit: cover;
+}
+
+.ad-banner-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08));
+  border: 1px dashed rgba(99, 102, 241, 0.25);
+  border-radius: 8px;
+  gap: 6px;
+  padding: 16px;
+  text-align: center;
+}
+
+.ad-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.ad-descricao {
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.7);
+  max-width: 400px;
+}

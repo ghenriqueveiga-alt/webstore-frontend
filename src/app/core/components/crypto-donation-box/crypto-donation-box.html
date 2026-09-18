@@ -1,0 +1,33 @@
+<div class="donation-box">
+  <div class="donation-header">
+    <span class="donation-icon">💰</span>
+    <span class="donation-title">Apoie</span>
+  </div>
+
+  @for (w of wallets; track w.symbol) {
+    <div class="wallet-block">
+      <div class="wallet-label" [style.color]="w.color">
+        <span class="wallet-badge" [style.background]="w.color">{{ w.icon }}</span>
+        {{ w.coin }}
+      </div>
+      <div class="qr-box">
+        <img [src]="getQrUrl(w.address)"
+             [alt]="w.coin + ' QR'"
+             class="qr-img"
+             width="130" height="130">
+      </div>
+      <button class="copy-row"
+              (click)="copyAddress(w.address)"
+              [class.copied]="copiedAddress() === w.address">
+        <code class="addr-text">{{ w.address }}</code>
+        <span class="copy-icon">
+          @if (copiedAddress() === w.address) {
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          } @else {
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          }
+        </span>
+      </button>
+    </div>
+  }
+</div>

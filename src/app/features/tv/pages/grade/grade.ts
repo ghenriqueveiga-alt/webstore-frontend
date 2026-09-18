@@ -702,6 +702,26 @@ export class Grade implements OnInit, OnDestroy {
     return this.episodioCache.get(bloco.aId) ?? null;
   }
 
+  getEpisodio2(bloco: BlocoOutput, dia: string): EpisodioInfo | null {
+    if (!bloco.aPrograma || !this.isFimDeSemana(dia)) return null;
+    const eps = this.allEpisodiosMap.get(bloco.aPrograma.aId);
+    if (!eps || eps.length < 2) return null;
+    const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
+    const diasIndiceNorm = new Map(this.dias.map((d, i) => [this.normalizeDia(d), i]));
+    const diaIdx = diasIndice.get(dia) ?? diasIndiceNorm.get(this.normalizeDia(dia)) ?? -1;
+    if (diaIdx < 0) return null;
+    const programaId = bloco.aPrograma.aId;
+    const sameDayBlocos = this.weekendBlocosFor(programaId, diaIdx);
+    const numSlots = sameDayBlocos.length;
+    if (numSlots === 0) return null;
+    const slotOffset = sameDayBlocos.findIndex(b => b.aId === bloco.aId);
+    if (slotOffset < 0) return null;
+    const pageOffset = this.currentPage() * numSlots;
+    const shift = programaId === 13 ? 0 : (this.displacedEpisodeShift.get(bloco.aId) ?? 0);
+    const finalIdx = (((pageOffset + slotOffset + 1) - shift) % eps.length + eps.length) % eps.length;
+    return eps[finalIdx];
+  }
+
   blocosFor(dia: string, horario: string): BlocoOutput[] {
     if (this.effectiveSchedule.size > 0) {
       const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
@@ -1093,7 +1113,85 @@ export class Grade implements OnInit, OnDestroy {
     return (now.getMinutes() % 30) / 30;
   });
 
-  getTipoDinamico(bloco: BlocoOutput, dia: string): string {
+  private agoraEMSlot(): { diaIdx: number; horarioIdx: number; slotIdx: number } {
+    const now = this.currentTime();
+    const diaIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const hora = now.getHours().toString().padStart(2, '0');
+    const minuto = now.getMinutes();
+    const minIdx = Math.floor(minuto / 30);
+    const horarioIdx = this.horarios.findIndex(h => h === `${hora}:${minIdx === 0 ? '00' : '30'}`);
+    return { diaIdx, horarioIdx: horarioIdx >= 0 ? horarioIdx : 0, slotIdx: horarioIdx >= 0 ? horarioIdx : 0 };
+  }
+
+  private tempoLivreAtualSec(): number {
+    const { slotIdx, diaIdx } = this.agoraEMSlot();
+    const horario = this.horarios[slotIdx];
+    const diaNome = this.dias[diaIdx];
+    const blocos = this.blocosFor(diaNome, horario);
+    if (blocos.length === 0) return 0;
+    const bloco = blocos[0];
+    const ep = this.getEpisodio(bloco, diaNome);
+    if (!ep || !ep.aDuracao) return 0;
+    return this.tempoLivreSec(ep);
+  }
+
+  private fatorVelocidadeAcima(livreSec: number): number {
+    const maxPossible = 30 * 60;
+    const ratio = Math.min(livreSec / maxPossible, 1);
+    return 0.5 + ratio * 1.5;
+  }
+
+  private fatorVelocidadeAbaixo(livreSec: number): number {
+    const maxPossible = 30 * 60;
+    const ratio = Math.min(livreSec / maxPossible, 1);
+    return 0.5 + ratio * 1.5;
+  }
+
+  private ehSobreEpisodioAtualSlot(): boolean {
+    const { slotIdx, diaIdx } = this.agoraEMSlot();
+    const horario = this.horarios[slotIdx];
+    const diaNome = this.dias[diaIdx];
+    const diasIndice = new Map(this.dias.map((d, i) => [d, i]));
+    const dIdx = diasIndice.get(diaNome) ?? -1;
+    if (dIdx < 0) return false;
+    const blocos = this.blocosFor(diaNome, horario);
+    if (blocos.length === 0) return false;
+    for (const bloco of blocos) {
+      const ep = this.getEpisodio(bloco, diaNome);
+      if (!ep || !ep.aDuracao) continue;
+      const epSec = this.parseDuracaoSec(ep.aDuracao);
+      const slotsNecessarios = Math.ceil(epSec / (30 * 60));
+      if (slotIdx >= slotsNecessarios - 1 && slotIdx < slotsNecessarios) return true;
+      if (slotIdx === slotsNecessarios) return true;
+    }
+    return false;
+  }
+
+  get fatorVelocidadeLivreAcima(): number {
+    try {
+      const livre = this.tempoLivreAtualSec();
+      if (livre === undefined || livre === null || isNaN(livre)) return 1;
+      return this.fatorVelocidadeAcima(livre);
+    } catch {
+      return 1;
+    }
+  }
+
+  get fatorVelocidadeLivreAbaixo(): number {
+    try {
+      const livre = this.tempoLivreAtualSec();
+      if (livre === undefined || livre === null || isNaN(livre)) return 1;
+      return this.fatorVelocidadeAbaixo(livre);
+    } catch {
+      return 1;
+    }
+  }
+
+  get ehSobreEpisodioAtual(): boolean {
+    return this.ehSobreEpisodioAtualSlot();
+  }
+
+  getTipoDinamico(bloco: any, dia: string): string {
     const original = bloco.aTipoBlocoDesc ?? '';
     if (original.includes('Maratona') || original.includes('Especial')) return original;
 
@@ -1111,35 +1209,6 @@ export class Grade implements OnInit, OnDestroy {
     if (dayPosition < 0) return original || 'Inédito';
 
     const epThis = this.getEpisodio(bloco, dia);
-
-    if (this.isFimDeSemana(dia)) {
-      const currentTime = bloco.aHorario?.substring(0, 5) ?? '';
-      const mesmoDiaSameEp = this.filteredBlocos.some(b => {
-        if (b.aId === bloco.aId) return false;
-        if (b.aPrograma?.aId !== programaId) return false;
-        if (b.aDiaSemanaDesc !== dia) return false;
-        if ((b.aHorario?.substring(0, 5) ?? '') >= currentTime) return false;
-        const epB = this.getEpisodio(b, dia);
-        return epB && epThis && epB.aId === epThis.aId;
-      });
-      if (mesmoDiaSameEp) return 'Reprise';
-
-      const diaIdxWk = this.dias.indexOf(dia);
-      const wkBlocos = this.weekendBlocosFor(programaId, diaIdxWk);
-      const numSlots = wkBlocos.length;
-
-      for (let p = 0; p < this.currentPage(); p++) {
-        const pOffset = p * numSlots;
-        for (let s = 0; s < numSlots; s++) {
-          const slotBloco = wkBlocos[s];
-          const sh = programaId === 13 ? 0 : (this.displacedEpisodeShift.get(slotBloco.aId) ?? 0);
-          const prevIdx = (((pOffset + s) - sh) % eps.length + eps.length) % eps.length;
-          if (epThis && eps[prevIdx]?.aId === epThis.aId) return 'Reprise';
-        }
-      }
-
-      return 'Inédito';
-    }
 
     const currentTime = bloco.aHorario?.substring(0, 5) ?? '';
     const mesmoDiaSameEp = this.filteredBlocos.some(b => {
@@ -1164,4 +1233,5 @@ export class Grade implements OnInit, OnDestroy {
 
     return original || 'Inédito';
   }
+
 }
