@@ -1110,7 +1110,37 @@ export class Grade implements OnInit, OnDestroy {
   readonly nowMinuteFraction = computed(() => {
     if (this.nowLineOverride() || this.linhaService.slot()) return 0;
     const now = this.currentTime();
-    return (now.getMinutes() % 30) / 30;
+    const bloco = this.getBlocoAtual();
+    if (!bloco) return (now.getMinutes() % 30) / 30;
+
+    const { diaIdx } = this.agoraEMSlot();
+    const diaNome = this.dias[diaIdx];
+    const ep = this.getEpisodio(bloco, diaNome);
+    if (!ep || !ep.aDuracao) return (now.getMinutes() % 30) / 30;
+
+    const epSec = this.parseDuracaoSec(ep.aDuracao);
+    if (epSec <= 0) return (now.getMinutes() % 30) / 30;
+
+    const elapsedMin = this.getElapsedMinFromBlocoStart(now, bloco);
+    const epMin = epSec / 60;
+    const livreMin = 30 - epMin;
+
+    const BLOCO_TOP = 0.28;
+    const BLOCO_HEIGHT = 0.44;
+    const FREE_TOP = 0.72;
+    const FREE_HEIGHT = 0.28;
+
+    if (elapsedMin < epMin) {
+      const fracaoEp = Math.min(elapsedMin / epMin, 1);
+      return BLOCO_TOP + fracaoEp * BLOCO_HEIGHT;
+    }
+
+    if (livreMin <= 0) return Math.min(FREE_TOP + FREE_HEIGHT, 1);
+
+    const fator = this.getFatorVelocidade(epSec);
+    const livreElapsed = Math.min(elapsedMin - epMin, livreMin);
+    const fracaoLivre = Math.min((livreElapsed * fator) / livreMin, 1);
+    return FREE_TOP + fracaoLivre * FREE_HEIGHT;
   });
 
   private agoraEMSlot(): { diaIdx: number; horarioIdx: number; slotIdx: number } {
@@ -1138,13 +1168,40 @@ export class Grade implements OnInit, OnDestroy {
   private fatorVelocidadeAcima(livreSec: number): number {
     const maxPossible = 30 * 60;
     const ratio = Math.min(livreSec / maxPossible, 1);
-    return 0.5 + ratio * 1.5;
+    return 0.5 + (1 - ratio) * 1.5;
   }
 
   private fatorVelocidadeAbaixo(livreSec: number): number {
     const maxPossible = 30 * 60;
     const ratio = Math.min(livreSec / maxPossible, 1);
-    return 0.5 + ratio * 1.5;
+    return 0.5 + (1 - ratio) * 1.5;
+  }
+
+  private getBlocoAtual(): BlocoOutput | null {
+    const { diaIdx, horarioIdx } = this.agoraEMSlot();
+    if (horarioIdx < 0 || !this.horarios[horarioIdx]) return null;
+    const diaNome = this.dias[diaIdx];
+    const horario = this.horarios[horarioIdx];
+    const blocos = this.blocosFor(diaNome, horario);
+    return blocos.length > 0 ? blocos[0] : null;
+  }
+
+  private getElapsedMinFromBlocoStart(now: Date, bloco: BlocoOutput): number {
+    const [bh, bm] = (bloco.aHorario || '00:00').split(':').map(Number);
+    const blocoStartMin = bh * 60 + bm;
+    const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+    return Math.max(0, nowMin - blocoStartMin);
+  }
+
+  private getFatorVelocidade(epSec: number): number {
+    const livreSec = Math.max(0, 30 * 60 - epSec);
+    return this.fatorVelocidadeAcima(livreSec);
+  }
+
+  private getFracaoLivre(elapsedMin: number, epMin: number, livreMin: number, fator: number): number {
+    if (livreMin <= 0) return 1;
+    const livreElapsed = Math.max(0, elapsedMin - epMin);
+    return Math.min(livreElapsed * fator / livreMin, 1);
   }
 
   private ehSobreEpisodioAtualSlot(): boolean {

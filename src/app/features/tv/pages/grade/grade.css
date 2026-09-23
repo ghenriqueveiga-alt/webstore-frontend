@@ -35,7 +35,7 @@
 }
 .bloco-body {
   border: 1px solid rgba(148,163,184,0.1); border-radius: 8px;
-  margin-left: 3px; padding: 8px 10px; transition: all 0.2s ease;
+  padding: 8px 10px; transition: all 0.2s ease;
   position: relative; overflow: hidden;
 }
 .bloco-body:hover { border-color: rgba(148,163,184,0.25); }

@@ -462,19 +462,35 @@
   transition: opacity 0.3s;
 }
 
-@media (max-width: 640px) {
-  .tv-stage { padding: 0.75rem 0.75rem 0; }
-  .tv-below { padding: 1rem 0 0; }
-  .tv-screen {
-    width: 100%;
-    max-height: 100%;
-    aspect-ratio: unset;
-  }
-}
-
 @media (max-width: 900px) {
   .tv-stage { padding-left: 1.5rem; padding-right: 1.5rem; }
-  .tv-below { padding-left: 0; padding-right: 0; }
+  .tv-below { padding-left: 0.5rem; padding-right: 0.5rem; }
+}
+
+@media (max-width: 640px) {
+  .tv-stage { padding: 0.5rem 0.5rem 0; }
+  .tv-below { padding: 0.75rem 0 0; }
+  .tv-set {
+    padding: 0.5rem;
+    border-radius: 1rem;
+    margin-top: 0.5rem;
+  }
+  .tv-screen {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.5rem;
+  }
+  .tv-bezel-top { padding: 0.2rem 0; }
+  .tv-bezel-bottom { padding: 0.2rem 0; }
+  .tv-brand-bottom { font-size: 0.6rem; }
+  .tv-info-grid { gap: 0.75rem; }
+  .tv-info-aside { gap: 0.5rem; }
+  .info-card { padding: 0.875rem 1rem; border-radius: 0.625rem; }
+  .info-title { font-size: 0.6rem; margin-bottom: 0.5rem; }
+  .epg-bar { gap: 0.5rem; margin-top: 0.25rem; margin-bottom: 0.25rem; }
+  .epg-card { padding: 0.5rem 0.75rem; border-radius: 0.625rem; }
+  .live-controls { padding: 0.375rem 0.5rem; }
+  .live-volume { width: 3rem; }
 }
 
 .osd-top.fs-hidden,

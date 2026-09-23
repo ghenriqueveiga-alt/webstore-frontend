@@ -189,6 +189,8 @@
                        [attr.data-bloco-id]="bloco.aId"
                        [attr.data-tipo]="getTipoDinamico(bloco, dia).includes('Inédito') ? 'inedito' : getTipoDinamico(bloco, dia).includes('Rep') ? 'reprise' : getTipoDinamico(bloco, dia).includes('Maratona') ? 'maratona' : getTipoDinamico(bloco, dia).includes('Especial') ? 'especial' : 'default'"
                        (click)="selectBloco(bloco, dia, horario)">
+                    <!-- Card body -->
+                    <div class="bloco-body">
                     <!-- Left accent bar -->
                     <div class="bloco-accent-bar"
                          [class.accent-inedito]="getTipoDinamico(bloco, dia).includes('Inédito')"
@@ -197,8 +199,6 @@
                          [class.accent-especial]="getTipoDinamico(bloco, dia).includes('Especial')"
                          [class.accent-default]="!getTipoDinamico(bloco, dia).includes('Inédito') && !getTipoDinamico(bloco, dia).includes('Rep') && !getTipoDinamico(bloco, dia).includes('Maratona') && !getTipoDinamico(bloco, dia).includes('Especial')">
                     </div>
-                    <!-- Card body -->
-                    <div class="bloco-body">
                       <!-- Program name -->
                       <p class="text-[11px] font-semibold text-gray-100 leading-tight truncate mb-1"
                          style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
@@ -262,7 +262,7 @@
      [style.display]="nowTimeSlot() === horario ? '' : 'none'"
      [style.left]="'calc(110px + ' + nowDaySlot() + ' * ((100% - 110px - 48px) / 7 + 8px))'"
      [style.width]="'calc((100% - 110px - 48px) / 7)'"
-     style="top: 0; bottom: 0;"></div>
+     [style.top]="nowMinuteFraction() * 100 + '%'"></div>
           </div>
         }
 
