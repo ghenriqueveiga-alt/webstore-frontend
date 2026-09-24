@@ -50,6 +50,178 @@ export class Grade implements OnInit, OnDestroy {
   readonly dias = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   readonly diasAbrev = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
 
+  private readonly cavaleirosOrder = [58, 56, 57, 55, 63, 61, 60, 59];
+  private isCavaleiros19Horario(bloco: BlocoOutput): boolean {
+    return bloco.aHorario?.substring(0, 5) === '19:00' && this.cavaleirosOrder.includes(bloco.aPrograma?.aId ?? -1);
+  }
+  private getCavaleirosFlatEpisodes(): EpisodioInfo[] {
+    const flat: EpisodioInfo[] = [];
+    for (const pid of this.cavaleirosOrder) {
+      const eps = this.allEpisodiosMap.get(pid);
+      if (eps) flat.push(...eps);
+    }
+    return flat;
+  }
+  private readonly dragonBallOrder = [30, 34, 32, 33, 82, 31];
+  private isDragonBall18Horario(bloco: BlocoOutput): boolean {
+    return bloco.aHorario?.substring(0, 5) === '18:00' && this.dragonBallOrder.includes(bloco.aPrograma?.aId ?? -1);
+  }
+  private getDragonBallFlatEpisodes(): EpisodioInfo[] {
+    const flat: EpisodioInfo[] = [];
+    for (const pid of this.dragonBallOrder) {
+      const eps = this.allEpisodiosMap.get(pid);
+      if (eps) flat.push(...eps);
+    }
+    return flat;
+  }
+  private readonly avatarOrder = [7, 8];
+  private isAvatar11Horario(bloco: BlocoOutput): boolean {
+    return bloco.aHorario?.substring(0, 5) === '11:00' && this.avatarOrder.includes(bloco.aPrograma?.aId ?? -1);
+  }
+  private getAvatarFlatEpisodes(): EpisodioInfo[] {
+    const flat: EpisodioInfo[] = [];
+    for (const pid of this.avatarOrder) {
+      const eps = this.allEpisodiosMap.get(pid);
+      if (eps) flat.push(...eps);
+    }
+    return flat;
+  }
+  private readonly bakiOrder = [10, 9];
+  private isBaki21Horario(bloco: BlocoOutput): boolean {
+    return bloco.aHorario?.substring(0, 5) === '21:00' && this.bakiOrder.includes(bloco.aPrograma?.aId ?? -1);
+  }
+  private getBakiFlatEpisodes(): EpisodioInfo[] {
+    const flat: EpisodioInfo[] = [];
+    for (const pid of this.bakiOrder) {
+      const eps = this.allEpisodiosMap.get(pid);
+      if (eps) flat.push(...eps);
+    }
+    return flat;
+  }
+  private readonly digimonOrder = [22, 26, 23, 25, 28, 27, 24];
+  private isDigimon1230Horario(bloco: BlocoOutput): boolean {
+    return bloco.aHorario?.substring(0, 5) === '12:30' && this.digimonOrder.includes(bloco.aPrograma?.aId ?? -1);
+  }
+  private getDigimonFlatEpisodes(): EpisodioInfo[] {
+    const flat: EpisodioInfo[] = [];
+    for (const pid of this.digimonOrder) {
+      const eps = this.allEpisodiosMap.get(pid);
+      if (eps) flat.push(...eps);
+    }
+    return flat;
+  }
+  private isAnyFlatHorario(bloco: BlocoOutput): boolean {
+    return this.isCavaleiros19Horario(bloco) || this.isDragonBall18Horario(bloco) || this.isAvatar11Horario(bloco) || this.isBaki21Horario(bloco) || this.isDigimon1230Horario(bloco);
+  }
+  getDisplayPrograma(bloco: BlocoOutput, dia: string): { aId: number; aNome: string } | null {
+    if (this.isDigimon1230Horario(bloco)) {
+      const diaIdx = this.dias.indexOf(dia);
+      const flat = this.getDigimonFlatEpisodes();
+      if (flat.length === 0) return bloco.aPrograma as any;
+      const diasQ = this.diasProgramaMap.get(22) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return bloco.aPrograma as any;
+      const pag = this.currentPage();
+      const idx = (((dayPos + pag * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      const ep = flat[idx];
+      for (const pid of this.digimonOrder) {
+        const eps = this.allEpisodiosMap.get(pid);
+        if (eps && eps.includes(ep)) {
+          const prog = this.blocos().find((b: BlocoOutput) => b.aPrograma?.aId === pid)?.aPrograma;
+          if (prog) return prog as any;
+          const names: Record<number, string> = { 22: 'Digimon - Adventure', 26: 'Digimon - Tamers', 23: 'Digimon - Frontier', 25: 'Digimon - Savers', 28: 'Digimon - Xros Wars - Legendado', 27: 'Digimon - Universe - Appli Monsters - Legendado', 24: 'Digimon - Ghost Game - Legendado' };
+          return { aId: pid, aNome: names[pid] ?? bloco.aPrograma!.aNome } as any;
+        }
+      }
+      return bloco.aPrograma as any;
+    }
+    if (this.isBaki21Horario(bloco)) {
+      const diaIdx = this.dias.indexOf(dia);
+      const flat = this.getBakiFlatEpisodes();
+      if (flat.length === 0) return bloco.aPrograma as any;
+      const diasQ = this.diasProgramaMap.get(9) ?? this.diasProgramaMap.get(10) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return bloco.aPrograma as any;
+      const pag = this.currentPage();
+      const idx = (((dayPos + pag * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      const ep = flat[idx];
+      for (const pid of this.bakiOrder) {
+        const eps = this.allEpisodiosMap.get(pid);
+        if (eps && eps.includes(ep)) {
+          const prog = this.blocos().find((b: BlocoOutput) => b.aPrograma?.aId === pid)?.aPrograma;
+          if (prog) return prog as any;
+          const names: Record<number, string> = { 10: 'Baki - O Campeão', 9: 'Baki - Hanma' };
+          return { aId: pid, aNome: names[pid] ?? bloco.aPrograma!.aNome } as any;
+        }
+      }
+      return bloco.aPrograma as any;
+    }
+    if (this.isAvatar11Horario(bloco)) {
+      const diaIdx = this.dias.indexOf(dia);
+      const flat = this.getAvatarFlatEpisodes();
+      if (flat.length === 0) return bloco.aPrograma as any;
+      const diasQ = this.diasProgramaMap.get(7) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return bloco.aPrograma as any;
+      const pag = this.currentPage();
+      const idx = (((dayPos + pag * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      const ep = flat[idx];
+      for (const pid of this.avatarOrder) {
+        const eps = this.allEpisodiosMap.get(pid);
+        if (eps && eps.includes(ep)) {
+          const prog = this.blocos().find((b: BlocoOutput) => b.aPrograma?.aId === pid)?.aPrograma;
+          if (prog) return prog as any;
+          const names: Record<number, string> = { 7: 'Avatar - Aang', 8: 'Avatar - Korra' };
+          return { aId: pid, aNome: names[pid] ?? bloco.aPrograma!.aNome } as any;
+        }
+      }
+      return bloco.aPrograma as any;
+    }
+    if (this.isCavaleiros19Horario(bloco)) {
+      const diaIdx = this.dias.indexOf(dia);
+      const flat = this.getCavaleirosFlatEpisodes();
+      if (flat.length === 0) return bloco.aPrograma as any;
+      const diasQ = this.diasProgramaMap.get(58) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return bloco.aPrograma as any;
+      const pag = this.currentPage();
+      const idx = (((dayPos + pag * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      const ep = flat[idx];
+      for (const pid of this.cavaleirosOrder) {
+        const eps = this.allEpisodiosMap.get(pid);
+        if (eps && eps.includes(ep)) {
+          const prog = this.blocos().find((b: BlocoOutput) => b.aPrograma?.aId === pid)?.aPrograma;
+          if (prog) return prog as any;
+          const names: Record<number, string> = { 58: 'Os Cavaleiros do Zodíaco - Guerra Galática', 56: 'Os Cavaleiros do Zodíaco - Cavaleiros de Prata', 57: 'Os Cavaleiros do Zodíaco - Doze Casas', 55: 'Os Cavaleiros do Zodíaco - Asgard', 63: 'Os Cavaleiros do Zodíaco - Poseidon', 61: 'Os Cavaleiros do Zodíaco - Hades - Santuário', 60: 'Os Cavaleiros do Zodíaco - Hades - Inferno', 59: 'Os Cavaleiros do Zodíaco - Hades - Elísio' };
+          return { aId: pid, aNome: names[pid] ?? bloco.aPrograma!.aNome } as any;
+        }
+      }
+      return bloco.aPrograma as any;
+    }
+    if (this.isDragonBall18Horario(bloco)) {
+      const diaIdx = this.dias.indexOf(dia);
+      const flat = this.getDragonBallFlatEpisodes();
+      if (flat.length === 0) return bloco.aPrograma as any;
+      const diasQ = this.diasProgramaMap.get(30) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return bloco.aPrograma as any;
+      const pag = this.currentPage();
+      const idx = (((dayPos + pag * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      const ep = flat[idx];
+      for (const pid of this.dragonBallOrder) {
+        const eps = this.allEpisodiosMap.get(pid);
+        if (eps && eps.includes(ep)) {
+          const prog = this.blocos().find((b: BlocoOutput) => b.aPrograma?.aId === pid)?.aPrograma;
+          if (prog) return prog as any;
+          const names: Record<number, string> = { 30: 'Dragon Ball', 34: 'Dragon Ball Z', 32: 'Dragon Ball GT', 33: 'Dragon Ball Super', 82: 'Super Dragon Ball Heroes - Legendado', 31: 'Dragon Ball Daima - Legandado' };
+          return { aId: pid, aNome: names[pid] ?? bloco.aPrograma!.aNome } as any;
+        }
+      }
+      return bloco.aPrograma as any;
+    }
+    return bloco.aPrograma as any;
+  }
+
   readonly faixaRanges: { nome: string; inicio: string; icon: string }[] = [
     { nome: 'Madrugada', inicio: '00:00', icon: '🌙' },
     { nome: 'Manhã', inicio: '06:00', icon: '☀️' },
@@ -217,6 +389,7 @@ export class Grade implements OnInit, OnDestroy {
           if (!cellBlocos) continue;
           for (const bloco of cellBlocos) {
             if (!bloco.aPrograma || bloco.aPrograma.aId === 35) continue;
+            if (this.isAnyFlatHorario(bloco)) continue;
             const eps = this.allEpisodiosMap.get(bloco.aPrograma.aId);
             const diasQ = this.diasProgramaMap.get(bloco.aPrograma.aId);
             if (!eps || eps.length === 0 || !diasQ || diasQ.length === 0) continue;
@@ -269,6 +442,7 @@ export class Grade implements OnInit, OnDestroy {
         if (!cellBlocos) continue;
         for (const bloco of cellBlocos) {
           if (bloco.aPrograma?.aId === 35) continue;
+          if (this.isAnyFlatHorario(bloco)) continue;
           const ep = this.getEpisodioUncached(bloco);
           if (!ep || !ep.aDuracao) continue;
           if (this.parseDuracaoSec(ep.aDuracao) <= 30*60) continue;
@@ -326,6 +500,7 @@ export class Grade implements OnInit, OnDestroy {
 
         for (const bloco of [...cellBlocos]) {
           if (bloco.aPrograma?.aId === 35) continue;
+          if (this.isAnyFlatHorario(bloco)) continue;
           if (bloco.aHorario?.substring(0, 5) !== t) continue;
           const ep = this.getEpisodioUncached(bloco);
           if (!ep || !ep.aDuracao) continue;
@@ -374,7 +549,13 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   private loadEpisodios(blocos: BlocoOutput[]): void {
-    const programIds = [...new Set(blocos.filter(b => b.aPrograma).map(b => b.aPrograma!.aId))];
+    const baseIds = [...new Set(blocos.filter(b => b.aPrograma).map(b => b.aPrograma!.aId))];
+    for (const pid of this.cavaleirosOrder) if (!baseIds.includes(pid)) baseIds.push(pid);
+    for (const pid of this.dragonBallOrder) if (!baseIds.includes(pid)) baseIds.push(pid);
+    for (const pid of this.avatarOrder) if (!baseIds.includes(pid)) baseIds.push(pid);
+    for (const pid of this.bakiOrder) if (!baseIds.includes(pid)) baseIds.push(pid);
+    for (const pid of this.digimonOrder) if (!baseIds.includes(pid)) baseIds.push(pid);
+    const programIds = baseIds;
     if (programIds.length === 0) {
       this.loading.set(false);
       return;
@@ -430,6 +611,17 @@ export class Grade implements OnInit, OnDestroy {
           const progPages = Math.max(1, Math.ceil(eps.length / pageSize));
           if (progPages > maxPages) maxPages = progPages;
         }
+        // Sequências flat (Cavaleiros 19:00, Dragon Ball 18:00 e Avatar 11:00)
+        const cavFlatLen = this.cavaleirosOrder.reduce((acc, pid) => acc + (this.allEpisodiosMap.get(pid)?.length ?? 0), 0);
+        if (cavFlatLen > 0) maxPages = Math.max(maxPages, Math.ceil(cavFlatLen / this.EPISODES_PER_PAGE));
+        const dbFlatLen = this.dragonBallOrder.reduce((acc, pid) => acc + (this.allEpisodiosMap.get(pid)?.length ?? 0), 0);
+        if (dbFlatLen > 0) maxPages = Math.max(maxPages, Math.ceil(dbFlatLen / this.EPISODES_PER_PAGE));
+        const avatarFlatLen = this.avatarOrder.reduce((acc, pid) => acc + (this.allEpisodiosMap.get(pid)?.length ?? 0), 0);
+        if (avatarFlatLen > 0) maxPages = Math.max(maxPages, Math.ceil(avatarFlatLen / this.EPISODES_PER_PAGE));
+        const bakiFlatLen = this.bakiOrder.reduce((acc, pid) => acc + (this.allEpisodiosMap.get(pid)?.length ?? 0), 0);
+        if (bakiFlatLen > 0) maxPages = Math.max(maxPages, Math.ceil(bakiFlatLen / this.EPISODES_PER_PAGE));
+        const digimonFlatLen = this.digimonOrder.reduce((acc, pid) => acc + (this.allEpisodiosMap.get(pid)?.length ?? 0), 0);
+        if (digimonFlatLen > 0) maxPages = Math.max(maxPages, Math.ceil(digimonFlatLen / this.EPISODES_PER_PAGE));
 
         this.totalPages.set(maxPages);
         const restored = Math.max(0, Math.min(this.pendingPage, maxPages - 1));
@@ -668,6 +860,51 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   private getEpisodioRaw(bloco: BlocoOutput, diaIdx: number): EpisodioInfo | null {
+    if (this.isDigimon1230Horario(bloco)) {
+      const flat = this.getDigimonFlatEpisodes();
+      if (flat.length === 0) return null;
+      const diasQ = this.diasProgramaMap.get(22) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return null;
+      const idx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      return flat[idx];
+    }
+    if (this.isBaki21Horario(bloco)) {
+      const flat = this.getBakiFlatEpisodes();
+      if (flat.length === 0) return null;
+      const diasQ = this.diasProgramaMap.get(9) ?? this.diasProgramaMap.get(10) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return null;
+      const idx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      return flat[idx];
+    }
+    if (this.isAvatar11Horario(bloco)) {
+      const flat = this.getAvatarFlatEpisodes();
+      if (flat.length === 0) return null;
+      const diasQ = this.diasProgramaMap.get(7) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return null;
+      const idx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      return flat[idx];
+    }
+    if (this.isCavaleiros19Horario(bloco)) {
+      const flat = this.getCavaleirosFlatEpisodes();
+      if (flat.length === 0) return null;
+      const diasQ = this.diasProgramaMap.get(58) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return null;
+      const idx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      return flat[idx];
+    }
+    if (this.isDragonBall18Horario(bloco)) {
+      const flat = this.getDragonBallFlatEpisodes();
+      if (flat.length === 0) return null;
+      const diasQ = this.diasProgramaMap.get(30) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return null;
+      const idx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      return flat[idx];
+    }
     if (!bloco.aPrograma) return null;
     const eps = this.allEpisodiosMap.get(bloco.aPrograma.aId);
     if (!eps || eps.length === 0) return null;
@@ -703,6 +940,11 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   getEpisodio(bloco: BlocoOutput, dia: string): EpisodioInfo | null {
+    if (this.isCavaleiros19Horario(bloco) || this.isDragonBall18Horario(bloco) || this.isAvatar11Horario(bloco) || this.isBaki21Horario(bloco) || this.isDigimon1230Horario(bloco)) {
+      const diaIdx = this.dias.indexOf(dia);
+      if (diaIdx < 0) return null;
+      return this.getEpisodioRaw(bloco, diaIdx);
+    }
     return this.episodioCache.get(bloco.aId) ?? null;
   }
 
@@ -1296,6 +1538,123 @@ export class Grade implements OnInit, OnDestroy {
   getTipoDinamico(bloco: any, dia: string): string {
     const original = bloco.aTipoBlocoDesc ?? '';
     if (original.includes('Maratona') || original.includes('Especial')) return original;
+
+    if (this.isDigimon1230Horario(bloco)) {
+      const flat = this.getDigimonFlatEpisodes();
+      const epThis = this.getEpisodio(bloco, dia);
+      if (!epThis || flat.length === 0) return 'Inédito';
+      const flatIdx = flat.findIndex(e => e.aId === epThis.aId);
+      if (flatIdx < 0) return 'Inédito';
+      const diasQ = this.diasProgramaMap.get(22) ?? [];
+      const diaIdx = this.dias.indexOf(dia);
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return 'Inédito';
+      const curFlatIdx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      for (let p = 0; p < this.currentPage(); p++) {
+        for (const dp of diasQ) {
+          if (((dp + p * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+        }
+      }
+      for (const dp of diasQ) {
+        if (dp >= dayPos) break;
+        if (((dp + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+      }
+      return 'Inédito';
+    }
+
+    if (this.isBaki21Horario(bloco)) {
+      const flat = this.getBakiFlatEpisodes();
+      const epThis = this.getEpisodio(bloco, dia);
+      if (!epThis || flat.length === 0) return 'Inédito';
+      const flatIdx = flat.findIndex(e => e.aId === epThis.aId);
+      if (flatIdx < 0) return 'Inédito';
+      const diasQ = this.diasProgramaMap.get(9) ?? this.diasProgramaMap.get(10) ?? [];
+      const diaIdx = this.dias.indexOf(dia);
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return 'Inédito';
+      const curFlatIdx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      for (let p = 0; p < this.currentPage(); p++) {
+        for (const dp of diasQ) {
+          if (((dp + p * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+        }
+      }
+      for (const dp of diasQ) {
+        if (dp >= dayPos) break;
+        if (((dp + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+      }
+      return 'Inédito';
+    }
+
+    if (this.isAvatar11Horario(bloco)) {
+      const flat = this.getAvatarFlatEpisodes();
+      const epThis = this.getEpisodio(bloco, dia);
+      if (!epThis || flat.length === 0) return 'Inédito';
+      const flatIdx = flat.findIndex(e => e.aId === epThis.aId);
+      if (flatIdx < 0) return 'Inédito';
+      const diasQ = this.diasProgramaMap.get(7) ?? [];
+      const diaIdx = this.dias.indexOf(dia);
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return 'Inédito';
+      const curFlatIdx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      for (let p = 0; p < this.currentPage(); p++) {
+        for (const dp of diasQ) {
+          if (((dp + p * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+        }
+      }
+      for (const dp of diasQ) {
+        if (dp >= dayPos) break;
+        if (((dp + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+      }
+      return 'Inédito';
+    }
+
+    if (this.isDragonBall18Horario(bloco)) {
+      const flat = this.getDragonBallFlatEpisodes();
+      const epThis = this.getEpisodio(bloco, dia);
+      if (!epThis || flat.length === 0) return 'Inédito';
+      const flatIdx = flat.findIndex(e => e.aId === epThis.aId);
+      if (flatIdx < 0) return 'Inédito';
+      const diasQ = this.diasProgramaMap.get(30) ?? [];
+      const diaIdx = this.dias.indexOf(dia);
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return 'Inédito';
+      const curFlatIdx = (((dayPos + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length) + flat.length) % flat.length;
+      for (let p = 0; p < this.currentPage(); p++) {
+        for (const dp of diasQ) {
+          if (((dp + p * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+        }
+      }
+      for (const dp of diasQ) {
+        if (dp >= dayPos) break;
+        if (((dp + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+      }
+      return 'Inédito';
+    }
+
+    if (this.isCavaleiros19Horario(bloco)) {
+      const flat = this.getCavaleirosFlatEpisodes();
+      const epThis = this.getEpisodio(bloco, dia);
+      if (!epThis || flat.length === 0) return 'Inédito';
+      const flatIdx = flat.findIndex(e => e.aId === epThis.aId);
+      if (flatIdx < 0) return 'Inédito';
+      const diasQ = this.diasProgramaMap.get(58) ?? [];
+      const diaIdx = this.dias.indexOf(dia);
+      const dayPos = diasQ.indexOf(diaIdx);
+      if (dayPos < 0) return 'Inédito';
+      const curGlobal = dayPos + this.currentPage() * this.EPISODES_PER_PAGE;
+      const curFlatIdx = ((curGlobal % flat.length) + flat.length) % flat.length;
+      // Se o mesmo flat já apareceu em página/dia anterior, é reprise
+      for (let p = 0; p < this.currentPage(); p++) {
+        for (const dp of diasQ) {
+          if (((dp + p * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+        }
+      }
+      for (const dp of diasQ) {
+        if (dp >= dayPos) break;
+        if (((dp + this.currentPage() * this.EPISODES_PER_PAGE) % flat.length + flat.length) % flat.length === curFlatIdx) return 'Reprise';
+      }
+      return 'Inédito';
+    }
 
     if (!bloco.aPrograma) return original || 'Inédito';
 
