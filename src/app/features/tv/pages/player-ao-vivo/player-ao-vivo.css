@@ -395,14 +395,16 @@
   border: 1px solid #374151;
   background: linear-gradient(180deg, rgba(31, 41, 55, 0.92), rgba(17, 24, 39, 0.92));
   text-align: center;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.slate-wait {
-  border-color: rgba(250, 204, 21, 0.45);
-}
-
+.slate-wait,
 .slate-next {
-  border-color: rgba(96, 165, 250, 0.45);
+  border-color: rgba(148, 163, 184, 0.28);
 }
 
 .slate-kicker {
@@ -413,12 +415,9 @@
   color: #9ca3af;
 }
 
-.slate-wait .slate-kicker {
-  color: #fcd34d;
-}
-
+.slate-wait .slate-kicker,
 .slate-next .slate-kicker {
-  color: #93c5fd;
+  color: #e5e7eb;
 }
 
 .slate-title {

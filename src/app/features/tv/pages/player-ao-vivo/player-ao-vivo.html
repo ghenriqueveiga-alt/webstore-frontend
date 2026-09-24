@@ -121,8 +121,8 @@
         <div #playerWrap class="tv-screen select-none" (contextmenu)="$event.preventDefault()" (mousemove)="onFsMouseMove($event)" (mouseleave)="onFsMouseLeave()" (click)="onScreenClick()" [class.hide-cursor]="isFullscreen() && !showFsUi()">
 
           @if (waitSeconds() > 0) {
-            <div class="tv-scroll">
-              <div class="text-center px-6 py-6">
+            <div class="free-countdown-overlay">
+              <div class="tv-scroll">
                 <span class="text-6xl block mb-3">⏳</span>
                 <p class="text-lg text-gray-300 mb-2">Episódio começa em</p>
                 <p class="text-4xl font-mono font-bold text-yellow-400">{{ formatTime(waitSeconds()) }}</p>
@@ -142,7 +142,7 @@
                       }
                     </p>
                   }
-                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(waitSeconds()) }}</span> para começar o programa <span class="font-bold text-white">{{ currentBloco()?.aPrograma?.aNome }}</span></p>
+                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(waitSeconds()) }}</span> para o episódio <span class="font-bold text-white">{{ currentEpisodio()?.aTitulo ?? currentBloco()?.aPrograma?.aNome }}</span> já vai começar</p>
                 </div>
               </div>
             </div>
@@ -160,7 +160,7 @@
                   } @else {
                     <p class="slate-title">Fim da grade de hoje</p>
                   }
-                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(freeCountdownSec) }}</span> para o próximo bloco</p>
+                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(freeCountdownSec) }}</span> para o próximo bloco <span class="font-bold text-white">{{ nextBloco?.aPrograma?.aNome ?? '' }}</span> irá começar</p>
                 </div>
               </div>
             </div>
@@ -189,7 +189,7 @@
                     @if (nextBloco?.aPrograma) {
                       <p class="slate-title">{{ nextBloco!.aPrograma!.aNome }} <span class="slate-hora">{{ nextBloco!.aHorario?.substring(0, 5) }}</span></p>
                     }
-                    <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(freeCountdownSec) }}</span> para o próximo bloco</p>
+                    <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(freeCountdownSec) }}</span> para o próximo bloco <span class="font-bold text-white">{{ nextBloco?.aPrograma?.aNome ?? '' }}</span> irá começar</p>
                   </div>
                 </div>
               </div>
