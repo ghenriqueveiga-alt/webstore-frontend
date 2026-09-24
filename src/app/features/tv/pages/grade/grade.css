@@ -33,6 +33,11 @@
   position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
   border-radius: 8px 0 0 8px; transition: width 0.2s ease; z-index: 1;
 }
+.bloco-accent-bar-right {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  border-radius: 0 8px 8px 0; z-index: 1; pointer-events: none;
+}
 .bloco-body {
   border: 1px solid rgba(148,163,184,0.1); border-radius: 8px;
   padding: 8px 10px; transition: all 0.2s ease;

@@ -119,6 +119,10 @@ export class Grade implements OnInit, OnDestroy {
       this.maybeRolloverPage();
     }, 1000);
     this._linhaSub = this.linhaService.mudanca$.subscribe(() => {
+      const serviceSlot = this.linhaService.slot();
+      if (this.nowLineOverride() !== null && this.nowLineOverride() !== serviceSlot) {
+        this.nowLineOverride.set(null);
+      }
       setTimeout(() => this.cdr.detectChanges());
     });
     this.tvService.listGrades(0, 100).subscribe({
@@ -1110,37 +1114,75 @@ export class Grade implements OnInit, OnDestroy {
   readonly nowMinuteFraction = computed(() => {
     if (this.nowLineOverride() || this.linhaService.slot()) return 0;
     const now = this.currentTime();
+    const linear = (now.getMinutes() % 30 + now.getSeconds() / 60) / 30;
     const bloco = this.getBlocoAtual();
-    if (!bloco) return (now.getMinutes() % 30) / 30;
+    if (!bloco) return linear;
 
     const { diaIdx } = this.agoraEMSlot();
     const diaNome = this.dias[diaIdx];
     const ep = this.getEpisodio(bloco, diaNome);
-    if (!ep || !ep.aDuracao) return (now.getMinutes() % 30) / 30;
+    if (!ep || !ep.aDuracao) return linear;
 
     const epSec = this.parseDuracaoSec(ep.aDuracao);
-    if (epSec <= 0) return (now.getMinutes() % 30) / 30;
+    if (epSec <= 0) return linear;
 
-    const elapsedMin = this.getElapsedMinFromBlocoStart(now, bloco);
-    const epMin = epSec / 60;
-    const livreMin = 30 - epMin;
+    // Linha percorre as três faixas visuais da fileira ATUAL (slot de 30 min):
+    // [LIVRE topo] -> [episódio] -> [LIVRE base]. Cada faixa tem altura fixa
+    // no layout e a velocidade é tempo/altura, logo livre curto = mais rápido.
+    const slotStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes() < 30 ? '00' : '30'}`;
+    const slotStartMin = (now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30));
+    const elapsedSlotMin = now.getMinutes() % 30 + now.getSeconds() / 60;
 
-    const BLOCO_TOP = 0.28;
-    const BLOCO_HEIGHT = 0.44;
-    const FREE_TOP = 0.72;
-    const FREE_HEIGHT = 0.28;
-
-    if (elapsedMin < epMin) {
-      const fracaoEp = Math.min(elapsedMin / epMin, 1);
-      return BLOCO_TOP + fracaoEp * BLOCO_HEIGHT;
+    const isMulti = this.isMultiBloco(bloco, diaNome);
+    let topFreeMin = 0, episodeSliceMin = 0, bottomFreeMin = 0;
+    if (isMulti) {
+      const totalLivreSec = this.multiBlocoFreeTime(ep);
+      const topSec = Math.floor(totalLivreSec / 2);
+      const bottomSec = Math.ceil(totalLivreSec / 2);
+      const slotIdx = this.slotIndex(diaNome, slotStr);
+      const slots = this.slotsForEpisode(ep);
+      if (slotIdx === 0) {
+        topFreeMin = topSec / 60;
+        episodeSliceMin = 30 - topFreeMin;
+      } else if (slotIdx === slots - 1) {
+        bottomFreeMin = bottomSec / 60;
+        episodeSliceMin = 30 - bottomFreeMin;
+      } else {
+        episodeSliceMin = 30;
+      }
+    } else {
+      const livreSec = Math.max(0, 30 * 60 - epSec);
+      topFreeMin = Math.floor(livreSec / 2) / 60;
+      bottomFreeMin = Math.ceil(livreSec / 2) / 60;
+      episodeSliceMin = epSec / 60;
     }
 
-    if (livreMin <= 0) return Math.min(FREE_TOP + FREE_HEIGHT, 1);
+    // Alturas medidas no layout (grid row 157px): top livre 0.07-0.25,
+    // episódio 0.282-0.774, livre base 0.774-0.955. Mantém fator visual fixo.
+    const TOP_T = 0.07, TOP_H = 0.181;
+    const EP_T = 0.282, EP_H = 0.492;
+    const BOT_T = 0.774, BOT_H = 0.181;
 
-    const fator = this.getFatorVelocidade(epSec);
-    const livreElapsed = Math.min(elapsedMin - epMin, livreMin);
-    const fracaoLivre = Math.min((livreElapsed * fator) / livreMin, 1);
-    return FREE_TOP + fracaoLivre * FREE_HEIGHT;
+    if (topFreeMin > 0 && elapsedSlotMin < topFreeMin) {
+      return TOP_T + (elapsedSlotMin / topFreeMin) * TOP_H;
+    }
+    if (episodeSliceMin > 0) {
+      const epStart = topFreeMin;
+      const epEnd = topFreeMin + episodeSliceMin;
+      if (elapsedSlotMin < epEnd) {
+        const inside = Math.max(0, elapsedSlotMin - epStart);
+        return EP_T + (inside / episodeSliceMin) * EP_H;
+      }
+    }
+    if (bottomFreeMin > 0) {
+      const botStart = topFreeMin + episodeSliceMin;
+      if (elapsedSlotMin >= botStart) {
+        const inside = Math.min(elapsedSlotMin - botStart, bottomFreeMin);
+        return BOT_T + (inside / bottomFreeMin) * BOT_H;
+      }
+    }
+    // Fora das faixas (ex.: livre 0) cai no fim do episódio.
+    return Math.min(EP_T + EP_H, 0.99);
   });
 
   private agoraEMSlot(): { diaIdx: number; horarioIdx: number; slotIdx: number } {
@@ -1178,11 +1220,14 @@ export class Grade implements OnInit, OnDestroy {
   }
 
   private getBlocoAtual(): BlocoOutput | null {
+    const now = this.currentTime();
+    const slotAtual = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes() < 30 ? '00' : '30'}`;
     const { diaIdx, horarioIdx } = this.agoraEMSlot();
-    if (horarioIdx < 0 || !this.horarios[horarioIdx]) return null;
+    // Sem o slot atual na grade (ou fallback para a fileira errada),
+    // não há bloco de referência: fração linear.
+    if (horarioIdx < 0 || this.horarios[horarioIdx] !== slotAtual) return null;
     const diaNome = this.dias[diaIdx];
-    const horario = this.horarios[horarioIdx];
-    const blocos = this.blocosFor(diaNome, horario);
+    const blocos = this.blocosFor(diaNome, slotAtual);
     return blocos.length > 0 ? blocos[0] : null;
   }
 

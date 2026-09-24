@@ -199,6 +199,7 @@
                          [class.accent-especial]="getTipoDinamico(bloco, dia).includes('Especial')"
                          [class.accent-default]="!getTipoDinamico(bloco, dia).includes('Inédito') && !getTipoDinamico(bloco, dia).includes('Rep') && !getTipoDinamico(bloco, dia).includes('Maratona') && !getTipoDinamico(bloco, dia).includes('Especial')">
                     </div>
+                    <div class="bloco-accent-bar-right"></div>
                       <!-- Program name -->
                       <p class="text-[11px] font-semibold text-gray-100 leading-tight truncate mb-1"
                          style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
@@ -260,8 +261,8 @@
             }
 <div class="now-line"
      [style.display]="nowTimeSlot() === horario ? '' : 'none'"
-     [style.left]="'calc(110px + ' + nowDaySlot() + ' * ((100% - 110px - 48px) / 7 + 8px))'"
-     [style.width]="'calc((100% - 110px - 48px) / 7)'"
+     [style.left]="'calc(110px + 13.38px + ' + nowDaySlot() + ' * ((100% - 110px - 48px) / 7 + 8px))'"
+     [style.width]="'calc((100% - 110px - 48px) / 7 - 18.38px)'"
      [style.top]="nowMinuteFraction() * 100 + '%'"></div>
           </div>
         }

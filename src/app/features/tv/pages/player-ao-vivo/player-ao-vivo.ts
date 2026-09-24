@@ -179,6 +179,18 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   private _suppressAutoPlay = false;
   private _endedProgramId: number | null = null;
 
+  readonly qrModalOpen = signal(false);
+  readonly selectedQr = signal<{ name: string; color: string } | null>(null);
+
+  openQrModal(name: string, color: string): void {
+    this.selectedQr.set({ name, color });
+    this.qrModalOpen.set(true);
+  }
+
+  closeQrModal(): void {
+    this.qrModalOpen.set(false);
+  }
+
   private _timerInterval: any;
 
   readonly dias = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -494,17 +506,19 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     let bloco: BlocoOutput | null = null;
 
     if (overrideSlot) {
-      const hasDirectBloco = this.blocos.some(b =>
-        b.aStatusCode === 'AT' && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia) &&
-        b.aHorario?.substring(0, 5) === overrideSlot && b.aPrograma
-      );
-      if (hasDirectBloco) {
-        bloco = this.blocos.find(b =>
-          b.aStatusCode === 'AT' && this.normalizeDia(b.aDiaSemanaDesc ?? '') === this.normalizeDia(dia) &&
-          b.aHorario?.substring(0, 5) === overrideSlot && b.aPrograma
-        ) ?? null;
-      } else {
-        bloco = null;
+      // Em horário pinado, respeita episódios multi-bloco que ocupam o slot
+      // (ex.: Re:Zero 00:00 com 50:01 cobre 00:30 — clicar em 00:30 deve
+      // continuar o mesmo episódio a partir do minuto 30, não o Parasyte
+      // deslocado). Usa a mesma expansão de grade que o modo ao vivo.
+      bloco = this.blocoEfetivoAgora(dia, overrideSlot);
+      if (!bloco) {
+        this.currentBloco.set(null);
+        this.currentEpisodio.set(null);
+        this.videoUrl.set(null);
+        this.videoEnded.set(false);
+        this.lastDetalheProgramaId = 0;
+        this.programaDetalhe.set(null);
+        return;
       }
     }
 

@@ -56,7 +56,7 @@ export class LinhaVermelhaService implements OnDestroy {
   }
 
   private _chave(): string {
-    return `linha-vermelha-${document.title || 'webstore'}`;
+    return `linha-vermelha`;
   }
 
   private _persistirLocal(): void {

@@ -6,19 +6,19 @@
 
   <!-- FIXED QR LEFT -->
   <aside class="qr-fixed-col qr-fixed-left">
-    <div class="crypto-card" style="--coin-color: #F7931A;">
+    <div class="crypto-card" style="--coin-color: #F7931A; cursor: pointer;" (click)="openQrModal('Bitcoin', '#F7931A')">
       <p class="crypto-coin-name">Bitcoin</p>
       <div class="crypto-qr-placeholder">
         <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
       </div>
     </div>
-    <div class="crypto-card" style="--coin-color: #627EEA;">
+    <div class="crypto-card" style="--coin-color: #627EEA; cursor: pointer;" (click)="openQrModal('Ethereum', '#627EEA')">
       <p class="crypto-coin-name">Ethereum</p>
       <div class="crypto-qr-placeholder">
         <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
       </div>
     </div>
-    <div class="crypto-card" style="--coin-color: #F0B90B;">
+    <div class="crypto-card" style="--coin-color: #F0B90B; cursor: pointer;" (click)="openQrModal('Binance', '#F0B90B')">
       <p class="crypto-coin-name">Binance</p>
       <div class="crypto-qr-placeholder">
         <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
@@ -28,19 +28,19 @@
 
   <!-- FIXED QR RIGHT -->
   <aside class="qr-fixed-col qr-fixed-right">
-    <div class="crypto-card" style="--coin-color: #9945FF;">
+    <div class="crypto-card" style="--coin-color: #9945FF; cursor: pointer;" (click)="openQrModal('Solana', '#9945FF')">
       <p class="crypto-coin-name">Solana</p>
       <div class="crypto-qr-placeholder">
         <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
       </div>
     </div>
-    <div class="crypto-card" style="--coin-color: #BFBBBB;">
+    <div class="crypto-card" style="--coin-color: #BFBBBB; cursor: pointer;" (click)="openQrModal('Litecoin', '#BFBBBB')">
       <p class="crypto-coin-name">Litecoin</p>
       <div class="crypto-qr-placeholder">
         <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
       </div>
     </div>
-    <div class="crypto-card" style="--coin-color: #FF6600;">
+    <div class="crypto-card" style="--coin-color: #FF6600; cursor: pointer;" (click)="openQrModal('Monero', '#FF6600')">
       <p class="crypto-coin-name">Monero</p>
       <div class="crypto-qr-placeholder">
         <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
@@ -386,6 +386,21 @@
       </div><!-- /tv-info-grid -->
       </div><!-- /tv-below -->
 
+  }
+
+  @if (qrModalOpen()) {
+    <div class="qr-modal-backdrop">
+      <div class="qr-modal-panel">
+        <button class="qr-modal-close" (click)="closeQrModal()" aria-label="Fechar">✕</button>
+        @if (selectedQr(); as qr) {
+          <p class="qr-modal-coin" [style.color]="qr.color">{{ qr.name }}</p>
+          <div class="qr-modal-qr" (click)="closeQrModal()" title="Escanear para fechar">
+            <svg viewBox="0 0 100 100" class="crypto-qr-svg"><rect width="100" height="100" fill="#fff" rx="4"/><text x="50" y="54" text-anchor="middle" font-size="11" fill="#000" font-family="monospace">QR CODE</text></svg>
+          </div>
+          <p class="qr-modal-hint">Clique no QR para simular escaneamento e fechar</p>
+        }
+      </div>
+    </div>
   }
   </div><!-- /tv-stage -->
   </div><!-- /ao-vivo-main -->
