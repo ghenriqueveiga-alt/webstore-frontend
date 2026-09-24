@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, viewChild, ElementRef, effect } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GoogleAd } from '../../../../core/components/google-ad/google-ad';
 import { TvService, BlocoOutput, ProgramaDetalhe } from '../../services/tv.service';
@@ -41,6 +41,84 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
   @ViewChild('videoPlayer') videoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('playerWrap') wrapRef!: ElementRef<HTMLDivElement>;
+
+  /** Quantidade de linhas que cabem na lista "Próximos", medida no DOM. */
+  readonly listCapacity = signal(12);
+  private readonly fillListRef = viewChild<ElementRef<HTMLDivElement>>('fillList');
+  private readonly infoSectionRef = viewChild<ElementRef<HTMLElement>>('infoSection');
+  private readonly _fillListObserver = effect((onCleanup) => {
+    const lista = this.fillListRef()?.nativeElement;
+    const secao = this.infoSectionRef()?.nativeElement;
+    const aside = lista?.closest('aside') as HTMLElement | null;
+    if (!lista || !secao || !aside) return;
+
+    let ro: ResizeObserver | null = null;
+    const medir = () => {
+      // Observa também os filhos da seção: a altura natural dela muda quando
+      // o conteúdo renderiza (imagem, grade), nem sempre alterando o box dela.
+      if (ro) for (const filho of Array.from(secao.children)) ro.observe(filho);
+
+      const ultimo = secao.lastElementChild as HTMLElement | null;
+      if (!ultimo) return;
+      const cs = getComputedStyle(secao);
+      // Altura NATURAL da seção. O grid estica a seção até a altura da linha, e
+      // a linha pode ser puxada pelo próprio aside que contém a lista — medir o
+      // box da seção (ou da lista) criaria realimentação e só cresceria.
+      // "ultimo.bottom - topo" já inclui borda superior + padding superior;
+      // falta somar borda e padding inferiores para ter a border-box natural.
+      const alturaSecao =
+        ultimo.getBoundingClientRect().bottom -
+        secao.getBoundingClientRect().top +
+        (parseFloat(cs.paddingBottom) || 0) +
+        (parseFloat(cs.borderBottomWidth) || 0) +
+        (parseFloat(getComputedStyle(ultimo).marginBottom) || 0);
+
+      // Coluna única (abaixo de 1024px) os cards ficam empilhados: não existe
+      // irmão para igualar, então a altura viria do próprio conteúdo e a lista
+      // nunca diminuiria (chegando a 35 itens em ~500px). Aí o teto passa a ser
+      // a tela. Em duas colunas nada muda: a linha é dirigida pela seção.
+      const grid = secao.parentElement;
+      const trilhas = grid
+        ? getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length
+        : 1;
+      const alturaUtil =
+        trilhas > 1 ? alturaSecao : Math.min(alturaSecao, window.innerHeight * 0.8);
+
+      // Parte do aside que não é a lista (transmissão + gaps + título/paddings).
+      // É constante: não depende nem da linha do grid nem da altura da lista.
+      const rAside = aside.getBoundingClientRect();
+      const rLista = lista.getBoundingClientRect();
+      const overhead = rAside.height - rLista.height;
+
+      const itens = Array.from(lista.children) as HTMLElement[];
+      if (itens.length === 0) return;
+      const r0 = itens[0].getBoundingClientRect();
+      const alt = r0.height;
+      if (!alt) return;
+      // Passo = altura da linha + o margin-top de 0.25rem do space-y-1.
+      const passo = itens.length > 1 ? itens[1].getBoundingClientRect().top - r0.top : alt + 4;
+      if (!passo) return;
+
+      // Tudo em medidas fracionárias (offsetHeight arredonda para inteiro e
+      // faria o cálculo perder ~1px, deixando uma linha a menos). O epsilon
+      // cobre apenas o ruído de ponto flutuante da subtração.
+      const disponivel = Math.max(0, alturaUtil - overhead + 0.01);
+      this.listCapacity.set(Math.max(1, Math.floor((disponivel - alt) / passo) + 1));
+    };
+
+    ro = new ResizeObserver(medir);
+    ro.observe(lista);
+    ro.observe(aside);
+    medir();
+    // O teto de altura usa a viewport, que não redimensiona nenhum dos elementos
+    // observados (a página rola) — sem isto, mudar a ALTURA da janela não
+    // recalcularia a lista.
+    window.addEventListener('resize', medir);
+    onCleanup(() => {
+      window.removeEventListener('resize', medir);
+      ro?.disconnect();
+    });
+  });
 
   readonly isPlaying = signal(true);
   readonly isMuted = signal(false);
@@ -909,43 +987,34 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   }
 
   get upcomingBlocos(): BlocoOutput[] {
-    const now = this.currentTime();
+    const limite = this.listCapacity();
     const alvo = this.diaAlvo();
     const dayIdx = alvo.diaIdx;
-    const dia = alvo.dia;
-    const h = now.getHours();
-    const m = now.getMinutes();
-    const relogio = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    const relogio = this.nowTimeFormatted.substring(0, 5);
     const currentTime = this.linhaService.slot() ?? relogio;
-
     const gradeId = this.currentBloco()?.aGrade?.aId;
 
-    const todayUpcoming = this.blocos
-      .filter(b =>
-        b.aDiaSemanaDesc === dia &&
-        b.aHorario &&
-        b.aHorario.substring(0, 5) >= currentTime &&
-        (!gradeId || b.aGrade?.aId === gradeId)
-      );
-
-    let result = todayUpcoming;
-
-    if (todayUpcoming.length < 10) {
-      const nextDayIdx = (dayIdx + 1) % 7;
-      const nextDia = this.dias[nextDayIdx];
-      const tomorrowBlocos = this.blocos
+    // Percorre os dias em ordem cronológica (hoje → amanhã → …), sempre de
+    // dentro do dia para fora. Assim 20:30, 21:00 … 23:30 vêm antes de 00:00
+    // do dia seguinte — um sort() por string os jogaria para o fim e o slice
+    // os descartaria, mostrando 00:00…05:00 no lugar do restante de hoje.
+    const result: BlocoOutput[] = [];
+    for (let offset = 0; offset < 7 && result.length < limite; offset++) {
+      const dia = this.dias[(dayIdx + offset) % 7];
+      const doDia = this.blocos
         .filter(b =>
-          b.aDiaSemanaDesc === nextDia &&
+          b.aDiaSemanaDesc === dia &&
           b.aHorario &&
-          b.aHorario.substring(0, 5) <= '05:00' &&
+          (offset > 0 || b.aHorario.substring(0, 5) >= currentTime) &&
           (!gradeId || b.aGrade?.aId === gradeId)
-        );
-      result = [...todayUpcoming, ...tomorrowBlocos];
+        )
+        .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''));
+      for (const b of doDia) {
+        if (result.length >= limite) break;
+        result.push(b);
+      }
     }
-
-    return result
-      .sort((a, b) => (a.aHorario ?? '').localeCompare(b.aHorario ?? ''))
-      .slice(0, 11);
+    return result;
   }
 
   get nextBloco(): BlocoOutput | null {

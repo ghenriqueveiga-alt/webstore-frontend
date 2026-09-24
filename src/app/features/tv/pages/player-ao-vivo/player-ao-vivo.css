@@ -93,7 +93,7 @@
 .tv-screen {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1.8 / 1;
   margin-inline: auto;
   background: #000;
   border-radius: 0.75rem;
@@ -279,14 +279,14 @@
 .tv-info-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   margin-top: 0;
 }
 
 @media (min-width: 1024px) {
   .tv-info-grid {
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: minmax(0, 1fr) min(27vw, 340px);
   }
 }
 
@@ -331,7 +331,7 @@
 
 .fact-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   margin-top: 1rem;
   background: #030712;
@@ -342,7 +342,7 @@
 
 @media (min-width: 640px) {
   .fact-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0.5rem 1.5rem;
   }
 }
@@ -352,6 +352,12 @@
   justify-content: space-between;
   gap: 0.5rem;
   font-size: 0.72rem;
+}
+
+/* O valor pode encolher até 0 para que .truncate (nowrap) mostre reticências
+   em vez de inflar o min-content e empurrar a coluna para fora do grid. */
+.fact > * {
+  min-width: 0;
 }
 
 .fact span:first-child {
@@ -477,7 +483,7 @@
   }
   .tv-screen {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1.8 / 1;
     border-radius: 0.5rem;
   }
   .tv-bezel-top { padding: 0.2rem 0; }
@@ -625,8 +631,44 @@
 
 @media (max-width: 900px) {
   .qr-fixed-col {
-    display: none;
+    position: static;
+    top: auto;
+    bottom: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    overflow: visible;
+    z-index: auto;
   }
+  .qr-fixed-left {
+    left: auto;
+    order: 2;
+    margin-top: 0.5rem;
+  }
+  .qr-fixed-right {
+    right: auto;
+    order: 4;
+    margin-top: 1rem;
+  }
+  .qr-fixed-col .crypto-card {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+  .qr-fixed-col .crypto-qr-placeholder {
+    flex: none;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .epg-bar { order: 1; }
+  .tv-set { order: 3; }
+  .tv-below { order: 5; }
 }
 
 .crypto-card {
