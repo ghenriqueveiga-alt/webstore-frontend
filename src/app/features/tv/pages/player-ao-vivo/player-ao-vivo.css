@@ -35,8 +35,20 @@
   min-height: 0;
 }
 
-.tv-stage {
-  width: 100%;
+.tv-room:has(.tv-static) {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.tv-room:has(.tv-static) .tv-stage {
+  justify-content: center;
+}
+
+.tv-room:has(.tv-static) .tv-set {
+  margin-top: 1rem;
+  max-height: calc(100vh - 2rem);
 }
 
 .tv-below {
@@ -104,6 +116,16 @@
   height: 100%;
 }
 
+.tv-room:has(.tv-static) .tv-set {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: stretch;
+  min-height: calc(100vh - 3rem);
+}
+
+.tv-room:has(.tv-static) .tv-screen,.tv-room:has(.tv-static) .tv-center{height:auto;min-height:clamp(340px,58vh,660px);overflow:hidden}
+.tv-room:has(.tv-static) .tv-screen{max-height:none}
+@media(min-width:641px){.tv-room:not(:has(.tv-static)) .tv-screen{height:calc(100dvh - 16rem);min-height:440px;max-height:none;aspect-ratio:auto}}
+
 .tv-video {
   position: absolute;
   inset: 0;
@@ -123,6 +145,8 @@
   padding: 1rem;
 }
 
+
+
 .tv-scroll {
   max-height: 100%;
   overflow-y: auto;
@@ -133,9 +157,8 @@
 }
 
 .tv-static {
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px),
-    radial-gradient(ellipse at center, #111827 0%, #000 75%);
+  background: #000;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.9);
 }
 
 .tv-scanlines {

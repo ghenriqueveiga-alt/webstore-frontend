@@ -86,8 +86,16 @@ export class Player implements OnInit {
         }
       },
       error: () => {
-        this.episodios.set([]);
         this.loadingEpisodios.set(false);
+        // A lista pode falhar (ex.: endpoint indisponível): ainda assim
+        // tenta tocar o episódio pedido via link direto (?episodio=ID).
+        if (autoSelectId !== null) {
+          this.playerService.getEpisodio(autoSelectId).subscribe({
+            next: (ep) => this.selectEpisodio(ep),
+          });
+        } else {
+          this.episodios.set([]);
+        }
       },
     });
   }
@@ -187,8 +195,8 @@ export class Player implements OnInit {
     if (seek !== null) {
       this.seekTo(seek);
       this.pendingSeek.set(null);
-      this.videoReady = true;
-    } else if (!this.videoReady) {
+    }
+    if (!this.videoReady) {
       this.videoReady = true;
       const video = this.videoRef?.nativeElement;
       if (video) video.play().catch(() => {});

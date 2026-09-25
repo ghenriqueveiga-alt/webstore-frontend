@@ -334,8 +334,38 @@ export class Grade implements OnInit, OnDestroy {
   readonly detailHorario = signal('');
   readonly detailDeleting = signal(false);
 
+  readonly qrCoins = [
+    { name: 'Bitcoin', color: '#F7931A' },
+    { name: 'Ethereum', color: '#627EEA' },
+    { name: 'Binance', color: '#F0B90B' },
+    { name: 'Solana', color: '#9945FF' },
+    { name: 'Litecoin', color: '#BFBBBB' },
+    { name: 'Monero', color: '#FF6600' },
+  ];
+  readonly qrModalOpen = signal(false);
+  readonly selectedQr = signal<{ name: string; color: string } | null>(null);
+
+  openQrModal(name: string, color: string): void {
+    this.selectedQr.set({ name, color });
+    this.qrModalOpen.set(true);
+  }
+
+  closeQrModal(): void {
+    this.qrModalOpen.set(false);
+  }
+
   readonly currentPage = signal(0);
   readonly EPISODES_PER_PAGE = 5;
+
+  /** Avanço de episódios por página no caminho genérico: um ciclo semanal
+   *  completo do programa (nº de dias em que ele passa). O valor fixo 5 só
+   *  vale para programas de seg–sex; programas diários (7 dias) ou com
+   *  menos dias repetiam/pulavam episódios e ganhavam badge de Reprise
+   *  falso a partir da página 2. */
+  private pageStep(programaId: number): number {
+    const dq = this.diasProgramaMap.get(programaId);
+    return dq && dq.length > 0 ? dq.length : this.EPISODES_PER_PAGE;
+  }
   readonly totalPages = signal(1);
   readonly pageLabels: string[] = [];
   private static readonly ROLLOVER_KEY = 'grade-last-rollover';
@@ -466,7 +496,8 @@ export class Grade implements OnInit, OnDestroy {
             const dayPos = diasQ.indexOf(d);
             if (dayPos < 0) continue;
             const slip = slipRun.get(bloco.aPrograma.aId) ?? 0;
-            const idx = (((dayPos + p * this.EPISODES_PER_PAGE - slip) % eps.length) + eps.length) % eps.length;
+            const step = diasQ.length || this.EPISODES_PER_PAGE;
+            const idx = (((dayPos + p * step - slip) % eps.length) + eps.length) % eps.length;
             const ep = eps[idx];
             if (!ep || !ep.aDuracao || this.parseDuracaoSec(ep.aDuracao) <= 30 * 60) continue;
             const need = Math.ceil(this.parseDuracaoSec(ep.aDuracao) / (30 * 60));
@@ -931,7 +962,7 @@ export class Grade implements OnInit, OnDestroy {
       return eps[finalIdx];
     }
 
-    const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
+    const pageOffset = this.currentPage() * this.pageStep(bloco.aPrograma.aId);
     const globalIdx = dayPosition + pageOffset;
     if (this.displacedEpisodeShift.has(bloco.aId)) {
       const naturalIdx = ((globalIdx % eps.length) + eps.length) % eps.length;
@@ -1024,7 +1055,7 @@ export class Grade implements OnInit, OnDestroy {
       const finalIdx = (pageOffset + slotOffset) % eps.length;
       return eps[finalIdx];
     }
-    const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
+    const pageOffset = this.currentPage() * this.pageStep(bloco.aPrograma.aId);
     const idx = (dayPosition + pageOffset) % eps.length;
     return eps[idx];
   }
@@ -1408,7 +1439,7 @@ export class Grade implements OnInit, OnDestroy {
 
   linhaParaInicio(): void {
     this.nowLineOverride.set('00:00');
-    this.linhaService.definir('00:00', this.currentPage(), this.nowDayIndex);
+    this.linhaService.definir('00:00', this.currentPage(), 0);
     this.scrollParaSlot('00:00');
   }
 
@@ -1437,7 +1468,18 @@ export class Grade implements OnInit, OnDestroy {
     const labels = document.querySelectorAll('.time-label');
     for (const el of Array.from(labels)) {
       if ((el.textContent ?? '').trim().startsWith(slot)) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const htmlEl = el as HTMLElement;
+        // Rola só o contêiner da grade: scrollIntoView rolaria a janela
+        // junto e tiraria o header de vista.
+        const container = htmlEl.closest('.grade-scroll') as HTMLElement | null;
+        if (container) {
+          const cRect = container.getBoundingClientRect();
+          const eRect = htmlEl.getBoundingClientRect();
+          const delta = eRect.top - cRect.top - cRect.height / 2 + eRect.height / 2;
+          container.scrollTo({ top: container.scrollTop + delta, behavior: 'smooth' });
+        } else {
+          htmlEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         break;
       }
     }
@@ -1852,11 +1894,12 @@ export class Grade implements OnInit, OnDestroy {
     });
     if (mesmoDiaSameEp) return 'Reprise';
 
-    const pageOffset = this.currentPage() * this.EPISODES_PER_PAGE;
+    const step = this.pageStep(programaId);
+    const pageOffset = this.currentPage() * step;
     const currentIdx = (dayPosition + pageOffset) % eps.length;
 
     for (let p = 0; p < this.currentPage(); p++) {
-      const pOffset = p * this.EPISODES_PER_PAGE;
+      const pOffset = p * step;
       for (const dp of diasQuePassa) {
         if ((dp + pOffset) % eps.length === currentIdx) return 'Reprise';
       }
