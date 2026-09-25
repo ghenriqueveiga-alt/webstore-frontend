@@ -668,11 +668,12 @@ export class Grade implements OnInit, OnDestroy {
         let maxPages = 1;
         for (const [pid, eps] of grouped) {
           const parteVal = (e: EpisodioInfo) => (e.aTitulo && e.aTitulo.toLowerCase().includes('parte')) ? 0 : (e.aParte ?? 0);
+          const numeroVal = (e: EpisodioInfo) => e.aNumero ?? 9999;
           const isInterleaved = pid === 7 || pid === 47 || pid === 48 || pid === 74;
           if (isInterleaved) {
-            eps.sort((a, b) => ((a.aTemporada ?? 0) - (b.aTemporada ?? 0)) || ((a.aNumero ?? 0) - (b.aNumero ?? 0)) || (parteVal(a) - parteVal(b)));
+            eps.sort((a, b) => ((a.aTemporada ?? 0) - (b.aTemporada ?? 0)) || (numeroVal(a) - numeroVal(b)) || (parteVal(a) - parteVal(b)));
           } else {
-            eps.sort((a, b) => ((a.aTemporada ?? 0) - (b.aTemporada ?? 0)) || (parteVal(a) - parteVal(b)) || ((a.aNumero ?? 0) - (b.aNumero ?? 0)));
+            eps.sort((a, b) => ((a.aTemporada ?? 0) - (b.aTemporada ?? 0)) || (parteVal(a) - parteVal(b)) || (numeroVal(a) - numeroVal(b)));
           }
           this.allEpisodiosMap.set(pid, eps);
           const diasQuePassa = this.diasProgramaMap.get(pid) ?? [];
