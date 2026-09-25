@@ -217,6 +217,46 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   private blocos: BlocoOutput[] = [];
   private readonly EPISODES_PER_PAGE = 5;
 
+  private readonly cavaleirosOrder = [58, 56, 57, 55, 63, 61, 60, 59];
+  private readonly dragonBallOrder = [30, 34, 32, 33, 82, 31];
+  private readonly avatarOrder = [7, 8];
+  private readonly bakiOrder = [10, 9];
+  private readonly digimonOrder = [22, 26, 23, 25, 28, 27, 24];
+  private readonly medabotsOrder = [47, 48];
+  private readonly bokuOrder = [13, 14];
+
+  private isCavaleiros19Horario(b: BlocoOutput): boolean { return b.aHorario?.substring(0,5)==='19:00' && this.cavaleirosOrder.includes(b.aPrograma?.aId ?? -1); }
+  private isDragonBall18Horario(b: BlocoOutput): boolean { return b.aHorario?.substring(0,5)==='18:00' && this.dragonBallOrder.includes(b.aPrograma?.aId ?? -1); }
+  private isAvatar11Horario(b: BlocoOutput): boolean { return b.aHorario?.substring(0,5)==='11:00' && this.avatarOrder.includes(b.aPrograma?.aId ?? -1); }
+  private isBaki21Horario(b: BlocoOutput): boolean { return b.aHorario?.substring(0,5)==='21:00' && this.bakiOrder.includes(b.aPrograma?.aId ?? -1); }
+  private isDigimon1230Horario(b: BlocoOutput): boolean { return b.aHorario?.substring(0,5)==='12:30' && this.digimonOrder.includes(b.aPrograma?.aId ?? -1); }
+  private isMedabots1130Horario(b: BlocoOutput): boolean { return b.aHorario?.substring(0,5)==='11:30' && this.medabotsOrder.includes(b.aPrograma?.aId ?? -1); }
+  private isBokuWeekend18Horario(b: BlocoOutput): boolean { const h=b.aHorario?.substring(0,5); return (h==='18:00'||h==='18:30') && this.bokuOrder.includes(b.aPrograma?.aId ?? -1) && this.isFimDeSemana(b.aDiaSemanaDesc ?? ''); }
+  private getFlatEpisodes(order: number[]): EpisodioInfo[] { const flat: EpisodioInfo[]=[]; for(const pid of order){ const eps=this.allEpisodiosMap.get(pid); if(eps) flat.push(...eps);} return flat; }
+  private getDisplayProgramaForLive(bloco: BlocoOutput, diaIdx: number): { aId: number; aNome: string } | null {
+    const tryFlat = (order: number[], progNames: Record<number,string>) => {
+      const flat = this.getFlatEpisodes(order);
+      if(flat.length===0) return null;
+      const diasQ = this.diasProgramaMap.get(order[0]) ?? [];
+      const dayPos = diasQ.indexOf(diaIdx);
+      if(dayPos<0) return null;
+      const idx = ((dayPos + this.paginaAlvo()*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length;
+      const ep=flat[idx];
+      for(const pid of order){ const eps=this.allEpisodiosMap.get(pid); if(eps && eps.includes(ep)){ const prog=this.blocos.find(b=>b.aPrograma?.aId===pid)?.aPrograma; if(prog) return prog as any; return {aId: pid, aNome: progNames[pid]??bloco.aPrograma!.aNome} as any; } }
+      return null;
+    };
+    if(this.isBokuWeekend18Horario(bloco)){
+      const wk=this.blocos.filter(b=>b.aPrograma?.aId===bloco.aPrograma!.aId && this.normalizeDia(b.aDiaSemanaDesc??'')===this.normalizeDia(this.dias[diaIdx])) .sort((a,b)=>(a.aHorario??'').localeCompare(b.aHorario??'')); const numSlots=wk.length||4; const slotOffset=wk.findIndex(b=>b.aId===bloco.aId); const flat=this.getFlatEpisodes(this.bokuOrder); if(flat.length===0) return bloco.aPrograma as any; const idx=((this.paginaAlvo()*numSlots+slotOffset)%flat.length+flat.length)%flat.length; const ep=flat[idx]; for(const pid of this.bokuOrder){ const eps=this.allEpisodiosMap.get(pid); if(eps && eps.includes(ep)){ const prog=this.blocos.find(b=>b.aPrograma?.aId===pid)?.aPrograma; if(prog) return prog as any; const names: Record<number,string>={13:'Buko no Hero',14:'Buko no Hero - Illegals - Legendado'}; return {aId:pid,aNome:names[pid]??bloco.aPrograma!.aNome} as any; } } return bloco.aPrograma as any;
+    }
+    if(this.isMedabots1130Horario(bloco)){ const r=tryFlat(this.medabotsOrder,{47:'Medabots',48:'Medabots - Spirits'}); if(r) return r; }
+    if(this.isDigimon1230Horario(bloco)){ const r=tryFlat(this.digimonOrder,{22:'Digimon - Adventure',26:'Digimon - Tamers',23:'Digimon - Frontier',25:'Digimon - Savers',28:'Digimon - Xros Wars - Legendado',27:'Digimon - Universe - Appli Monsters - Legendado',24:'Digimon - Ghost Game - Legendado'}); if(r) return r; }
+    if(this.isBaki21Horario(bloco)){ const diasQ=this.diasProgramaMap.get(9)??this.diasProgramaMap.get(10)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos>=0){ const flat=this.getFlatEpisodes(this.bakiOrder); const idx=((dayPos+this.paginaAlvo()*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length; const ep=flat[idx]; for(const pid of this.bakiOrder){ const eps=this.allEpisodiosMap.get(pid); if(eps&&eps.includes(ep)){ const prog=this.blocos.find(b=>b.aPrograma?.aId===pid)?.aPrograma; if(prog) return prog as any; const names: Record<number,string>={10:'Baki - O Campeão',9:'Baki - Hanma'}; return {aId:pid,aNome:names[pid]??bloco.aPrograma!.aNome} as any; } } } }
+    if(this.isAvatar11Horario(bloco)){ const r=tryFlat(this.avatarOrder,{7:'Avatar - Aang',8:'Avatar - Korra'}); if(r) return r; }
+    if(this.isCavaleiros19Horario(bloco)){ const r=tryFlat(this.cavaleirosOrder,{58:'Os Cavaleiros do Zodíaco - Guerra Galática',56:'Os Cavaleiros do Zodíaco - Cavaleiros de Prata',57:'Os Cavaleiros do Zodíaco - Doze Casas',55:'Os Cavaleiros do Zodíaco - Asgard',63:'Os Cavaleiros do Zodíaco - Poseidon',61:'Os Cavaleiros do Zodíaco - Hades - Santuário',60:'Os Cavaleiros do Zodíaco - Hades - Inferno',59:'Os Cavaleiros do Zodíaco - Hades - Elísio'}); if(r) return r; }
+    if(this.isDragonBall18Horario(bloco)){ const r=tryFlat(this.dragonBallOrder,{30:'Dragon Ball',34:'Dragon Ball Z',32:'Dragon Ball GT',33:'Dragon Ball Super',82:'Super Dragon Ball Heroes - Legendado',31:'Dragon Ball Daima - Legandado'}); if(r) return r; }
+    return bloco.aPrograma as any;
+  }
+
   private normalizeDia(d: string): string {
     return d.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
@@ -438,7 +478,15 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     this.tvService.listBlocos(0, 10000).subscribe({
       next: (res) => {
         this.blocos = res.aBlocos;
-        const programIds = [...new Set(res.aBlocos.filter(b => b.aPrograma).map(b => b.aPrograma!.aId))];
+        const baseIds = [...new Set(res.aBlocos.filter(b => b.aPrograma).map(b => b.aPrograma!.aId))];
+        for(const pid of this.cavaleirosOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        for(const pid of this.dragonBallOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        for(const pid of this.avatarOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        for(const pid of this.bakiOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        for(const pid of this.digimonOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        for(const pid of this.medabotsOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        for(const pid of this.bokuOrder) if(!baseIds.includes(pid)) baseIds.push(pid);
+        const programIds = baseIds;
 
         if (programIds.length === 0) {
           this.loading.set(false);
@@ -472,7 +520,13 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
               });
             }
             for (const [pid, eps] of grouped) {
-              eps.sort((a, b) => ((a.aTemporada ?? 0) - (b.aTemporada ?? 0)) || ((a.aParte ?? 0) - (b.aParte ?? 0)) || ((a.aNumero ?? 0) - (b.aNumero ?? 0)));
+              const isInterleaved = pid===7 || pid===47 || pid===48 || pid===74;
+              const parteVal = (e: EpisodioInfo) => (e.aTitulo && e.aTitulo.toLowerCase().includes('parte')) ? 0 : (e.aParte ?? 0);
+              if(isInterleaved){
+                eps.sort((a,b)=> ((a.aTemporada??0)-(b.aTemporada??0)) || ((a.aNumero??0)-(b.aNumero??0)) || (parteVal(a)-parteVal(b)));
+              } else {
+                eps.sort((a,b)=> ((a.aTemporada??0)-(b.aTemporada??0)) || (parteVal(a)-parteVal(b)) || ((a.aNumero??0)-(b.aNumero??0)));
+              }
               this.allEpisodiosMap.set(pid, eps);
             }
 
@@ -571,7 +625,11 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
 
     this.currentBloco.set(bloco);
 
-    if (bloco.aPrograma) {
+    const diaIdxForLive = this.dias.indexOf(dia);
+    const displayProg = this.getDisplayProgramaForLive(bloco, diaIdxForLive);
+    if (displayProg) {
+      this.loadProgramaDetalhe(displayProg.aId);
+    } else if (bloco.aPrograma) {
       this.loadProgramaDetalhe(bloco.aPrograma.aId);
     }
 
@@ -580,12 +638,17 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     const blocoTotalSeconds = bh * 3600 + bm * 60;
     const currentTotalSeconds = h * 3600 + m * 60 + s;
     const segundosNoBloco = this.linhaService.segundosDentroBloco();
-    const eps = bloco.aPrograma ? this.allEpisodiosMap.get(bloco.aPrograma.aId) : null;
-    if (eps && eps.length > 0) {
-      const epIdx = this.getEpisodeIndex(bloco, dia);
-      this.currentEpisodio.set(eps[epIdx % eps.length]);
+    const epLive = this.episodioPagina0(bloco, diaIdxForLive);
+    if (epLive) {
+      this.currentEpisodio.set(epLive);
     } else {
-      this.currentEpisodio.set(null);
+      const eps = bloco.aPrograma ? this.allEpisodiosMap.get(bloco.aPrograma.aId) : null;
+      if (eps && eps.length > 0) {
+        const epIdx = this.getEpisodeIndex(bloco, dia);
+        this.currentEpisodio.set(eps[epIdx % eps.length]);
+      } else {
+        this.currentEpisodio.set(null);
+      }
     }
     const topFree = this.getTopFreeSeconds();
 
@@ -693,14 +756,18 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
   }
 
   private loadVideo(programaId: number, dia: string): void {
-    const eps = this.allEpisodiosMap.get(programaId);
-    if (!eps || eps.length === 0) return;
-
     const bloco = this.currentBloco();
     if (!bloco) return;
-
-    const epIdx = this.getEpisodeIndex(bloco, dia);
-    const ep = eps[epIdx % eps.length];
+    const diaIdx = this.dias.indexOf(dia);
+    const flatEp = this.episodioPagina0(bloco, diaIdx);
+    let ep: EpisodioInfo | null = flatEp;
+    if (!ep) {
+      const eps = this.allEpisodiosMap.get(programaId);
+      if (!eps || eps.length === 0) return;
+      const epIdx = this.getEpisodeIndex(bloco, dia);
+      ep = eps[epIdx % eps.length];
+    }
+    if (!ep) return;
 
     this.videoUrl.set(null);
 
@@ -725,6 +792,34 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     if (!eps || eps.length === 0) return null;
     const diaName = this.dias[diaIdx];
     const pag = pagina ?? this.paginaAlvo();
+
+    if (this.isBokuWeekend18Horario(bloco)) {
+      const flat = this.getFlatEpisodes(this.bokuOrder);
+      if (flat.length===0) return null;
+      const wk = this.blocos.filter(b=> b.aStatusCode==='AT' && this.bokuOrder.includes(b.aPrograma?.aId ?? -1) && this.normalizeDia(b.aDiaSemanaDesc??'')===this.normalizeDia(diaName)).sort((a,b)=>(a.aHorario??'').localeCompare(b.aHorario??''));
+      const numSlots = wk.length || 4;
+      const slotOffset = wk.findIndex(b=>b.aId===bloco.aId);
+      if(slotOffset<0) return null;
+      return flat[((pag*numSlots+slotOffset)%flat.length+flat.length)%flat.length];
+    }
+    if (this.isMedabots1130Horario(bloco)) {
+      const flat=this.getFlatEpisodes(this.medabotsOrder); if(flat.length===0) return null; const diasQ=this.diasProgramaMap.get(47)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos<0) return null; return flat[((dayPos+pag*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length];
+    }
+    if (this.isDigimon1230Horario(bloco)) {
+      const flat=this.getFlatEpisodes(this.digimonOrder); if(flat.length===0) return null; const diasQ=this.diasProgramaMap.get(22)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos<0) return null; return flat[((dayPos+pag*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length];
+    }
+    if (this.isBaki21Horario(bloco)) {
+      const flat=this.getFlatEpisodes(this.bakiOrder); if(flat.length===0) return null; const diasQ=this.diasProgramaMap.get(9)??this.diasProgramaMap.get(10)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos<0) return null; return flat[((dayPos+pag*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length];
+    }
+    if (this.isAvatar11Horario(bloco)) {
+      const flat=this.getFlatEpisodes(this.avatarOrder); if(flat.length===0) return null; const diasQ=this.diasProgramaMap.get(7)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos<0) return null; return flat[((dayPos+pag*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length];
+    }
+    if (this.isCavaleiros19Horario(bloco)) {
+      const flat=this.getFlatEpisodes(this.cavaleirosOrder); if(flat.length===0) return null; const diasQ=this.diasProgramaMap.get(58)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos<0) return null; return flat[((dayPos+pag*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length];
+    }
+    if (this.isDragonBall18Horario(bloco)) {
+      const flat=this.getFlatEpisodes(this.dragonBallOrder); if(flat.length===0) return null; const diasQ=this.diasProgramaMap.get(30)??[]; const dayPos=diasQ.indexOf(diaIdx); if(dayPos<0) return null; return flat[((dayPos+pag*this.EPISODES_PER_PAGE)%flat.length+flat.length)%flat.length];
+    }
 
     if (this.isFimDeSemana(diaName)) {
       const weekendBlocos = this.blocos.filter(b =>
@@ -957,9 +1052,18 @@ export class PlayerAoVivo implements OnInit, OnDestroy {
     return this.currentBloco()?.aGrade?.aNome ?? '';
   }
 
+  get liveDisplayPrograma(): { aId: number; aNome: string } | null {
+    const bloco = this.currentBloco();
+    if (!bloco) return null;
+    return this.getDisplayProgramaForLive(bloco, this.effectiveDayIdx());
+  }
+  get liveDisplayNome(): string {
+    return this.liveDisplayPrograma?.aNome ?? this.currentBloco()?.aPrograma?.aNome ?? '';
+  }
   get capaUrl(): string | null {
-    const detalheId = this.programaDetalhe()?.aId;
-    if (detalheId) return this.tvService.getProgramaCapaUrl(detalheId);
+    const displayId = this.liveDisplayPrograma?.aId ?? this.programaDetalhe()?.aId;
+    if (displayId) return this.tvService.getProgramaCapaUrl(displayId);
+    if (this.programaDetalhe()?.aId) return this.tvService.getProgramaCapaUrl(this.programaDetalhe()!.aId);
     return this.tvService.getProgramaCapaUrl(this.currentBloco()?.aPrograma?.aId);
   }
 

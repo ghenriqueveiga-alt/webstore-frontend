@@ -424,11 +424,11 @@
           @if (detailBloco()!.aPrograma) {
             <div class="flex items-center gap-3 p-3 rounded-xl"
                  style="background: rgba(2,6,23,0.4); border: 1px solid rgba(148,163,184,0.06);">
-              @if (tvService.getProgramaCapaUrl(detailBloco()!.aPrograma!.aId); as capa) {
+              @if (tvService.getProgramaCapaUrl(getDisplayPrograma(detailBloco()!, detailDia())?.aId ?? detailBloco()!.aPrograma!.aId); as capa) {
                 <img [src]="capa" class="w-10 h-10 rounded-xl object-cover shadow-lg" />
               }
               <div>
-                <p class="text-sm font-semibold text-white">{{ detailBloco()!.aPrograma!.aNome }}</p>
+                <p class="text-sm font-semibold text-white">{{ getDisplayPrograma(detailBloco()!, detailDia())?.aNome ?? detailBloco()!.aPrograma!.aNome }}</p>
                 @if (detailBloco()!.aGrade) {
                   <p class="text-[10px] text-gray-500 mt-0.5">{{ detailBloco()!.aGrade!.aNome }}</p>
                 }

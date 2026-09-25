@@ -82,10 +82,10 @@
           }
           <div class="flex items-center gap-3 mt-1.5">
             @if (capaUrl) {
-              <img [src]="capaUrl" [alt]="currentBloco()!.aPrograma!.aNome" class="w-12 h-16 rounded-md object-cover border border-gray-700 shrink-0" />
+              <img [src]="capaUrl" [alt]="liveDisplayNome" class="w-12 h-16 rounded-md object-cover border border-gray-700 shrink-0" />
             }
             <div class="min-w-0">
-              <p class="text-sm font-bold text-white truncate">{{ currentBloco()!.aPrograma!.aNome }}</p>
+              <p class="text-sm font-bold text-white truncate">{{ liveDisplayNome }}</p>
               @if (currentEpisodio()) {
                 <p class="text-xs text-gray-400 truncate">
                   @if (currentEpisodio()!.aTemporada) { T{{ currentEpisodio()!.aTemporada!.toString().padStart(2, '0') }} }
@@ -128,7 +128,7 @@
                 <p class="text-4xl font-mono font-bold text-yellow-400">{{ formatTime(waitSeconds()) }}</p>
                 <div class="slate slate-wait">
                   <p class="slate-kicker">A seguir</p>
-                  <p class="slate-title">{{ currentBloco()?.aPrograma?.aNome ?? 'Próximo programa' }} <span class="slate-hora">{{ currentBloco()?.aHorario?.substring(0, 5) }}</span></p>
+                  <p class="slate-title">{{ liveDisplayNome || 'Próximo programa' }} <span class="slate-hora">{{ currentBloco()?.aHorario?.substring(0, 5) }}</span></p>
                   @if (currentEpisodio()) {
                     <p class="slate-ep">
                       @if (currentEpisodio()!.aTemporada) {
@@ -142,7 +142,7 @@
                       }
                     </p>
                   }
-                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(waitSeconds()) }}</span> para o episódio <span class="font-bold text-white">{{ currentEpisodio()?.aTitulo ?? currentBloco()?.aPrograma?.aNome }}</span> já vai começar</p>
+                  <p class="slate-sub"><span class="font-mono font-bold text-yellow-300">{{ formatTime(waitSeconds()) }}</span> para o episódio <span class="font-bold text-white">{{ currentEpisodio()?.aTitulo ?? liveDisplayNome }}</span> já vai começar</p>
                 </div>
               </div>
             </div>
@@ -206,7 +206,7 @@
             <div class="osd-left">
               <span class="osd-ch">{{ channelNumber }}</span>
               <div class="min-w-0">
-                <p class="osd-prog">{{ currentBloco()?.aPrograma?.aNome }}</p>
+                <p class="osd-prog">{{ liveDisplayNome }}</p>
                 <p class="osd-sub">{{ currentBloco()?.aHorario?.substring(0, 5) }} &middot; {{ currentFaixa }} &middot; {{ isReprise() ? 'Reprise' : 'Inédito' }}</p>
               </div>
             </div>
@@ -238,10 +238,10 @@
           <p class="info-title">Sobre o programa</p>
           <div class="flex flex-col sm:flex-row gap-4">
             @if (capaUrl) {
-              <img [src]="capaUrl" [alt]="currentBloco()!.aPrograma!.aNome" class="w-full sm:w-40 rounded-xl object-cover border border-gray-700 shrink-0" />
+              <img [src]="capaUrl" [alt]="liveDisplayNome" class="w-full sm:w-40 rounded-xl object-cover border border-gray-700 shrink-0" />
             }
             <div class="min-w-0 flex-1">
-              <h2 class="text-xl font-bold text-white leading-tight">{{ currentBloco()!.aPrograma!.aNome }}</h2>
+              <h2 class="text-xl font-bold text-white leading-tight">{{ liveDisplayNome }}</h2>
               @if (programaDetalhe()?.aTituloAlternativo) {
                 <p class="text-xs text-gray-400 mt-0.5">{{ programaDetalhe()!.aTituloAlternativo }}</p>
               }
